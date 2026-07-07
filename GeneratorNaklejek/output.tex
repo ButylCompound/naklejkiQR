@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage[paperwidth=10cm, paperheight=6cm, margin=3mm]{geometry}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern} % Better font rendering
+
+\begin{document}
+\pagestyle{empty} % Remove page numbers
+
+\noindent
+\begin{minipage}[b][5.4cm][t]{0.62\textwidth}
+    \raggedright
+    {\centering \includegraphics[height=1.8cm]{logo.jpg}\par}
+    \vspace{0.15cm}
+    {\linespread{1.05}\huge\selectfont \textbf{Test Product Alpha}\par}
+    \vspace{0.15cm}
+    {\Large Waga: \textbf{985 kg}\par}
+    \vspace{0.15cm}
+    {\large Data: 2026-07-03 17:59:48\par}
+\end{minipage}\hfill
+\begin{minipage}[b][5.4cm][b]{0.35\textwidth}
+    \begin{flushright}
+        \includegraphics[width=0.85\linewidth]{current_qr.png}
+    \end{flushright}
+\end{minipage}
+
+\end{document}

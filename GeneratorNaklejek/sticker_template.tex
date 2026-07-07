@@ -1,0 +1,28 @@
+\documentclass{article}
+\usepackage[paperwidth=10cm, paperheight=6cm, margin=3mm]{geometry}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern} % Better font rendering
+
+\begin{document}
+\pagestyle{empty} % Remove page numbers
+
+\noindent
+\begin{minipage}[b][5.4cm][t]{0.62\textwidth}
+    \raggedright
+    {\centering \includegraphics[height=1.8cm]{logo.jpg}\par}
+    \vspace{0.15cm}
+    {\linespread{1.05}\huge\selectfont \textbf{<< product_name >>}\par}
+    \vspace{0.15cm}
+    {\Large Waga: \textbf{<< weight >> kg}\par}
+    \vspace{0.15cm}
+    {\large Data: << datetime >>\par}
+\end{minipage}\hfill
+\begin{minipage}[b][5.4cm][b]{0.35\textwidth}
+    \begin{flushright}
+        \includegraphics[width=0.85\linewidth]{<< qr_path >>}
+    \end{flushright}
+\end{minipage}
+
+\end{document}
