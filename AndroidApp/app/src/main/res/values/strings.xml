@@ -14,10 +14,8 @@
     <string name="scan_prompt">Skieruj aparat na kod QR…</string>
     <string name="status_ok_format">OK: %1$s (%2$s kg)</string>
     <string name="status_duplicate">Już zeskanowano!</string>
-    <string name="status_duplicate_added">Dodano (kopia naklejki)</string>
     <string name="status_invalid">Nieprawidłowy kod QR</string>
     <string name="status_session_missing">Błąd: nie znaleziono sesji</string>
-    <string name="add_anyway">Dodaj mimo to (kolejna paleta z kopią naklejki)</string>
     <string name="finish_session">Zakończ</string>
     <string name="scanned_count">Zeskanowano: %1$d</string>
     <string name="camera_permission_denied">Brak uprawnienia do aparatu. Nadaj uprawnienie w Ustawieniach i spróbuj ponownie.</string>

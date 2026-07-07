@@ -26,7 +26,8 @@ def create(
     product_name: str = typer.Option(None, "--name", "-n", help="Product name (defaults to last used)"),
     print_job: bool = typer.Option(True, "--print/--no-print", help="Whether to send to printer automatically"),
     printer_name: str = typer.Option("Zebra ZD421", "--printer", "-p", help="Windows printer name for SumatraPDF"),
-    date_override: str = typer.Option(None, "--date", "-d", help="Manual date override (e.g., '2023-10-25 12:00:00')")
+    date_override: str = typer.Option(None, "--date", "-d", help="Manual date override (e.g., '2023-10-25 12:00:00')"),
+    operator: str = typer.Option(None, "--operator", "-o", help="Operator initials (defaults to last used)")
 ):
     """
     Generate and print a QR code sticker for a product pallet.
@@ -39,8 +40,12 @@ def create(
             typer.echo("Error: No product name provided and no previous name saved.", err=True)
             raise typer.Exit(code=1)
     
+    if operator is None:
+        operator = state.get("last_operator", "")
+    
     # Save the used product name
     state["last_product_name"] = product_name
+    state["last_operator"] = operator
     save_state(state)
     
     if date_override:
@@ -50,6 +55,8 @@ def create(
     
     # Generate QR Code
     qr_data = f"{product_name} | {weight}kg | {now}"
+    if operator:
+        qr_data += f" | {operator}"
     typer.echo(f"Generating QR for: {qr_data}")
     
     qr = qrcode.QRCode(version=1, box_size=10, border=0)
@@ -81,6 +88,7 @@ def create(
         product_name=product_name,
         weight=weight,
         datetime=now,
+        operator=operator,
         qr_path=qr_path.replace("\\", "/")
     )
     

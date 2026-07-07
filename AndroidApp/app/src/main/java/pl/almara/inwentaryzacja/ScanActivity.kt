@@ -14,7 +14,6 @@ import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -64,7 +63,6 @@ class ScanActivity : AppCompatActivity() {
     private var lastHandledAt = 0L
 
     private var scannedCount = 0
-    private var pendingDuplicate: ScanItem? = null
     private var toneGen: ToneGenerator? = null
 
     private val permissionLauncher =
@@ -96,7 +94,6 @@ class ScanActivity : AppCompatActivity() {
 
         toneGen = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 85) }.getOrNull()
 
-        binding.addAnywayButton.setOnClickListener { addPendingDuplicate() }
         binding.finishButton.setOnClickListener { finishSession() }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -168,9 +165,6 @@ class ScanActivity : AppCompatActivity() {
         if (now - lastHandledAt < COOLDOWN_MS) return
         lastHandledAt = now
 
-        binding.addAnywayButton.visibility = View.GONE
-        pendingDuplicate = null
-
         val item = QrParser.parse(raw, SessionStore.timestamp())
         if (item == null) {
             showStatus(getString(R.string.status_invalid), R.color.status_error)
@@ -189,8 +183,6 @@ class ScanActivity : AppCompatActivity() {
                 feedback(error = false)
             }
             SessionStore.AddResult.DUPLICATE -> {
-                pendingDuplicate = item
-                binding.addAnywayButton.visibility = View.VISIBLE
                 showStatus(getString(R.string.status_duplicate), R.color.status_warn)
                 feedback(error = true)
             }
@@ -199,24 +191,6 @@ class ScanActivity : AppCompatActivity() {
                 feedback(error = true)
             }
         }
-    }
-
-    /**
-     * Naklejki drukowane w kilku kopiach mają identyczny kod QR — ten przycisk
-     * pozwala świadomie dodać drugą paletę z taką samą naklejką.
-     */
-    private fun addPendingDuplicate() {
-        val item = pendingDuplicate ?: return
-        pendingDuplicate = null
-        binding.addAnywayButton.visibility = View.GONE
-
-        if (SessionStore.addItem(this, sessionId, item, force = true) == SessionStore.AddResult.ADDED) {
-            scannedCount++
-            updateCounter()
-            showStatus(getString(R.string.status_duplicate_added), R.color.status_ok)
-            feedback(error = false)
-        }
-        lastHandledAt = SystemClock.elapsedRealtime()
     }
 
     private fun showStatus(text: String, @ColorRes colorRes: Int) {

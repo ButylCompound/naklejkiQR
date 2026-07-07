@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Android 15+ (API 35) wymusza tryb edge-to-edge: treść aplikacji jest rysowana
+        pod paskiem statusu i paskiem tytułu, przez co przyciski nachodzą na paski systemowe.
+        Ten atrybut przywraca klasyczne zachowanie (treść poniżej pasków systemowych).
+    -->
+    <style name="Theme.Skaner" parent="Theme.Material3.DayNight">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

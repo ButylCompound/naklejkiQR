@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.6.23)  7 JUL 2026 08:52
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.6.23)  7 JUL 2026 15:25
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -266,19 +266,20 @@ L3 programming layer <2026-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 2257 strings out of 467509
- 37188 string characters out of 5404406
+ 2259 strings out of 467509
+ 36965 string characters out of 5404406
  445313 words of memory out of 5000000
- 31492 multiletter control sequences out of 15000+600000
- 648481 words of font info for 54 fonts, out of 8000000 for 9000
+ 31493 multiletter control sequences out of 15000+600000
+ 651476 words of font info for 55 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  57i,6n,65p,212b,243s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/KamilKopischke/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
-lmbx12.pfb><C:/Users/KamilKopischke/AppData/Local/Programs/MiKTeX/fonts/type1/p
-ublic/lm/lmr12.pfb>
-Output written on output.pdf (1 page, 89307 bytes).
+lmbx10.pfb><C:/Users/KamilKopischke/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/lm/lmbx12.pfb><C:/Users/KamilKopischke/AppData/Local/Programs/MiKTeX/font
+s/type1/public/lm/lmr12.pfb>
+Output written on output.pdf (1 page, 111957 bytes).
 PDF statistics:
- 19 PDF objects out of 1000 (max. 8388607)
+ 24 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -50,11 +50,11 @@ object SessionStore {
 
     /**
      * Dodaje pozycję do sesji. Zwraca DUPLICATE, jeżeli identyczny kod QR
-     * został już zeskanowany w tej sesji (chyba że force = true).
+     * został już zeskanowany w tej sesji.
      */
-    fun addItem(context: Context, sessionId: String, item: ScanItem, force: Boolean = false): AddResult? {
+    fun addItem(context: Context, sessionId: String, item: ScanItem): AddResult? {
         val session = getSession(context, sessionId) ?: return null
-        if (!force && session.items.any { it.raw == item.raw }) return AddResult.DUPLICATE
+        if (session.items.any { it.raw == item.raw }) return AddResult.DUPLICATE
         session.items.add(item)
         save(context, session)
         return AddResult.ADDED

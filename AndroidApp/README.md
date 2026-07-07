@@ -7,7 +7,7 @@ Android app for warehouse operators: scan pallet QR stickers (printed by `Genera
 1. **Nowa sesja** — start a new inventory session (name defaults to `Inwentaryzacja <date>`).
 2. Point the camera at a sticker. The app scans automatically — no button press:
    - 🟢 **OK: <product> (<weight> kg)** — recorded, with a beep + short vibration.
-   - 🟠 **Już zeskanowano!** — this exact QR code is already in the session (error tone + long vibration). Since stickers printed as *copies* share the same QR code, a button **„Dodaj mimo to"** appears to knowingly add a second pallet with an identical sticker.
+   - 🟠 **Już zeskanowano!** — this exact QR code is already in the session; it is not added again (error tone + long vibration). Note: stickers printed as *copies* share the same QR code, so each pallet needs its own individually printed sticker to be countable.
    - 🔴 **Nieprawidłowy kod QR** — QR found but not in the expected `Nazwa | 500kg | data` format.
    - After every read there is a **2-second cooldown** before the next scan.
 3. **Zakończ** — shows the session summary (pallet list, count, total weight).
@@ -113,16 +113,15 @@ You can also print real stickers with `GeneratorNaklejek` — that's the true en
 | # | Scenario | Expected |
 |---|----------|----------|
 | 1 | New session, scan a valid QR | Green **OK** banner, beep, counter +1 |
-| 2 | Scan the **same** QR again | Orange **Już zeskanowano!**, error tone, counter unchanged, **Dodaj mimo to** button appears |
-| 3 | Press **Dodaj mimo to** | Counter +1, green confirmation |
-| 4 | Two QRs shown within 2 s | Second one ignored (cooldown) |
-| 5 | Scan a non-sticker QR (e.g. a URL) | Red **Nieprawidłowy kod QR** |
-| 6 | Polish characters + comma weight (`123,5kg`) | Parsed correctly, weight shows as 123.5 |
-| 7 | Kill the app mid-session, reopen | Session and items still there |
-| 8 | Airplane mode ON, scan several stickers | Everything works (offline) |
-| 9 | **Wyślij CSV** → pick Outlook/OneDrive | File attaches/uploads; open in Excel: Polish chars OK, columns split on `;`, sum row correct |
-| 10 | **Zapisz plik CSV** | File saved to the chosen folder |
-| 11 | Long-press a session on the main list | Delete confirmation dialog |
+| 2 | Scan the **same** QR again | Orange **Już zeskanowano!**, error tone, counter unchanged |
+| 3 | Two QRs shown within 2 s | Second one ignored (cooldown) |
+| 4 | Scan a non-sticker QR (e.g. a URL) | Red **Nieprawidłowy kod QR** |
+| 5 | Polish characters + comma weight (`123,5kg`) | Parsed correctly, weight shows as 123.5 |
+| 6 | Kill the app mid-session, reopen | Session and items still there |
+| 7 | Airplane mode ON, scan several stickers | Everything works (offline) |
+| 8 | **Wyślij CSV** → pick Outlook/OneDrive | File attaches/uploads; open in Excel: Polish chars OK, columns split on `;`, sum row correct |
+| 9 | **Zapisz plik CSV** | File saved to the chosen folder |
+| 10 | Long-press a session on the main list | Delete confirmation dialog |
 
 ## 8. Troubleshooting
 
@@ -134,6 +133,16 @@ You can also print real stickers with `GeneratorNaklejek` — that's the true en
 | Camera is black in emulator | Extended controls → Camera → make sure *Virtual scene* is the back camera; cold-boot the emulator |
 | App installs but camera permission dialog never appears | Uninstall + reinstall, or grant Camera manually in phone Settings → Apps |
 | Share sheet has no SharePoint option | Install the OneDrive or Teams app on the phone and sign in with the company account |
+
+## 16 KB page size compatibility (Android 15+/16 devices)
+
+The app bundles native libraries (ML Kit's QR decoder, CameraX JNI), so 16 KB alignment matters:
+
+- **CameraX must stay ≥ 1.4.0** (1.3.x was 4 KB-aligned and crashes on 16 KB devices) — currently pinned to 1.4.2.
+- **ML Kit barcode-scanning ≥ 17.3.0** — 16 KB-ready per Google's release notes; don't downgrade.
+- AGP ≥ 8.5.1 (we use 8.7.3) handles the required zip alignment automatically.
+
+To verify: build the APK, then in Android Studio open it via **Build → Analyze APK** — the alignment check flags any non-16 KB `.so`. Or from the command line: `zipalign -c -P 16 -v 4 app-debug.apk`. To test at runtime, create an emulator with a system image whose name ends in **"16 KB Page Size"** (SDK Manager → system images, Android 15+) and run the full test checklist on it.
 
 ## Project structure
 

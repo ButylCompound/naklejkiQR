@@ -39,12 +39,14 @@ def get_printers():
             pass
     return printers
 
-def generate_pdf(product_name, weight, date_override=None):
+def generate_pdf(product_name, weight, operator="", date_override=None):
     if date_override:
         now = date_override
     else:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     qr_data = f"{product_name} | {weight}kg | {now}"
+    if operator:
+        qr_data += f" | {operator}"
     
     qr = qrcode.QRCode(version=1, box_size=10, border=0)
     qr.add_data(qr_data)
@@ -72,6 +74,7 @@ def generate_pdf(product_name, weight, date_override=None):
         product_name=product_name,
         weight=weight,
         datetime=now,
+        operator=operator,
         qr_path=qr_path.replace("\\", "/")
     )
     
@@ -125,7 +128,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Naklejki QR - Generator")
-        self.root.geometry("450x590")
+        self.root.geometry("450x660")
         self.root.configure(padx=25, pady=25)
         
         # Setup clean style
@@ -152,6 +155,11 @@ class App:
         self.weight_var = tk.StringVar()
         self.weight_entry = ttk.Entry(root, textvariable=self.weight_var, font=('Segoe UI', 12))
         self.weight_entry.pack(fill="x", pady=(0, 15))
+        
+        ttk.Label(root, text="Inicjały operatora:").pack(anchor="w", pady=(0, 5))
+        self.operator_var = tk.StringVar(value=self.state.get("last_operator", ""))
+        self.operator_entry = ttk.Entry(root, textvariable=self.operator_var, font=('Segoe UI', 12))
+        self.operator_entry.pack(fill="x", pady=(0, 15))
         
         ttk.Label(root, text="Własna data (opcjonalnie):").pack(anchor="w", pady=(0, 5))
         self.date_var = tk.StringVar()
@@ -200,6 +208,7 @@ class App:
     def _process(self, do_print):
         prod_name = self.name_var.get().strip()
         weight = self.weight_var.get().strip()
+        operator = self.operator_var.get().strip()
         date_override = self.date_var.get().strip()
         
         if not prod_name:
@@ -220,10 +229,11 @@ class App:
         self.root.update_idletasks()
         
         try:
-            pdf_path = generate_pdf(prod_name, weight, date_override=date_override if date_override else None)
+            pdf_path = generate_pdf(prod_name, weight, operator=operator, date_override=date_override if date_override else None)
             
             # Save state
             self.state["last_product_name"] = prod_name
+            self.state["last_operator"] = operator
             self.state["last_printer"] = self.printer_var.get()
             save_state(self.state)
             
