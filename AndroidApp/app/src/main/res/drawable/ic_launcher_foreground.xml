@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prosta ikona w stylu kodu QR -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M32,32h16v16h-16z M36,36h8v8h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M60,32h16v16h-16z M64,36h8v8h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M32,60h16v16h-16z M36,64h8v8h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,60h6v6h-6z M70,60h6v6h-6z M60,70h6v6h-6z M70,70h6v6h-6z" />
+</vector>

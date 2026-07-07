@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.6.23)  3 JUL 2026 17:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.6.23)  7 JUL 2026 08:52
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -219,14 +219,43 @@ File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 <logo.jpg, id=1, 183.5658pt x 71.7882pt>
 File: logo.jpg Graphic file (type jpg)
 <use logo.jpg>
-Package pdftex.def Info: logo.jpg  used on input line 14.
-(pdftex.def)             Requested size: 130.96283pt x 51.21504pt.
-<current_qr.png, id=2, 331.2375pt x 331.2375pt>
+Package pdftex.def Info: logo.jpg  used on input line 12.
+(pdftex.def)             Requested size: 123.68588pt x 48.36958pt.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 2
+3.
+
+(C:\Users\KamilKopischke\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
+File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 2
+3.
+
+(C:\Users\KamilKopischke\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
+File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
+23.
+
+(C:\Users\KamilKopischke\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
+File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
+23.
+(C:\Users\KamilKopischke\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
+File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 23.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 23.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 23.
+<current_qr.png, id=2, 291.0875pt x 291.0875pt>
 File: current_qr.png Graphic file (type png)
 <use current_qr.png>
-Package pdftex.def Info: current_qr.png  used on input line 24.
-(pdftex.def)             Requested size: 79.57008pt x 79.56938pt.
- [1
+Package pdftex.def Info: current_qr.png  used on input line 26.
+(pdftex.def)             Requested size: 88.20192pt x 88.20192pt.
+[1
 
 {C:/Users/KamilKopischke/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/U
 sers/KamilKopischke/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}
@@ -237,17 +266,17 @@ L3 programming layer <2026-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 2181 strings out of 467509
- 35149 string characters out of 5404406
- 444313 words of memory out of 5000000
- 31437 multiletter control sequences out of 15000+600000
- 646483 words of font info for 47 fonts, out of 8000000 for 9000
+ 2257 strings out of 467509
+ 37188 string characters out of 5404406
+ 445313 words of memory out of 5000000
+ 31492 multiletter control sequences out of 15000+600000
+ 648481 words of font info for 54 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 57i,6n,65p,212b,234s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 57i,6n,65p,212b,243s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/KamilKopischke/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/
 lmbx12.pfb><C:/Users/KamilKopischke/AppData/Local/Programs/MiKTeX/fonts/type1/p
 ublic/lm/lmr12.pfb>
-Output written on output.pdf (1 page, 90605 bytes).
+Output written on output.pdf (1 page, 89307 bytes).
 PDF statistics:
  19 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

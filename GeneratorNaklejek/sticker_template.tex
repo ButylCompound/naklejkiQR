@@ -9,19 +9,21 @@
 \pagestyle{empty} % Remove page numbers
 
 \noindent
-\begin{minipage}[b][5.4cm][t]{0.62\textwidth}
+{\centering \includegraphics[height=1.7cm, keepaspectratio]{logo.jpg}\par}
+\vspace{0.2cm}
+
+\noindent
+\begin{minipage}[c][3.3cm][c]{0.58\textwidth}
     \raggedright
-    {\centering \includegraphics[height=1.8cm]{logo.jpg}\par}
+    {\linespread{1.05}\Large\selectfont \textbf{Nazwa: << product_name >>}\par}
+    \vspace{0.25cm}
+    {\Large \textbf{Ilość netto:} << weight >> kg\par}
     \vspace{0.15cm}
-    {\linespread{1.05}\huge\selectfont \textbf{<< product_name >>}\par}
-    \vspace{0.15cm}
-    {\Large Waga: \textbf{<< weight >> kg}\par}
-    \vspace{0.15cm}
-    {\large Data: << datetime >>\par}
+    {\Large \textbf{Data:} \\ << datetime >>\par}
 \end{minipage}\hfill
-\begin{minipage}[b][5.4cm][b]{0.35\textwidth}
+\begin{minipage}[c][3.3cm][c]{0.38\textwidth}
     \begin{flushright}
-        \includegraphics[width=0.85\linewidth]{<< qr_path >>}
+        \includegraphics[width=3.1cm, height=3.1cm, keepaspectratio]{<< qr_path >>}
     \end{flushright}
 \end{minipage}
 

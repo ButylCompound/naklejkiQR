@@ -25,7 +25,8 @@ def create(
     weight: str = typer.Argument(..., help="Weight of the product/pallet (e.g., 500)"),
     product_name: str = typer.Option(None, "--name", "-n", help="Product name (defaults to last used)"),
     print_job: bool = typer.Option(True, "--print/--no-print", help="Whether to send to printer automatically"),
-    printer_name: str = typer.Option("Zebra ZD421", "--printer", "-p", help="Windows printer name for SumatraPDF")
+    printer_name: str = typer.Option("Zebra ZD421", "--printer", "-p", help="Windows printer name for SumatraPDF"),
+    date_override: str = typer.Option(None, "--date", "-d", help="Manual date override (e.g., '2023-10-25 12:00:00')")
 ):
     """
     Generate and print a QR code sticker for a product pallet.
@@ -42,7 +43,10 @@ def create(
     state["last_product_name"] = product_name
     save_state(state)
     
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if date_override:
+        now = date_override
+    else:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     # Generate QR Code
     qr_data = f"{product_name} | {weight}kg | {now}"
@@ -118,12 +122,15 @@ def create(
             typer.echo("Auto-printing is only configured for Windows/WSL with SumatraPDF. Please print manually.")
 
 def _print_windows(pdf_path, printer_name):
-    sumatra_path = "SumatraPDF.exe"
+    import glob
+    sumatra_paths = glob.glob("SumatraPDF*.exe")
+    sumatra_path = sumatra_paths[0] if sumatra_paths else "SumatraPDF.exe"
+    
     if not os.path.exists(sumatra_path):
         # Fallback to checking if it's in PATH, though subprocess handles it
         pass
         
-    print_cmd = [sumatra_path, "-print-to", printer_name, "-silent", pdf_path]
+    print_cmd = [sumatra_path, "-print-settings", "shrink,landscape", "-print-to", printer_name, "-silent", pdf_path]
     try:
         subprocess.run(print_cmd, check=True)
         typer.echo("Print job sent successfully!")

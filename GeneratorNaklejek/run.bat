@@ -3,6 +3,21 @@ echo Uruchamianie Generatora Naklejek...
 
 cd /d "%~dp0"
 
+:: Check if the app was moved by comparing the saved path
+set "CURRENT_DIR=%CD%"
+if exist .venv_path.txt (
+    set /p SAVED_DIR=<.venv_path.txt
+) else (
+    set "SAVED_DIR="
+)
+
+if exist .venv (
+    if /I not "%CURRENT_DIR%"=="%SAVED_DIR%" (
+        echo Wykryto przeniesienie folderu aplikacji. Rekonfiguracja srodowiska...
+        rmdir /S /Q .venv
+    )
+)
+
 :: Check if virtual environment exists, create if it doesn't
 if not exist .venv\Scripts\activate.bat (
     echo Tworzenie wirtualnego srodowiska...
@@ -19,6 +34,9 @@ if not exist .venv\Scripts\activate.bat (
         echo Instalowanie zaleznosci...
         .venv\Scripts\python.exe -m pip install -r requirements.txt
     )
+    
+    :: Save the current directory path
+    echo %CURRENT_DIR%>.venv_path.txt
 )
 
 :: Activate virtual environment

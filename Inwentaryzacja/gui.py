@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 import threading
 import os
 from pathlib import Path
+import json
 
 # Import the scanner logic
 from skaner import process_inventory
@@ -10,7 +11,7 @@ from skaner import process_inventory
 class InventoryApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Inventory Scanner - SharePoint Sync")
+        self.root.title("Skaner Inwentaryzacji - Synchronizacja SharePoint")
         self.root.geometry("600x500")
         self.root.configure(padx=20, pady=20)
         
@@ -20,10 +21,20 @@ class InventoryApp:
         except:
             style.theme_use('clam')
             
+        self.config_file = Path(__file__).parent / "config.json"
+        
         # Hardcoded to the current SharePoint synchronized location
         default_sp_dir = str(Path(__file__).parent / "Zdjecia_z_magazynu")
+        if self.config_file.exists():
+            try:
+                with open(self.config_file, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                    if "sp_path" in config and Path(config["sp_path"]).exists():
+                        default_sp_dir = config["sp_path"]
+            except Exception:
+                pass
         
-        ttk.Label(root, text="SharePoint Folder Path (Photos location):").pack(anchor="w")
+        ttk.Label(root, text="Ścieżka do folderu SharePoint (lokalizacja zdjęć):").pack(anchor="w")
         
         self.folder_frame = ttk.Frame(root)
         self.folder_frame.pack(fill="x", pady=(5, 15))
@@ -32,24 +43,24 @@ class InventoryApp:
         self.sp_entry = ttk.Entry(self.folder_frame, textvariable=self.sp_path_var)
         self.sp_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
         
-        self.browse_btn = ttk.Button(self.folder_frame, text="Browse", command=self.browse_sp)
+        self.browse_btn = ttk.Button(self.folder_frame, text="Przeglądaj", command=self.browse_sp)
         self.browse_btn.pack(side="right")
         
         # Subfolders
-        ttk.Label(root, text="Select Inventory Date (Subfolder):").pack(anchor="w")
+        ttk.Label(root, text="Wybierz datę inwentaryzacji (Podfolder):").pack(anchor="w")
         self.date_frame = ttk.Frame(root)
         self.date_frame.pack(fill="x", pady=(5, 15))
         
         self.date_combo = ttk.Combobox(self.date_frame, state="readonly")
         self.date_combo.pack(side="left", fill="x", expand=True, padx=(0, 10))
         
-        self.refresh_btn = ttk.Button(self.date_frame, text="Refresh Dates", command=self.refresh_dates)
+        self.refresh_btn = ttk.Button(self.date_frame, text="Odśwież daty", command=self.refresh_dates)
         self.refresh_btn.pack(side="right")
         
-        self.scan_btn = ttk.Button(root, text="Run Scanner", command=self.run_scanner)
+        self.scan_btn = ttk.Button(root, text="Uruchom Skaner", command=self.run_scanner)
         self.scan_btn.pack(fill="x", pady=10, ipady=5)
         
-        ttk.Label(root, text="Output Log:").pack(anchor="w")
+        ttk.Label(root, text="Logi wyjściowe:").pack(anchor="w")
         self.log_text = tk.Text(root, height=12, state="disabled")
         self.log_text.pack(fill="both", expand=True, pady=(5, 0))
         
@@ -68,12 +79,21 @@ class InventoryApp:
             self.sp_path_var.set(folder)
             self.refresh_dates()
             
+    def save_config(self, path):
+        try:
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                json.dump({"sp_path": str(path)}, f)
+        except Exception:
+            pass
+
     def refresh_dates(self):
         sp_path = Path(self.sp_path_var.get())
         if not sp_path.exists() or not sp_path.is_dir():
             self.date_combo['values'] = []
             self.date_combo.set("")
             return
+            
+        self.save_config(str(sp_path))
             
         subdirs = [d.name for d in sp_path.iterdir() if d.is_dir()]
         self.date_combo['values'] = sorted(subdirs, reverse=True)
@@ -87,7 +107,7 @@ class InventoryApp:
         date_folder = self.date_combo.get()
         
         if not sp_path or not date_folder:
-            messagebox.showerror("Error", "Please select a valid SharePoint folder and a date subfolder.")
+            messagebox.showerror("Błąd", "Wybierz prawidłowy folder SharePoint i podfolder z datą.")
             return
             
         full_path = Path(sp_path) / date_folder
@@ -101,9 +121,13 @@ class InventoryApp:
             try:
                 report_path = process_inventory(str(full_path), log_callback=lambda msg: self.root.after(0, self.log, msg))
                 if report_path:
-                    self.root.after(0, lambda: messagebox.showinfo("Success", f"Scan complete! Report saved to:\n{report_path}"))
+                    self.root.after(0, lambda: messagebox.showinfo("Sukces", f"Skanowanie zakończone! Raport zapisano w:\n{report_path}"))
+                    try:
+                        os.startfile(report_path)
+                    except Exception as e:
+                        self.root.after(0, self.log, f"Nie udało się otworzyć pliku: {e}")
             except Exception as e:
-                self.root.after(0, self.log, f"Error: {e}")
+                self.root.after(0, self.log, f"Błąd: {e}")
             finally:
                 self.root.after(0, lambda: self.scan_btn.config(state="normal"))
                 

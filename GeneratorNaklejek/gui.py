@@ -23,8 +23,27 @@ def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
 
-def generate_pdf(product_name, weight):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def get_printers():
+    printers = ["Zebra ZD421"]
+    if os.name == 'nt':
+        try:
+            output = subprocess.check_output(
+                ['powershell', '-Command', 'Get-Printer | Select-Object -ExpandProperty Name'],
+                text=True,
+                creationflags=0x08000000
+            )
+            found = [p.strip() for p in output.split('\n') if p.strip()]
+            if found:
+                printers = found
+        except Exception:
+            pass
+    return printers
+
+def generate_pdf(product_name, weight, date_override=None):
+    if date_override:
+        now = date_override
+    else:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     qr_data = f"{product_name} | {weight}kg | {now}"
     
     qr = qrcode.QRCode(version=1, box_size=10, border=0)
@@ -82,8 +101,11 @@ def print_pdf(pdf_path, printer_name="Zebra ZD421"):
     is_windows = os.name == 'nt'
     
     if is_windows:
-        sumatra_path = "SumatraPDF.exe"
-        print_cmd = [sumatra_path, "-print-to", printer_name, "-silent", pdf_path]
+        import glob
+        sumatra_paths = glob.glob("SumatraPDF*.exe")
+        sumatra_path = sumatra_paths[0] if sumatra_paths else "SumatraPDF.exe"
+        
+        print_cmd = [sumatra_path, "-print-settings", "shrink,landscape", "-print-to", printer_name, "-silent", pdf_path]
         try:
             subprocess.run(print_cmd, check=True)
         except Exception as e:
@@ -103,7 +125,7 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Naklejki QR - Generator")
-        self.root.geometry("450x430")
+        self.root.geometry("450x590")
         self.root.configure(padx=25, pady=25)
         
         # Setup clean style
@@ -126,15 +148,35 @@ class App:
         self.name_entry = ttk.Entry(root, textvariable=self.name_var, font=('Segoe UI', 12))
         self.name_entry.pack(fill="x", pady=(0, 15))
         
-        ttk.Label(root, text="Waga (kg):").pack(anchor="w", pady=(0, 5))
+        ttk.Label(root, text="Ilość netto (kg):").pack(anchor="w", pady=(0, 5))
         self.weight_var = tk.StringVar()
         self.weight_entry = ttk.Entry(root, textvariable=self.weight_var, font=('Segoe UI', 12))
         self.weight_entry.pack(fill="x", pady=(0, 15))
         
+        ttk.Label(root, text="Własna data (opcjonalnie):").pack(anchor="w", pady=(0, 5))
+        self.date_var = tk.StringVar()
+        self.date_entry = ttk.Entry(root, textvariable=self.date_var, font=('Segoe UI', 12))
+        self.date_entry.pack(fill="x", pady=(0, 15))
+        
         ttk.Label(root, text="Liczba kopii:").pack(anchor="w", pady=(0, 5))
         self.copies_var = tk.StringVar(value="1")
         self.copies_spinbox = ttk.Spinbox(root, from_=1, to=100, textvariable=self.copies_var, font=('Segoe UI', 12))
-        self.copies_spinbox.pack(fill="x", pady=(0, 25))
+        self.copies_spinbox.pack(fill="x", pady=(0, 15))
+        
+        ttk.Label(root, text="Drukarka:").pack(anchor="w", pady=(0, 5))
+        self.printer_var = tk.StringVar()
+        self.printer_combo = ttk.Combobox(root, textvariable=self.printer_var, font=('Segoe UI', 11), state="readonly")
+        
+        printers = get_printers()
+        self.printer_combo['values'] = printers
+        
+        saved_printer = self.state.get("last_printer", "Zebra ZD421")
+        if saved_printer in printers:
+            self.printer_var.set(saved_printer)
+        elif printers:
+            self.printer_var.set(printers[0])
+            
+        self.printer_combo.pack(fill="x", pady=(0, 25))
         
         # Focus on weight if name is already pre-filled
         if self.name_var.get():
@@ -158,6 +200,7 @@ class App:
     def _process(self, do_print):
         prod_name = self.name_var.get().strip()
         weight = self.weight_var.get().strip()
+        date_override = self.date_var.get().strip()
         
         if not prod_name:
             messagebox.showerror("Błąd", "Proszę podać nazwę produktu!")
@@ -177,17 +220,18 @@ class App:
         self.root.update_idletasks()
         
         try:
-            pdf_path = generate_pdf(prod_name, weight)
+            pdf_path = generate_pdf(prod_name, weight, date_override=date_override if date_override else None)
             
             # Save state
             self.state["last_product_name"] = prod_name
+            self.state["last_printer"] = self.printer_var.get()
             save_state(self.state)
             
             if do_print:
                 self.status_var.set(f"Wysyłanie do drukarki ({copies} kopii)...")
                 self.root.update_idletasks()
                 for _ in range(copies):
-                    print_pdf(pdf_path)
+                    print_pdf(pdf_path, printer_name=self.printer_var.get())
                 self.status_var.set(f"Wydrukowano: {prod_name} ({weight}kg) x{copies}")
             else:
                 self.status_var.set("PDF wygenerowany pomyślnie.")

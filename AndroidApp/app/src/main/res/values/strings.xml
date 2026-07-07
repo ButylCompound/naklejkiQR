@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Skaner Inwentaryzacji</string>
+
+    <!-- Lista sesji -->
+    <string name="new_session">Nowa sesja</string>
+    <string name="default_session_name">Inwentaryzacja %1$s</string>
+    <string name="session_name_hint">Nazwa sesji</string>
+    <string name="start">Rozpocznij</string>
+    <string name="cancel">Anuluj</string>
+    <string name="no_sessions">Brak sesji.\nKliknij „Nowa sesja”, aby rozpocząć skanowanie.\n\n(Przytrzymaj sesję na liście, aby ją usunąć)</string>
+
+    <!-- Ekran skanowania -->
+    <string name="scan_prompt">Skieruj aparat na kod QR…</string>
+    <string name="status_ok_format">OK: %1$s (%2$s kg)</string>
+    <string name="status_duplicate">Już zeskanowano!</string>
+    <string name="status_duplicate_added">Dodano (kopia naklejki)</string>
+    <string name="status_invalid">Nieprawidłowy kod QR</string>
+    <string name="status_session_missing">Błąd: nie znaleziono sesji</string>
+    <string name="add_anyway">Dodaj mimo to (kolejna paleta z kopią naklejki)</string>
+    <string name="finish_session">Zakończ</string>
+    <string name="scanned_count">Zeskanowano: %1$d</string>
+    <string name="camera_permission_denied">Brak uprawnienia do aparatu. Nadaj uprawnienie w Ustawieniach i spróbuj ponownie.</string>
+    <string name="camera_error">Błąd aparatu: %1$s</string>
+
+    <!-- Szczegóły sesji -->
+    <string name="continue_scanning">Skanuj</string>
+    <string name="share_csv">Wyślij CSV (e-mail / SharePoint)</string>
+    <string name="save_csv">Zapisz plik CSV</string>
+    <string name="csv_saved">Zapisano plik CSV.</string>
+    <string name="csv_save_error">Błąd zapisu: %1$s</string>
+    <string name="csv_subject">Inwentaryzacja: %1$s</string>
+    <string name="csv_share_title">Udostępnij raport</string>
+    <string name="delete_session">Usuń sesję</string>
+    <string name="delete_confirm">Czy na pewno usunąć sesję „%1$s”? Tej operacji nie można cofnąć.</string>
+    <string name="delete">Usuń</string>
+    <string name="summary_format">Palet: %1$d  •  Łączna waga: %2$s kg</string>
+    <string name="item_format">%1$d. %2$s — %3$s kg\nNaklejka: %4$s  |  Skan: %5$s</string>
+</resources>
