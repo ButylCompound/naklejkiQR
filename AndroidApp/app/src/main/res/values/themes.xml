@@ -1,4 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Skaner" parent="Theme.Material3.DayNight" />
+    <!--
+        Motyw firmowy: granat #00235A (paski, kontrolki), pomarańcz #FF5E14 (akcje główne).
+        Wymuszony jasny motyw — kolory firmowe są dobrane pod jasne tło.
+    -->
+    <style name="Base.Theme.Skaner" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/brand_blue</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/brand_orange</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="android:windowBackground">@color/app_background</item>
+        <item name="android:statusBarColor">@color/brand_blue</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.Skaner" parent="Base.Theme.Skaner" />
+
+    <!-- Duży pomarańczowy przycisk akcji głównej -->
+    <style name="Widget.Skaner.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/brand_orange</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- Granatowy przycisk drugorzędny (obrys) -->
+    <style name="Widget.Skaner.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/brand_blue</item>
+        <item name="android:textColor">@color/brand_blue</item>
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <!-- Tekstowy przycisk akcji destrukcyjnej -->
+    <style name="Widget.Skaner.Button.Danger" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/status_error</item>
+    </style>
 </resources>

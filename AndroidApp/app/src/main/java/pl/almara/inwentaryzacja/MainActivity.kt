@@ -3,10 +3,11 @@ package pl.almara.inwentaryzacja
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
+import android.view.ViewGroup
 import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import pl.almara.inwentaryzacja.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -44,13 +45,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshList() {
         sessions = SessionStore.listSessions(this)
-        binding.emptyText.visibility = if (sessions.isEmpty()) View.VISIBLE else View.GONE
-        val rows = sessions.map { s ->
-            val total = Format.weight(s.items.sumOf { it.weightKg })
-            "${s.name}\n${s.createdAt}  •  Palet: ${s.items.size}  •  $total kg"
-        }
-        binding.sessionsList.adapter =
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, rows)
+        binding.emptyState.visibility = if (sessions.isEmpty()) View.VISIBLE else View.GONE
+        binding.sessionsList.adapter = SessionAdapter(this, sessions)
     }
 
     private fun showNewSessionDialog() {
@@ -63,9 +59,20 @@ class MainActivity : AppCompatActivity() {
             hint = getString(R.string.session_name_hint)
             setSelectAllOnFocus(true)
         }
-        AlertDialog.Builder(this)
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        val container = FrameLayout(this).apply {
+            setPadding(pad, pad / 2, pad, 0)
+            addView(
+                input,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+        MaterialAlertDialogBuilder(this)
             .setTitle(R.string.new_session)
-            .setView(input)
+            .setView(container)
             .setPositiveButton(R.string.start) { _, _ ->
                 val name = input.text.toString().trim().ifEmpty { defaultName }
                 val session = SessionStore.createSession(this, name)
@@ -79,7 +86,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmDelete(session: Session) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(R.string.delete_session)
             .setMessage(getString(R.string.delete_confirm, session.name))
             .setPositiveButton(R.string.delete) { _, _ ->

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ramka celownika na ekranie skanowania -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <stroke
+        android:width="3dp"
+        android:color="#B3FFFFFF" />
+    <corners android:radius="24dp" />
+</shape>

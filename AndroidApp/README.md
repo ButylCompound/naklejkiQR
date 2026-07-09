@@ -12,22 +12,22 @@ Android app for warehouse operators: scan pallet QR stickers (printed by `Genera
    - After every read there is a **2-second cooldown** before the next scan.
 3. **Zakończ** — shows the session summary (pallet list, count, total weight).
 4. Export:
-   - **Wyślij CSV (e-mail / SharePoint)** — opens the Android share sheet; pick Outlook/Gmail to e-mail it, or OneDrive/Teams to upload to SharePoint. The file is handed to the chosen app, which uploads whenever connectivity is available.
-   - **Zapisz plik CSV** — save the file to a folder on the phone (e.g. a OneDrive-synced folder).
+   - **Wyślij CSV** — opens the Android share sheet; pick Outlook/Gmail to e-mail it, or OneDrive/Teams to upload to SharePoint. The file is handed to the chosen app, which uploads whenever connectivity is available.
+   - **Zapisz CSV** — save the file to a folder on the phone (e.g. a OneDrive-synced folder). A notification confirms the save; tapping it opens the file (on Android 13+ the first save asks for notification permission).
 
 Sessions are stored on the device (app-private storage) and survive app restarts and offline periods. Data is only removed when you delete a session (long-press it on the list, or the **Usuń sesję** button).
 
 ### QR payload contract
 
-Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00` (name | weight | print date). Weight accepts `,` or `.` decimals.
+Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00 | XX` (name | weight | print date | operator initials). The initials segment is optional — older stickers without it still scan fine. Weight accepts `,` or `.` decimals.
 
 ### CSV format
 
 Semicolon-separated, UTF-8 with BOM, decimal comma — opens correctly in Polish Excel:
 
 ```
-Lp;Produkt;Waga (kg);Data naklejki;Data skanowania
-1;ALBU T4D;500;2026-07-07 10:00:00;2026-07-07 12:31:05
+Lp;Produkt;Waga (kg);Inicjały;Data naklejki;Data skanowania
+1;ALBU T4D;500;XX;2026-07-07 10:00:00;2026-07-07 12:31:05
 ...
 Liczba palet;12
 Łączna waga (kg);6250
@@ -120,7 +120,7 @@ You can also print real stickers with `GeneratorNaklejek` — that's the true en
 | 6 | Kill the app mid-session, reopen | Session and items still there |
 | 7 | Airplane mode ON, scan several stickers | Everything works (offline) |
 | 8 | **Wyślij CSV** → pick Outlook/OneDrive | File attaches/uploads; open in Excel: Polish chars OK, columns split on `;`, sum row correct |
-| 9 | **Zapisz plik CSV** | File saved to the chosen folder |
+| 9 | **Zapisz CSV** | File saved to the chosen folder |
 | 10 | Long-press a session on the main list | Delete confirmation dialog |
 
 ## 8. Troubleshooting

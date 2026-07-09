@@ -81,6 +81,7 @@ object SessionStore {
                 put("weightKg", item.weightKg)
                 put("labelDate", item.labelDate)
                 put("scannedAt", item.scannedAt)
+                put("initials", item.initials)
                 put("raw", item.raw)
             })
         }
@@ -100,6 +101,7 @@ object SessionStore {
                     weightKg = it.getDouble("weightKg"),
                     labelDate = it.optString("labelDate"),
                     scannedAt = it.optString("scannedAt"),
+                    initials = it.optString("initials"),
                     raw = it.optString("raw")
                 )
             )

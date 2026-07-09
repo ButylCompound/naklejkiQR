@@ -9,6 +9,7 @@
     <string name="start">Rozpocznij</string>
     <string name="cancel">Anuluj</string>
     <string name="no_sessions">Brak sesji.\nKliknij „Nowa sesja”, aby rozpocząć skanowanie.\n\n(Przytrzymaj sesję na liście, aby ją usunąć)</string>
+    <string name="session_meta_format">%1$s  •  Palet: %2$d  •  %3$s kg</string>
 
     <!-- Ekran skanowania -->
     <string name="scan_prompt">Skieruj aparat na kod QR…</string>
@@ -23,15 +24,20 @@
 
     <!-- Szczegóły sesji -->
     <string name="continue_scanning">Skanuj</string>
-    <string name="share_csv">Wyślij CSV (e-mail / SharePoint)</string>
-    <string name="save_csv">Zapisz plik CSV</string>
-    <string name="csv_saved">Zapisano plik CSV.</string>
+    <string name="share_csv">Wyślij CSV</string>
+    <string name="save_csv">Zapisz CSV</string>
+    <string name="stat_pallets">Palety</string>
+    <string name="stat_weight">Łączna waga (kg)</string>
+    <string name="item_weight_format">%1$s kg</string>
+    <string name="item_dates_format">Naklejka: %1$s  •  Skan: %2$s</string>
+    <string name="csv_saved">Zapisano plik CSV</string>
+    <string name="csv_saved_tap_to_open">%1$s — dotknij, aby otworzyć</string>
+    <string name="csv_open_chooser">Otwórz plik CSV</string>
+    <string name="notif_channel_name">Eksport CSV</string>
     <string name="csv_save_error">Błąd zapisu: %1$s</string>
     <string name="csv_subject">Inwentaryzacja: %1$s</string>
     <string name="csv_share_title">Udostępnij raport</string>
     <string name="delete_session">Usuń sesję</string>
     <string name="delete_confirm">Czy na pewno usunąć sesję „%1$s”? Tej operacji nie można cofnąć.</string>
     <string name="delete">Usuń</string>
-    <string name="summary_format">Palet: %1$d  •  Łączna waga: %2$s kg</string>
-    <string name="item_format">%1$d. %2$s — %3$s kg\nNaklejka: %4$s  |  Skan: %5$s</string>
 </resources>

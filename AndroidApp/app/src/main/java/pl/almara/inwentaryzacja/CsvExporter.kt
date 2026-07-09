@@ -22,11 +22,12 @@ object CsvExporter {
     fun buildCsv(session: Session): String {
         val sb = StringBuilder()
         sb.append('\uFEFF') // BOM — dzięki temu Excel poprawnie odczyta polskie znaki
-        sb.append("Lp;Produkt;Waga (kg);Data naklejki;Data skanowania\r\n")
+        sb.append("Lp;Produkt;Waga (kg);Inicjały;Data naklejki;Data skanowania\r\n")
         session.items.forEachIndexed { i, item ->
             sb.append(i + 1).append(';')
                 .append(esc(item.product)).append(';')
                 .append(Format.weightCsv(item.weightKg)).append(';')
+                .append(esc(item.initials)).append(';')
                 .append(esc(item.labelDate)).append(';')
                 .append(esc(item.scannedAt)).append("\r\n")
         }

@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -28,11 +27,25 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         viewBinding = true
+    }
+    packaging {
+        jniLibs {
+            // Prekompilowane biblioteki ML Kit / CameraX — pakujemy bez strippowania,
+            // dzięki czemu build nie wymaga zainstalowanego NDK
+            keepDebugSymbols += listOf(
+                "**/libbarhopper_v3.so",
+                "**/libimage_processing_util_jni.so",
+                "**/libsurface_util_jni.so"
+            )
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
