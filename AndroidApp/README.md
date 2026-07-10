@@ -19,7 +19,7 @@ Sessions are stored on the device (app-private storage) and survive app restarts
 
 ### QR payload contract
 
-Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00 | XX` (name | weight | print date | operator initials). The initials segment is optional — older stickers without it still scan fine. Weight accepts `,` or `.` decimals.
+Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00 | XX` (name | weight | print date | operator initials). All four segments are required and the date must be a valid `yyyy-MM-dd HH:mm:ss` timestamp — anything else is rejected as **Nieprawidłowy kod QR**. Weight accepts `,` or `.` decimals.
 
 ### CSV format
 
@@ -96,14 +96,16 @@ Command line alternative (from the `AndroidApp` folder, Windows): `gradlew.bat a
 Use the existing generator's venv (has `qrcode` installed), or any Python with `pip install qrcode[pil]`:
 
 ```bash
-python -c "import qrcode; qrcode.make('ALBU T4D | 500kg | 2026-07-07 10:00:00').save('test_qr.png')"
+python -c "import qrcode; qrcode.make('ALBU T4D | 500kg | 2026-07-07 10:00:00 | KK').save('test_qr.png')"
 ```
 
 Make a few variants (different names/weights), plus useful edge cases:
 
 ```bash
-python -c "import qrcode; qrcode.make('Produkt z polskimi znakami ĄĘŻŹ | 123,5kg | 2026-07-07 11:00:00').save('test_qr2.png')"
+python -c "import qrcode; qrcode.make('Produkt z polskimi znakami ĄĘŻŹ | 123,5kg | 2026-07-07 11:00:00 | KK').save('test_qr2.png')"
 python -c "import qrcode; qrcode.make('to nie jest naklejka').save('test_qr_bad.png')"
+python -c "import qrcode; qrcode.make('Produkt | 500kg | 2026-07-07 10:00:00').save('test_qr_no_initials.png')"  # rejected: no initials
+python -c "import qrcode; qrcode.make('Produkt | 500kg | 2026-13-45 10:00:00 | KK').save('test_qr_bad_date.png')"  # rejected: invalid date
 ```
 
 You can also print real stickers with `GeneratorNaklejek` — that's the true end-to-end test.

@@ -1,28 +1,36 @@
 package pl.almara.inwentaryzacja
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.format.ResolverStyle
+
 /**
  * Parser zawartości kodu QR z naklejki.
- * Oczekiwany format (ten sam co w GeneratorNaklejek / Inwentaryzacja/skaner.py):
+ * Wymagany format (ten sam co w GeneratorNaklejek / Inwentaryzacja/skaner.py):
  *   "Nazwa produktu | 500kg | 2026-07-07 10:00:00 | XX"
- * (inicjały operatora na końcu są opcjonalne — starsze naklejki ich nie mają)
+ * Wszystkie cztery segmenty są obowiązkowe, a data musi być poprawną
+ * datą w formacie yyyy-MM-dd HH:mm:ss — inaczej kod jest odrzucany.
  */
 object QrParser {
 
+    private val LABEL_DATE_FORMAT: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss").withResolverStyle(ResolverStyle.STRICT)
+
     fun parse(raw: String, scannedAt: String): ScanItem? {
         val parts = raw.split("|").map { it.trim() }
-        if (parts.size < 2) return null
+        if (parts.size != 4) return null
 
-        val product = parts[0]
-        if (product.isEmpty()) return null
+        val (product, weightPart, labelDate, initials) = parts
+        if (product.isEmpty() || initials.isEmpty()) return null
 
-        val weight = parts[1]
+        val weight = weightPart
             .replace("kg", "", ignoreCase = true)
             .trim()
             .replace(',', '.')
             .toDoubleOrNull() ?: return null
 
-        val labelDate = if (parts.size >= 3) parts[2] else ""
-        val initials = if (parts.size >= 4) parts[3] else ""
+        if (!isValidLabelDate(labelDate)) return null
 
         return ScanItem(
             product = product,
@@ -33,4 +41,12 @@ object QrParser {
             raw = raw
         )
     }
+
+    private fun isValidLabelDate(value: String): Boolean =
+        try {
+            LocalDateTime.parse(value, LABEL_DATE_FORMAT)
+            true
+        } catch (e: DateTimeParseException) {
+            false
+        }
 }

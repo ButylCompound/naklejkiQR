@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Fix for pyzbar DLL loading on Windows (Python 3.8+)
@@ -61,18 +62,23 @@ def process_inventory(folder_path, log_callback=print):
                 
             for obj in decoded_objects:
                 data = obj.data.decode("utf-8")
-            # Expected format: "Product XYZ | 500kg | 2023-10-25 12:00:00 | XX"
-            # (operator initials at the end are optional — older stickers don't have them)
+            # Required format: "Product XYZ | 500kg | 2023-10-25 12:00:00 | XX"
             parts = [p.strip() for p in data.split("|")]
-            if len(parts) >= 2:
-                product_name = parts[0]
-                weight_str = parts[1].replace("kg", "").strip()
-                date_str = parts[2] if len(parts) >= 3 else "Brak daty"
-                initials = parts[3] if len(parts) >= 4 else ""
+            if len(parts) == 4:
+                product_name, weight_str, date_str, initials = parts
+                weight_str = weight_str.replace("kg", "").strip()
+                if not product_name or not initials:
+                    log_callback(f"  [!] {img_path.name}: Zignorowano (brak nazwy lub inicjałów: '{data}')")
+                    continue
                 try:
                     weight = float(weight_str)
                 except ValueError:
                     log_callback(f"  [!] {img_path.name}: Zignorowano (nieprawidłowa waga: '{parts[1]}')")
+                    continue
+                try:
+                    datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    log_callback(f"  [!] {img_path.name}: Zignorowano (nieprawidłowa data: '{date_str}')")
                     continue
 
                 items.append({
@@ -105,8 +111,7 @@ def process_inventory(folder_path, log_callback=print):
                 f.write(f"  Produkt: {item['product']}\n")
                 f.write(f"  Waga:    {item['weight']} kg\n")
                 f.write(f"  Data:    {item['date']}\n")
-                if item['initials']:
-                    f.write(f"  Inicjały: {item['initials']}\n")
+                f.write(f"  Inicjały: {item['initials']}\n")
                 f.write(f"  Plik:    {item['file']}\n")
                 f.write("-" * 20 + "\n")
                 

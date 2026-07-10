@@ -6,7 +6,7 @@ data class ScanItem(
     val weightKg: Double,
     val labelDate: String,   // data z naklejki (kiedy wydrukowano)
     val scannedAt: String,   // kiedy zeskanowano telefonem
-    val initials: String,    // inicjały operatora z naklejki (może być puste — starsze naklejki)
+    val initials: String,    // inicjały operatora z naklejki
     val raw: String          // surowa zawartość kodu QR (klucz deduplikacji)
 )
 

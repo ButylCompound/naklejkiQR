@@ -1,0 +1,10 @@
+.venv/
+.venv_path.txt
+__pycache__/
+state.json
+output.pdf
+output.tex
+output.aux
+output.log
+current_qr.png
+*.pyc

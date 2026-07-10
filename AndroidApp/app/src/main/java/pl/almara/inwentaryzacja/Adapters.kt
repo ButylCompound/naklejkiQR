@@ -42,12 +42,9 @@ class ScanItemAdapter(context: Context, private val items: List<ScanItem>) :
         binding.itemProduct.text = "${position + 1}. ${item.product}"
         binding.itemWeight.text =
             context.getString(R.string.item_weight_format, Format.weight(item.weightKg))
-        val dates = context.getString(
-            R.string.item_dates_format,
-            item.labelDate.ifEmpty { "—" }, item.scannedAt
+        binding.itemDates.text = "${item.initials}  •  " + context.getString(
+            R.string.item_dates_format, item.labelDate, item.scannedAt
         )
-        binding.itemDates.text =
-            if (item.initials.isEmpty()) dates else "${item.initials}  •  $dates"
         return binding.root
     }
 }
