@@ -18,12 +18,18 @@ if exist .venv (
     )
 )
 
+where uv >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    set HAS_UV=1
+) else (
+    set HAS_UV=0
+)
+
 :: Check if virtual environment exists, create if it doesn't
 if not exist .venv\Scripts\activate.bat (
     echo Tworzenie wirtualnego srodowiska...
     
-    where uv >nul 2>nul
-    if %ERRORLEVEL% equ 0 (
+    if "%HAS_UV%"=="1" (
         echo Uzywanie 'uv' do utworzenia srodowiska...
         uv venv .venv
         echo Instalowanie zaleznosci przy pomocy 'uv'...
