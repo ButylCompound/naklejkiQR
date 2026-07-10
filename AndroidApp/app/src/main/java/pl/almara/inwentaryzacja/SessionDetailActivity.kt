@@ -38,6 +38,11 @@ class SessionDetailActivity : AppCompatActivity() {
                 contentResolver.openOutputStream(uri)?.use {
                     it.write(CsvExporter.buildCsv(s).toByteArray(Charsets.UTF_8))
                 }
+                // Bez trwałego uprawnienia dostęp do pliku wygasa wraz z zamknięciem
+                // aplikacji i powiadomienie przestałoby otwierać plik
+                contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
                 lastSavedUri = uri
                 notifySaved()
             } catch (e: Exception) {
@@ -86,9 +91,11 @@ class SessionDetailActivity : AppCompatActivity() {
             setDataAndType(uri, "text/csv")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+        // requestCode = hash URI, żeby każde powiadomienie otwierało swój plik
         val pendingIntent = PendingIntent.getActivity(
-            this, 0,
-            Intent.createChooser(openIntent, getString(R.string.csv_open_chooser)),
+            this, uri.hashCode(),
+            Intent.createChooser(openIntent, getString(R.string.csv_open_chooser))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
