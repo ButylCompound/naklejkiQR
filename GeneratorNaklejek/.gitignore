@@ -8,3 +8,14 @@ output.aux
 output.log
 current_qr.png
 *.pyc
+
+# PyInstaller & Build artifacts
+build/
+dist/
+*.spec
+
+# Temp scripts and extractions
+.venv_extract/
+extract.py
+do_wydruku.csv
+~$*.xlsx
