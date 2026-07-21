@@ -22,8 +22,9 @@ def save_state(state):
 
 @app.command()
 def create(
-    weight: str = typer.Argument(..., help="Weight of the product/pallet (e.g., 500)"),
+    weight: str = typer.Option(..., "--weight", "-w", help="Weight of the product/pallet (e.g., 500)"),
     product_name: str = typer.Option(None, "--name", "-n", help="Product name (defaults to last used)"),
+    copies: int = typer.Option(1, "--copies", "-c", help="Number of copies to print"),
     print_job: bool = typer.Option(True, "--print/--no-print", help="Whether to send to printer automatically"),
     printer_name: str = typer.Option("Zebra ZD421", "--printer", "-p", help="Windows printer name for SumatraPDF"),
     date_override: str = typer.Option(None, "--date", "-d", help="Manual date override (e.g., '2023-10-25 12:00:00')"),
@@ -109,7 +110,7 @@ def create(
     typer.echo("PDF successfully generated: output.pdf")
     
     if print_job:
-        typer.echo(f"Sending to printer '{printer_name}'...")
+        typer.echo(f"Sending {copies} copies to printer '{printer_name}'...")
         pdf_path = os.path.abspath("output.pdf")
         
         # Check OS environment
@@ -122,12 +123,14 @@ def create(
             
         is_windows = os.name == 'nt'
         
-        if is_windows:
-            _print_windows(pdf_path, printer_name)
-        elif is_wsl:
-            _print_wsl(pdf_path, printer_name)
-        else:
-            typer.echo("Auto-printing is only configured for Windows/WSL with SumatraPDF. Please print manually.")
+        for _ in range(copies):
+            if is_windows:
+                _print_windows(pdf_path, printer_name)
+            elif is_wsl:
+                _print_wsl(pdf_path, printer_name)
+            else:
+                typer.echo("Auto-printing is only configured for Windows/WSL with SumatraPDF. Please print manually.")
+                break
 
 def _print_windows(pdf_path, printer_name):
     import glob

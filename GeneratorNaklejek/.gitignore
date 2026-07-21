@@ -19,3 +19,4 @@ dist/
 extract.py
 do_wydruku.csv
 ~$*.xlsx
+*.xlsx
