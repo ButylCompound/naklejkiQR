@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "Bash(cmd.exe /c 'C:\\\\dev\\\\NaklejkiQR\\\\AndroidApp\\\\run_tests.bat')",
+      "Bash(cmd.exe /c 'C:\\\\dev\\\\NaklejkiQR\\\\AndroidApp\\\\build_release.bat')"
     ]
   }
 }

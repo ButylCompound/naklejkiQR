@@ -11,10 +11,13 @@
     <!-- Ustawienia -->
     <string name="settings_alley_count">Liczba alejek</string>
     <string name="settings_alley_count_invalid">Podaj liczbę większą od zera</string>
-    <string name="settings_requesters">Osoby zamawiające</string>
+    <string name="settings_requesters">Osoby pobierające</string>
     <string name="settings_managers">Kierownicy zmiany</string>
     <string name="settings_people_count">%1$d os.</string>
     <string name="settings_people_empty">Brak — dotknij, aby dodać</string>
+    <string name="settings_reset">Przywróć ustawienia domyślne</string>
+    <string name="settings_reset_confirm">Ustawić liczbę alejek na 32 i wyczyścić listy osób? Tej operacji nie można cofnąć.</string>
+    <string name="settings_reset_yes">Przywróć</string>
     <string name="people_add">Dodaj</string>
     <string name="people_name_hint">Imię i nazwisko</string>
     <string name="people_empty">Brak osób.\nDodaj pierwszą osobę poniżej.</string>
@@ -33,12 +36,12 @@
     <string name="rw_confirm_message">Po zatwierdzeniu dokument dostanie numer i zostanie zablokowany do edycji oraz dalszego skanowania. Kontynuować?</string>
     <string name="rw_confirm_yes">Zatwierdź</string>
     <string name="rw_amount_prompt">Ilość pobrana (%1$s):</string>
-    <string name="rw_requester_label">Zamawiający: %1$s</string>
+    <string name="rw_requester_label">Pobrał: %1$s</string>
     <string name="rw_manager_label">Kierownik zmiany: %1$s</string>
     <string name="rw_choose">(wybierz)</string>
     <string name="rw_choose_person">Wybierz osobę</string>
     <string name="rw_no_people">Najpierw dodaj osoby w Ustawieniach</string>
-    <string name="rw_pick_people">Wybierz zamawiającego i kierownika zmiany</string>
+    <string name="rw_pick_people">Wybierz osobę pobierającą i kierownika zmiany</string>
     <string name="rw_no_items">Brak pozycji — najpierw zeskanuj materiały</string>
     <string name="rw_print">Drukuj</string>
     <string name="rw_send_pdf">Wyślij PDF</string>

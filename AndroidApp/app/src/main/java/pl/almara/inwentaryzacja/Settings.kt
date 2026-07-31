@@ -14,7 +14,7 @@ object Settings {
     private const val KEY_MANAGERS = "rw_managers"
     private const val KEY_RW_YEAR = "rw_year"
     private const val KEY_RW_SEQ = "rw_seq"
-    private const val DEFAULT_ALLEYS = 10
+    private const val DEFAULT_ALLEYS = 32
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -44,6 +44,13 @@ object Settings {
     private fun setNames(context: Context, key: String, value: List<String>) {
         val cleaned = value.map { it.trim() }.filter { it.isNotEmpty() }
         prefs(context).edit().putString(key, cleaned.joinToString("\n")).apply()
+    }
+
+    /** Przywraca ustawienia domyślne: liczba alejek = 32, puste listy osób. */
+    fun resetDefaults(context: Context) {
+        setAlleyCount(context, DEFAULT_ALLEYS)
+        setRequesters(context, emptyList())
+        setManagers(context, emptyList())
     }
 
     /** Kolejny numer RW w formacie "RW/RRRR/NN"; licznik zeruje się co rok. */

@@ -86,7 +86,7 @@ object RwPdf {
         c.drawText("Rozchód wewnętrzny (RW)", MARGIN, MARGIN + 34f, head)
         c.drawText("Nr: ${doc.number.ifEmpty { "—" }}", X_RIGHT - 160f, MARGIN + 12f, text)
         c.drawText("Data wystawienia: ${doc.createdAt.take(10)}", X_RIGHT - 160f, MARGIN + 28f, text)
-        c.drawText("Zamawiający: ${doc.requester.ifEmpty { "—" }}", MARGIN, MARGIN + 54f, text)
+        c.drawText("Pobrał: ${doc.requester.ifEmpty { "—" }}", MARGIN, MARGIN + 54f, text)
         c.drawText("Kierownik zmiany: ${doc.manager.ifEmpty { "—" }}", MARGIN, MARGIN + 70f, text)
         return MARGIN + 88f
     }
@@ -114,17 +114,17 @@ object RwPdf {
     private fun drawSignatures(c: Canvas, doc: RwDocument) {
         val y = PAGE_H - MARGIN - 40f
         val cols = listOf(
-            "Wystawił" to doc.requester,
-            "Zatwierdził" to doc.manager,
-            "Wydał" to "",
-            "Pobrał" to ""
+            "Pobrał" to doc.requester,
+            "Kierownik" to doc.manager,
+            "Podpis pobierającego" to "",
+            "Podpis kierownika" to ""
         )
         val slot = (X_RIGHT - MARGIN) / cols.size
         cols.forEachIndexed { i, (label, name) ->
             val x = MARGIN + i * slot
             c.drawLine(x, y, x + slot - 12f, y, line)
             if (name.isNotEmpty()) c.drawText(fit(name, small, slot - 12f), x, y - 4f, small)
-            c.drawText(label, x, y + 14f, small)
+            c.drawText(fit(label, small, slot - 12f), x, y + 14f, small)
         }
     }
 

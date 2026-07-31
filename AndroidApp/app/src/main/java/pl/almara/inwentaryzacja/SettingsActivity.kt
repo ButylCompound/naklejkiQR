@@ -24,6 +24,19 @@ class SettingsActivity : AppCompatActivity() {
         binding.rowAlleys.setOnClickListener { editAlleys() }
         binding.rowRequesters.setOnClickListener { editPeople(PeopleEditActivity.LIST_REQUESTERS) }
         binding.rowManagers.setOnClickListener { editPeople(PeopleEditActivity.LIST_MANAGERS) }
+        binding.resetButton.setOnClickListener { confirmReset() }
+    }
+
+    private fun confirmReset() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.settings_reset)
+            .setMessage(R.string.settings_reset_confirm)
+            .setPositiveButton(R.string.settings_reset_yes) { _, _ ->
+                Settings.resetDefaults(this)
+                refresh()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     override fun onResume() {

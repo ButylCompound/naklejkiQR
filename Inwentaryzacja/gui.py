@@ -91,7 +91,7 @@ class PalletInventoryTab(BaseInventoryTab):
         self.table_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Kolumny zgodne z wytycznymi L125: tylko te pola, które istnieją w CSV i arkuszu + Lp
-        columns = ("Lp", "Produkt", "Ilość", "Data", "Status")
+        columns = ("Lp", "Alejka", "Produkt", "Ilość", "Data", "Status")
         self.tree = ttk.Treeview(self.table_frame, columns=columns, show="headings", selectmode="extended")
         
         # Paski przewijania
@@ -108,6 +108,7 @@ class PalletInventoryTab(BaseInventoryTab):
         
         # Nagłówki i szerokości
         self.tree.heading("Lp", text="Lp", command=lambda: self.sort_column("Lp"))
+        self.tree.heading("Alejka", text="Alejka", command=lambda: self.sort_column("Alejka"))
         self.tree.heading("Produkt", text="Produkt / Nazwa handlowa", command=lambda: self.sort_column("Produkt"))
         self.tree.heading("Ilość", text="Ilość", command=lambda: self.sort_column("Ilość"))
         self.tree.heading("Data", text="Data", command=lambda: self.sort_column("Data"))
@@ -182,6 +183,7 @@ class PalletInventoryTab(BaseInventoryTab):
             tag = rec.get("Kategoria", "")
             self.tree.insert("", "end", values=(
                 rec.get("Lp", ""),
+                rec.get("Alejka", ""),
                 rec.get("Produkt", ""),
                 rec.get("Ilość", ""),
                 rec.get("Data", ""),
@@ -231,10 +233,11 @@ class PalletInventoryTab(BaseInventoryTab):
             vals = self.tree.item(item_id, "values")
             export_data.append({
                 "Lp": vals[0],
-                "Produkt": vals[1],
-                "Ilość": vals[2],
-                "Data": vals[3],
-                "Status": vals[4]
+                "Alejka": vals[1],
+                "Produkt": vals[2],
+                "Ilość": vals[3],
+                "Data": vals[4],
+                "Status": vals[5]
             })
             
         df_export = pd.DataFrame(export_data)

@@ -140,11 +140,14 @@ def reconcile_inventory(excel_path, csv_path, excel_sheet='palety'):
         prod_val = csv_r['prod_norm']
         ilosc_val = format_qty(csv_r['waga_norm'])
         data_val = csv_r['date_norm'] if csv_r['date_norm'] else str(csv_r.get('Data naklejki', '')).strip()
+        alejka_val = str(csv_r.get('Alejka', '')).strip()
+        if alejka_val.lower() == 'nan': alejka_val = ''
         
         if key in ex_pool and len(ex_pool[key]) > 0:
             match_idx = ex_pool[key].pop(0)
             matched_ex_indices.add(match_idx)
             records.append({
+                'Alejka': alejka_val,
                 'Produkt': prod_val,
                 'Ilość': ilosc_val,
                 'Data': data_val,
@@ -155,6 +158,7 @@ def reconcile_inventory(excel_path, csv_path, excel_sheet='palety'):
         else:
             # Nadwyżka (zeskanowane na magazynie, ale brak w systemie lub status Wydana)
             records.append({
+                'Alejka': alejka_val,
                 'Produkt': prod_val,
                 'Ilość': ilosc_val,
                 'Data': data_val,
@@ -275,6 +279,8 @@ def reconcile_raw_materials(excel_path, csv_path, excel_sheet='Stan magazynowy s
         name = str(row.get('Produkt', '')).strip()
         if not name or name == 'nan': continue
         qty = extract_num(row.get(ilosc_col))
+        alejka_val = str(row.get('Alejka', '')).strip()
+        if alejka_val.lower() == 'nan': alejka_val = ''
         
         c_norm = norm(name)
         candidates = []
