@@ -2,6 +2,50 @@
 <resources>
     <string name="app_name">Skaner Inwentaryzacji</string>
 
+    <!-- Ekran startowy -->
+    <string name="home_welcome">Wybierz moduł</string>
+    <string name="home_inventory">Inwentaryzacje</string>
+    <string name="home_rw">RW</string>
+    <string name="home_settings">Ustawienia</string>
+
+    <!-- Ustawienia -->
+    <string name="settings_alley_count">Liczba alejek</string>
+    <string name="settings_alley_count_invalid">Podaj liczbę większą od zera</string>
+    <string name="settings_requesters">Osoby zamawiające</string>
+    <string name="settings_managers">Kierownicy zmiany</string>
+    <string name="settings_people_count">%1$d os.</string>
+    <string name="settings_people_empty">Brak — dotknij, aby dodać</string>
+    <string name="people_add">Dodaj</string>
+    <string name="people_name_hint">Imię i nazwisko</string>
+    <string name="people_empty">Brak osób.\nDodaj pierwszą osobę poniżej.</string>
+    <string name="people_duplicate">Ta osoba już jest na liście</string>
+    <string name="ok">OK</string>
+
+    <!-- RW — wewnętrzne pobranie materiałów -->
+    <string name="rw_new">Nowy RW</string>
+    <string name="rw_draft">Nowy RW (roboczy)</string>
+    <string name="rw_empty">Brak dokumentów RW.\nKliknij „Nowy RW”, aby rozpocząć.</string>
+    <string name="rw_meta_format">%1$s  •  Pozycji: %2$d  •  %3$s</string>
+    <string name="rw_item_code">Kod: %1$s</string>
+    <string name="rw_resume">Skanuj dalej</string>
+    <string name="rw_locked">Zatwierdzony — tylko do druku</string>
+    <string name="rw_confirm_title">Zatwierdzić RW?</string>
+    <string name="rw_confirm_message">Po zatwierdzeniu dokument dostanie numer i zostanie zablokowany do edycji oraz dalszego skanowania. Kontynuować?</string>
+    <string name="rw_confirm_yes">Zatwierdź</string>
+    <string name="rw_amount_prompt">Ilość pobrana (%1$s):</string>
+    <string name="rw_requester_label">Zamawiający: %1$s</string>
+    <string name="rw_manager_label">Kierownik zmiany: %1$s</string>
+    <string name="rw_choose">(wybierz)</string>
+    <string name="rw_choose_person">Wybierz osobę</string>
+    <string name="rw_no_people">Najpierw dodaj osoby w Ustawieniach</string>
+    <string name="rw_pick_people">Wybierz zamawiającego i kierownika zmiany</string>
+    <string name="rw_no_items">Brak pozycji — najpierw zeskanuj materiały</string>
+    <string name="rw_print">Drukuj</string>
+    <string name="rw_send_pdf">Wyślij PDF</string>
+    <string name="rw_subject">RW %1$s</string>
+    <string name="rw_delete">Usuń dokument RW</string>
+    <string name="rw_delete_confirm">Czy na pewno usunąć dokument „%1$s”?</string>
+
     <!-- Lista sesji -->
     <string name="new_session">Nowa sesja</string>
     <string name="default_session_name">Inwentaryzacja %1$s</string>
@@ -9,16 +53,20 @@
     <string name="start">Rozpocznij</string>
     <string name="cancel">Anuluj</string>
     <string name="no_sessions">Brak sesji.\nKliknij „Nowa sesja”, aby rozpocząć skanowanie.\n\n(Przytrzymaj sesję na liście, aby ją usunąć)</string>
-    <string name="session_meta_format">%1$s  •  Palet: %2$d  •  %3$s kg</string>
+    <string name="session_meta_format">%1$s  •  Palet: %2$d  •  %3$s</string>
 
     <!-- Ekran skanowania -->
     <string name="scan_prompt">Skieruj aparat na kod QR…</string>
-    <string name="status_ok_format">OK: %1$s (%2$s kg)</string>
+    <string name="status_ok_format">OK: %1$s (%2$s)</string>
     <string name="status_duplicate">Już zeskanowano!</string>
+    <string name="status_updated_format">Zmieniono: %1$s (%2$s)</string>
     <string name="status_invalid">Nieprawidłowy kod QR</string>
     <string name="status_session_missing">Błąd: nie znaleziono sesji</string>
     <string name="finish_session">Zakończ</string>
     <string name="scanned_count">Zeskanowano: %1$d</string>
+    <string name="alley_label">Alejka %1$d</string>
+    <string name="alley_prev">Poprzednia alejka</string>
+    <string name="alley_next">Następna alejka</string>
     <string name="camera_permission_denied">Brak uprawnienia do aparatu. Nadaj uprawnienie w Ustawieniach i spróbuj ponownie.</string>
     <string name="camera_error">Błąd aparatu: %1$s</string>
 
@@ -27,8 +75,7 @@
     <string name="share_csv">Wyślij CSV</string>
     <string name="save_csv">Zapisz CSV</string>
     <string name="stat_pallets">Palety</string>
-    <string name="stat_weight">Łączna waga (kg)</string>
-    <string name="item_weight_format">%1$s kg</string>
+    <string name="stat_weight">Łączna ilość</string>
     <string name="item_dates_format">Naklejka: %1$s  •  Skan: %2$s</string>
     <string name="csv_saved">Zapisano plik CSV</string>
     <string name="csv_saved_tap_to_open">%1$s — dotknij, aby otworzyć</string>
@@ -39,5 +86,7 @@
     <string name="csv_share_title">Udostępnij raport</string>
     <string name="delete_session">Usuń sesję</string>
     <string name="delete_confirm">Czy na pewno usunąć sesję „%1$s”? Tej operacji nie można cofnąć.</string>
+    <string name="delete_item">Usuń pozycję</string>
+    <string name="delete_item_confirm">Usunąć „%1$s” z listy?</string>
     <string name="delete">Usuń</string>
 </resources>

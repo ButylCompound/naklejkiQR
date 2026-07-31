@@ -140,10 +140,18 @@ class SessionDetailActivity : AppCompatActivity() {
             session?.let { saveCsvLauncher.launch(CsvExporter.fileName(it)) }
         }
         binding.deleteButton.setOnClickListener { confirmDelete() }
+        binding.itemsList.setOnItemLongClickListener { _, _, position, _ ->
+            (binding.itemsList.getItemAtPosition(position) as? ScanItem)?.let { confirmDeleteItem(it) }
+            true
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        refresh()
+    }
+
+    private fun refresh() {
         val s = SessionStore.getSession(this, sessionId)
         if (s == null) {
             finish()
@@ -153,8 +161,20 @@ class SessionDetailActivity : AppCompatActivity() {
 
         binding.toolbar.title = s.name
         binding.statCount.text = s.items.size.toString()
-        binding.statWeight.text = Format.weight(s.items.sumOf { it.weightKg })
+        binding.statWeight.text = Format.totals(s.items)
         binding.itemsList.adapter = ScanItemAdapter(this, s.items)
+    }
+
+    private fun confirmDeleteItem(item: ScanItem) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.delete_item)
+            .setMessage(getString(R.string.delete_item_confirm, item.product))
+            .setPositiveButton(R.string.delete) { _, _ ->
+                SessionStore.deleteItem(this, sessionId, item.raw)
+                refresh()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun confirmDelete() {

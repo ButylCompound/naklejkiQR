@@ -1,3 +1,20 @@
+# Środowiska wirtualne
 .venv-icons/
 .venv/
+venv/
+env/
+
+# Python cache
 __pycache__/
+*.py[cod]
+
+# PyInstaller (build_exe)
+build/
+dist/
+*.spec
+
+# Pliki aplikacyjne (stan)
+state.json
+Inwentaryzacja/input/
+Inwentaryzacja/output/
+.venv_path.txt

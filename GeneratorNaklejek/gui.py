@@ -7,6 +7,8 @@ import subprocess
 from datetime import datetime
 import jinja2
 
+CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+
 STATE_FILE = "state.json"
 TEMPLATE_FILE = "sticker_template.tex"
 
@@ -30,7 +32,7 @@ def get_printers():
             output = subprocess.check_output(
                 ['powershell', '-Command', 'Get-Printer | Select-Object -ExpandProperty Name'],
                 text=True,
-                creationflags=0x08000000
+                creationflags=CREATE_NO_WINDOW
             )
             found = [p.strip() for p in output.split('\n') if p.strip()]
             if found:
@@ -39,12 +41,20 @@ def get_printers():
             pass
     return printers
 
-def generate_pdf(product_name, weight, operator="", date_override=None):
+def generate_pdf(product_name, weight, operator="", date_override=None, unit="kg"):
     if date_override:
-        now = date_override
+        try:
+            dt = datetime.strptime(date_override, "%Y-%m-%d %H:%M")
+            now = dt.strftime("%Y-%m-%d %H:%M")
+        except ValueError:
+            try:
+                dt = datetime.strptime(date_override, "%Y-%m-%d %H:%M:%S")
+                now = dt.strftime("%Y-%m-%d %H:%M")
+            except ValueError:
+                now = date_override[:16]
     else:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    qr_data = f"{product_name} | {weight}kg | {now}"
+        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    qr_data = f"{product_name} | {weight} {unit} | {now}"
     if operator:
         qr_data += f" | {operator}"
     
@@ -73,6 +83,7 @@ def generate_pdf(product_name, weight, operator="", date_override=None):
     tex_content = template.render(
         product_name=product_name,
         weight=weight,
+        unit=unit,
         datetime=now,
         operator=operator,
         qr_path=qr_path.replace("\\", "/")
@@ -84,9 +95,9 @@ def generate_pdf(product_name, weight, operator="", date_override=None):
         
     # Try calling pdflatex.exe first (Windows), fallback to pdflatex (Linux/WSL)
     try:
-        result = subprocess.run(["pdflatex.exe", "-interaction=nonstopmode", out_tex], capture_output=True, text=True)
+        result = subprocess.run(["pdflatex.exe", "-interaction=nonstopmode", out_tex], capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
     except FileNotFoundError:
-        result = subprocess.run(["pdflatex", "-interaction=nonstopmode", out_tex], capture_output=True, text=True)
+        result = subprocess.run(["pdflatex", "-interaction=nonstopmode", out_tex], capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
         
     if result.returncode != 0:
         raise Exception(f"Błąd kompilacji LaTeX.\n{result.stdout[-500:]}")
@@ -110,15 +121,15 @@ def print_pdf(pdf_path, printer_name="Zebra ZD421"):
         
         print_cmd = [sumatra_path, "-print-settings", "shrink,landscape", "-print-to", printer_name, "-silent", pdf_path]
         try:
-            subprocess.run(print_cmd, check=True)
+            subprocess.run(print_cmd, check=True, creationflags=CREATE_NO_WINDOW)
         except Exception as e:
             raise Exception(f"Błąd drukowania (Windows): {e}")
     elif is_wsl:
         try:
-            win_path_result = subprocess.run(["wslpath", "-w", pdf_path], capture_output=True, text=True, check=True)
+            win_path_result = subprocess.run(["wslpath", "-w", pdf_path], capture_output=True, text=True, check=True, creationflags=CREATE_NO_WINDOW)
             win_pdf_path = win_path_result.stdout.strip()
             print_cmd = ["SumatraPDF.exe", "-print-to", printer_name, "-silent", win_pdf_path]
-            subprocess.run(print_cmd, check=True)
+            subprocess.run(print_cmd, check=True, creationflags=CREATE_NO_WINDOW)
         except Exception as e:
             raise Exception(f"Błąd drukowania z WSL: {e}")
     else:
@@ -151,17 +162,39 @@ class App:
         self.name_entry = ttk.Entry(root, textvariable=self.name_var, font=('Segoe UI', 12))
         self.name_entry.pack(fill="x", pady=(0, 15))
         
-        ttk.Label(root, text="Ilość netto (kg):").pack(anchor="w", pady=(0, 5))
+        ttk.Label(root, text="Ilość netto:").pack(anchor="w", pady=(0, 5))
+        weight_frame = ttk.Frame(root)
+        weight_frame.pack(fill="x", pady=(0, 15))
+        
+        def validate_weight(P):
+            if P == "":
+                return True
+            if all(c.isdigit() or c in '.,' for c in P):
+                if P.count('.') + P.count(',') <= 1:
+                    return True
+            return False
+            
+        vcmd_weight = (root.register(validate_weight), '%P')
         self.weight_var = tk.StringVar()
-        self.weight_entry = ttk.Entry(root, textvariable=self.weight_var, font=('Segoe UI', 12))
-        self.weight_entry.pack(fill="x", pady=(0, 15))
+        self.weight_entry = ttk.Entry(weight_frame, textvariable=self.weight_var, font=('Segoe UI', 12), width=15, validate='key', validatecommand=vcmd_weight)
+        self.weight_entry.pack(side="left", fill="x", expand=True, padx=(0, 15))
+        
+        self.unit_var = tk.StringVar(value="kg")
+        ttk.Radiobutton(weight_frame, text="kg", variable=self.unit_var, value="kg").pack(side="left", padx=(0, 10))
+        ttk.Radiobutton(weight_frame, text="szt.", variable=self.unit_var, value="szt.").pack(side="left")
         
         ttk.Label(root, text="Inicjały operatora:").pack(anchor="w", pady=(0, 5))
+        def validate_operator(P):
+            if len(P) <= 3:
+                return True
+            return False
+            
+        vcmd_operator = (root.register(validate_operator), '%P')
         self.operator_var = tk.StringVar(value=self.state.get("last_operator", ""))
-        self.operator_entry = ttk.Entry(root, textvariable=self.operator_var, font=('Segoe UI', 12))
+        self.operator_entry = ttk.Entry(root, textvariable=self.operator_var, font=('Segoe UI', 12), validate='key', validatecommand=vcmd_operator)
         self.operator_entry.pack(fill="x", pady=(0, 15))
         
-        ttk.Label(root, text="Własna data (opcjonalnie):").pack(anchor="w", pady=(0, 5))
+        ttk.Label(root, text="Własna data (opcjonalnie, format YYYY-MM-DD HH:MM):").pack(anchor="w", pady=(0, 5))
         self.date_var = tk.StringVar()
         self.date_entry = ttk.Entry(root, textvariable=self.date_var, font=('Segoe UI', 12))
         self.date_entry.pack(fill="x", pady=(0, 15))
@@ -208,6 +241,7 @@ class App:
     def _process(self, do_print):
         prod_name = self.name_var.get().strip()
         weight = self.weight_var.get().strip()
+        unit = self.unit_var.get()
         operator = self.operator_var.get().strip()
         date_override = self.date_var.get().strip()
         
@@ -215,8 +249,31 @@ class App:
             messagebox.showerror("Błąd", "Proszę podać nazwę produktu!")
             return
         if not weight:
-            messagebox.showerror("Błąd", "Proszę podać wagę!")
+            messagebox.showerror("Błąd", "Proszę podać ilość netto!")
             return
+            
+        try:
+            val = float(weight.replace(',', '.'))
+            if val <= 0:
+                raise ValueError()
+        except ValueError:
+            messagebox.showerror("Błąd", "Ilość netto musi być dodatnią wartością liczbową (np. 500 lub 123.5)!")
+            return
+            
+        if len(operator) not in (0, 2, 3):
+            messagebox.showerror("Błąd", "Inicjały operatora muszą składać się z 2 lub 3 znaków (lub pozostać puste)!")
+            return
+            
+        if date_override:
+            try:
+                from datetime import datetime
+                try:
+                    datetime.strptime(date_override, "%Y-%m-%d %H:%M")
+                except ValueError:
+                    datetime.strptime(date_override, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                messagebox.showerror("Błąd", "Nieprawidłowy format daty!\n\nOczekiwano: YYYY-MM-DD HH:MM\nPrzykład: 2024-01-25 14:30")
+                return
             
         try:
             copies = int(self.copies_var.get().strip())
@@ -229,7 +286,7 @@ class App:
         self.root.update_idletasks()
         
         try:
-            pdf_path = generate_pdf(prod_name, weight, operator=operator, date_override=date_override if date_override else None)
+            pdf_path = generate_pdf(prod_name, weight, operator=operator, date_override=date_override if date_override else None, unit=unit)
             
             # Save state
             self.state["last_product_name"] = prod_name
@@ -242,7 +299,7 @@ class App:
                 self.root.update_idletasks()
                 for _ in range(copies):
                     print_pdf(pdf_path, printer_name=self.printer_var.get())
-                self.status_var.set(f"Wydrukowano: {prod_name} ({weight}kg) x{copies}")
+                self.status_var.set(f"Wydrukowano: {prod_name} ({weight} {unit}) x{copies}")
             else:
                 self.status_var.set("PDF wygenerowany pomyślnie.")
                 if hasattr(os, 'startfile'):

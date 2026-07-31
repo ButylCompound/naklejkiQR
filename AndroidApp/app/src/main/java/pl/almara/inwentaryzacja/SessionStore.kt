@@ -60,6 +60,13 @@ object SessionStore {
         return AddResult.ADDED
     }
 
+    /** Usuwa pozycję (po surowej zawartości QR — kluczu deduplikacji). */
+    fun deleteItem(context: Context, sessionId: String, raw: String) {
+        val session = getSession(context, sessionId) ?: return
+        session.items.removeAll { it.raw == raw }
+        save(context, session)
+    }
+
     private fun save(context: Context, session: Session) {
         // Zapis przez plik tymczasowy, żeby awaria w trakcie zapisu nie uszkodziła sesji
         val target = file(context, session.id)
@@ -75,16 +82,7 @@ object SessionStore {
         o.put("name", s.name)
         o.put("createdAt", s.createdAt)
         val arr = JSONArray()
-        for (item in s.items) {
-            arr.put(JSONObject().apply {
-                put("product", item.product)
-                put("weightKg", item.weightKg)
-                put("labelDate", item.labelDate)
-                put("scannedAt", item.scannedAt)
-                put("initials", item.initials)
-                put("raw", item.raw)
-            })
-        }
+        for (item in s.items) arr.put(ItemJson.toJson(item))
         o.put("items", arr)
         return o.toString()
     }
@@ -93,19 +91,7 @@ object SessionStore {
         val o = JSONObject(text)
         val items = mutableListOf<ScanItem>()
         val arr = o.optJSONArray("items") ?: JSONArray()
-        for (i in 0 until arr.length()) {
-            val it = arr.getJSONObject(i)
-            items.add(
-                ScanItem(
-                    product = it.getString("product"),
-                    weightKg = it.getDouble("weightKg"),
-                    labelDate = it.optString("labelDate"),
-                    scannedAt = it.optString("scannedAt"),
-                    initials = it.optString("initials"),
-                    raw = it.optString("raw")
-                )
-            )
-        }
+        for (i in 0 until arr.length()) items.add(ItemJson.fromJson(arr.getJSONObject(i)))
         return Session(o.getString("id"), o.getString("name"), o.optString("createdAt"), items)
     }
 }

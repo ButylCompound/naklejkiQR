@@ -13,7 +13,6 @@
         android:elevation="4dp"
         app:navigationIcon="?attr/homeAsUpIndicator"
         app:navigationIconTint="@android:color/white"
-        app:title="@string/home_inventory"
         app:titleTextColor="@android:color/white" />
 
     <FrameLayout
@@ -22,7 +21,7 @@
         android:layout_weight="1">
 
         <ListView
-            android:id="@+id/sessionsList"
+            android:id="@+id/peopleList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
@@ -31,43 +30,44 @@
             android:padding="16dp"
             android:scrollbars="none" />
 
-        <LinearLayout
+        <TextView
             android:id="@+id/emptyState"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center"
-            android:orientation="vertical"
             android:padding="32dp"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="96dp"
-                android:layout_height="96dp"
-                android:contentDescription="@string/app_name"
-                android:src="@drawable/ic_qr" />
-
-            <TextView
-                android:id="@+id/emptyText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:text="@string/no_sessions"
-                android:textColor="@color/text_secondary"
-                android:textSize="15sp" />
-        </LinearLayout>
+            android:text="@string/people_empty"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp"
+            android:visibility="gone" />
     </FrameLayout>
 
-    <Button
-        android:id="@+id/newSessionButton"
-        style="@style/Widget.Skaner.Button.Primary"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="58dp"
-        android:layout_margin="16dp"
-        android:text="@string/new_session"
-        app:icon="@drawable/ic_add"
-        app:iconGravity="textStart"
-        app:iconTint="@android:color/white" />
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <EditText
+            android:id="@+id/nameInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autofillHints="name"
+            android:hint="@string/people_name_hint"
+            android:inputType="textCapWords"
+            android:maxLines="1" />
+
+        <Button
+            android:id="@+id/addButton"
+            style="@style/Widget.Skaner.Button.Primary"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:paddingHorizontal="20dp"
+            android:text="@string/people_add" />
+    </LinearLayout>
 
 </LinearLayout>

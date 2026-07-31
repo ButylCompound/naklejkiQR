@@ -1,87 +1,31 @@
 package pl.almara.inwentaryzacja
 
-import android.Manifest
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.view.WindowManager
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.ColorRes
-import androidx.annotation.OptIn
-import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.content.ContextCompat
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
 import pl.almara.inwentaryzacja.databinding.ActivityScanBinding
-import java.util.concurrent.Executors
 
 /**
- * Ekran skanowania: celujesz aparatem w naklejkę, aplikacja sama odczytuje kod,
- * pokazuje status (OK / Już zeskanowano / Błąd) i przez 2 sekundy ignoruje
- * kolejne kody (cooldown), żeby nie zliczyć tej samej naklejki dwa razy.
+ * Skanowanie do inwentaryzacji: celujesz aparatem w naklejkę, aplikacja odczytuje
+ * kod, dopisuje pozycję z bieżącą alejką i pokazuje status. Alejkę ustawiasz
+ * strzałkami; wybór jest ograniczony liczbą alejek z ustawień.
  */
-class ScanActivity : AppCompatActivity() {
+class ScanActivity : BaseScanActivity() {
 
     companion object {
         const val EXTRA_SESSION_ID = "session_id"
-        private const val COOLDOWN_MS = 2000L
     }
 
     private lateinit var binding: ActivityScanBinding
     private lateinit var sessionId: String
 
-    private val cameraExecutor = Executors.newSingleThreadExecutor()
-    private val handler = Handler(Looper.getMainLooper())
-
-    private val scanner = BarcodeScanning.getClient(
-        BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build()
-    )
-
-    /** Czas (elapsedRealtime) ostatniego obsłużonego kodu — steruje cooldownem. */
-    @Volatile
-    private var lastHandledAt = 0L
-
     private var scannedCount = 0
-    private var toneGen: ToneGenerator? = null
-
-    private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                startCamera()
-            } else {
-                Toast.makeText(this, R.string.camera_permission_denied, Toast.LENGTH_LONG).show()
-                finish()
-            }
-        }
+    private var currentAlley = 1
+    private var maxAlley = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityScanBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Ekran nie gaśnie podczas skanowania
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         val id = intent.getStringExtra(EXTRA_SESSION_ID)
         if (id == null) {
@@ -89,95 +33,37 @@ class ScanActivity : AppCompatActivity() {
             return
         }
         sessionId = id
-        scannedCount = SessionStore.getSession(this, sessionId)?.items?.size ?: 0
+        maxAlley = Settings.alleyCount(this)
+        val existing = SessionStore.getSession(this, sessionId)?.items
+        scannedCount = existing?.size ?: 0
+        currentAlley = (existing?.lastOrNull()?.alley ?: 1).coerceIn(1, maxAlley)
         updateCounter()
+        updateAlley()
 
-        toneGen = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 85) }.getOrNull()
-
+        binding.alleyPrevButton.setOnClickListener {
+            if (currentAlley > 1) { currentAlley--; updateAlley() }
+        }
+        binding.alleyNextButton.setOnClickListener {
+            if (currentAlley < maxAlley) { currentAlley++; updateAlley() }
+        }
         binding.finishButton.setOnClickListener { finishSession() }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            startCamera()
-        } else {
-            permissionLauncher.launch(Manifest.permission.CAMERA)
-        }
+        startScanning()
     }
 
-    private fun finishSession() {
-        startActivity(
-            Intent(this, SessionDetailActivity::class.java)
-                .putExtra(SessionDetailActivity.EXTRA_SESSION_ID, sessionId)
-        )
-        finish()
-    }
-
-    private fun startCamera() {
-        val future = ProcessCameraProvider.getInstance(this)
-        future.addListener({
-            val cameraProvider = future.get()
-
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.previewView.surfaceProvider)
-            }
-
-            val analysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also { it.setAnalyzer(cameraExecutor) { proxy -> analyze(proxy) } }
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    this, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis
-                )
-            } catch (e: Exception) {
-                Toast.makeText(this, getString(R.string.camera_error, e.message), Toast.LENGTH_LONG).show()
-            }
-        }, ContextCompat.getMainExecutor(this))
-    }
-
-    @OptIn(ExperimentalGetImage::class)
-    private fun analyze(proxy: ImageProxy) {
-        // Cooldown: w trakcie 2 s po odczycie nie analizujemy kolejnych klatek
-        if (SystemClock.elapsedRealtime() - lastHandledAt < COOLDOWN_MS) {
-            proxy.close()
-            return
-        }
-        val mediaImage = proxy.image
-        if (mediaImage == null) {
-            proxy.close()
-            return
-        }
-        val input = InputImage.fromMediaImage(mediaImage, proxy.imageInfo.rotationDegrees)
-        scanner.process(input)
-            .addOnSuccessListener { barcodes ->
-                val raw = barcodes.firstOrNull { !it.rawValue.isNullOrBlank() }?.rawValue
-                if (raw != null) handleQr(raw)
-            }
-            .addOnCompleteListener { proxy.close() }
-    }
-
-    /** Wywoływane na wątku głównym (callback ML Kit). */
-    private fun handleQr(raw: String) {
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastHandledAt < COOLDOWN_MS) return
-        lastHandledAt = now
-
-        val item = QrParser.parse(raw, SessionStore.timestamp())
+    override fun onQr(raw: String) {
+        val item = QrParser.parse(raw, SessionStore.timestamp())?.copy(alley = currentAlley)
         if (item == null) {
             showStatus(getString(R.string.status_invalid), R.color.status_error)
             feedback(error = true)
             return
         }
-
         when (SessionStore.addItem(this, sessionId, item)) {
             SessionStore.AddResult.ADDED -> {
                 scannedCount++
                 updateCounter()
                 showStatus(
-                    getString(R.string.status_ok_format, item.product, Format.weight(item.weightKg)),
+                    getString(R.string.status_ok_format, item.product, Format.quantity(item)),
                     R.color.status_ok
                 )
                 feedback(error = false)
@@ -193,47 +79,21 @@ class ScanActivity : AppCompatActivity() {
         }
     }
 
-    private fun showStatus(text: String, @ColorRes colorRes: Int) {
-        binding.statusText.text = text
-        binding.statusText.setBackgroundColor(ContextCompat.getColor(this, colorRes))
-        handler.removeCallbacks(resetStatus)
-        handler.postDelayed(resetStatus, COOLDOWN_MS)
-    }
-
-    private val resetStatus = Runnable {
-        binding.statusText.text = getString(R.string.scan_prompt)
-        binding.statusText.setBackgroundColor(ContextCompat.getColor(this, R.color.status_neutral))
+    private fun finishSession() {
+        startActivity(
+            Intent(this, SessionDetailActivity::class.java)
+                .putExtra(SessionDetailActivity.EXTRA_SESSION_ID, sessionId)
+        )
+        finish()
     }
 
     private fun updateCounter() {
         binding.counterText.text = getString(R.string.scanned_count, scannedCount)
     }
 
-    /** Sygnał dźwiękowy + wibracja — operator nie musi patrzeć na ekran. */
-    private fun feedback(error: Boolean) {
-        toneGen?.startTone(
-            if (error) ToneGenerator.TONE_SUP_ERROR else ToneGenerator.TONE_PROP_BEEP,
-            200
-        )
-        val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        }
-        vibrator?.vibrate(
-            VibrationEffect.createOneShot(
-                if (error) 300 else 100,
-                VibrationEffect.DEFAULT_AMPLITUDE
-            )
-        )
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
-        cameraExecutor.shutdown()
-        toneGen?.release()
-        scanner.close()
+    private fun updateAlley() {
+        binding.alleyText.text = getString(R.string.alley_label, currentAlley)
+        binding.alleyPrevButton.isEnabled = currentAlley > 1
+        binding.alleyNextButton.isEnabled = currentAlley < maxAlley
     }
 }

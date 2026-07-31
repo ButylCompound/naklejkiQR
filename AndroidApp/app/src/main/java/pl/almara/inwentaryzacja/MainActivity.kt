@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.toolbar.setNavigationOnClickListener { finish() }
         binding.newSessionButton.setOnClickListener { showNewSessionDialog() }
 
         binding.sessionsList.setOnItemClickListener { _, _, position, _ ->

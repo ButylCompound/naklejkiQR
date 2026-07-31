@@ -1,6 +1,0 @@
-.venv/
-.venv_path.txt
-__pycache__/
-config.json
-wyniki_inwentaryzacji_*.txt
-*.pyc

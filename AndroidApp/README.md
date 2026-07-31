@@ -19,7 +19,7 @@ Sessions are stored on the device (app-private storage) and survive app restarts
 
 ### QR payload contract
 
-Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00 | XX` (name | weight | print date | operator initials). All four segments are required and the date must be a valid `yyyy-MM-dd HH:mm:ss` timestamp — anything else is rejected as **Nieprawidłowy kod QR**. Weight accepts `,` or `.` decimals.
+Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00 | XX` (name | weight | print date | operator initials). All four segments are required and the date must be a valid `yyyy-MM-dd HH:mm:ss` or `yyyy-MM-dd HH:mm` timestamp (older stickers without seconds are accepted and normalized to `:00` when stored/reported) — anything else is rejected as **Nieprawidłowy kod QR**. Weight accepts `,` or `.` decimals.
 
 ### CSV format
 
@@ -74,15 +74,51 @@ Alternative without the virtual scene: run the app on a real phone and scan a QR
 
 ## 4. Building an APK for the operators' phones
 
-For internal use the **debug APK** is the simplest (no signing setup):
+### Debug build (quick testing)
 
-1. **Build → Build App Bundle(s) / APK(s) → Build APK(s)**.
+1. **Build → Build App Bundle(s) / APK(s) → Build APK(s)**, or from the command line: `gradlew.bat assembleDebug`.
 2. Result: `app/build/outputs/apk/debug/app-debug.apk`.
 3. Send that file to each phone (e-mail, Teams, USB, SharePoint). Opening it on the phone prompts to install — allow "install from unknown sources" for the app you opened it with.
 
-Command line alternative (from the `AndroidApp` folder, Windows): `gradlew.bat assembleDebug`
+### Production build (signed release — what to actually hand out to operators)
 
-> For a Play-Store-quality signed release build you'd use **Build → Generate Signed App Bundle / APK** and create a keystore — not needed for internal distribution.
+The project is wired up for a **signed release build**, using a real keystore instead of the debug signature. This matters because Android checks the signature on every install: as long as every release is signed with the *same* key, operators can update the app by simply installing the new APK over the old one — their sessions stay intact. Switch signing keys later and every phone would need a manual uninstall first, wiping any unsent sessions.
+
+**One-time setup (already done in this repo, documented here in case it needs to be redone):**
+
+```bash
+keytool -genkeypair -v -keystore keystore/almara-skaner-release.jks \
+  -alias skaner_inwentaryzacji -keyalg RSA -keysize 2048 -validity 10000 \
+  -storepass <choose-a-strong-password> \
+  -dname "CN=Almara, OU=IT, O=Almara sp. z o.o. sp. k., L=Warszawa, ST=Mazowieckie, C=PL"
+```
+
+(Run via the JDK bundled with Android Studio, e.g. `"C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"` on Windows.) Then create `AndroidApp/keystore.properties` (already gitignored, alongside `keystore/`):
+
+```properties
+storeFile=keystore/almara-skaner-release.jks
+storePassword=<the password you chose>
+keyAlias=skaner_inwentaryzacji
+keyPassword=<same password — modern keytool's PKCS12 format requires store and key password to match>
+```
+
+`app/build.gradle.kts` reads this file automatically and signs the `release` build type with it. If `keystore.properties` is missing, release builds still compile but come out **unsigned** (fine for CI checks, not installable as-is).
+
+> **⚠️ Back up `keystore/almara-skaner-release.jks` and `keystore.properties` somewhere outside this checkout** (a password manager attachment, a company secrets vault) — both are gitignored on purpose (a signing key must never sit in source control) but that also means a lost laptop or a wiped repo clone loses them for good. Losing the keystore means every operator's phone needs a fresh uninstall + reinstall to receive any future update, and old scan sessions on their phones would be lost in the process.
+
+**Build it:**
+
+```bash
+gradlew.bat assembleRelease
+```
+
+Result: `app/build/outputs/apk/release/app-release.apk` — this is the file to distribute to operators going forward. Verify it's actually signed with your key any time via:
+
+```bash
+"%ANDROID_HOME%\build-tools\<version>\apksigner.bat" verify --print-certs app\build\outputs\apk\release\app-release.apk
+```
+
+**If a phone already has the debug build installed**, Android will refuse to install the release build over it (`INSTALL_FAILED_UPDATE_INCOMPATIBLE` — different signing key) until the debug copy is uninstalled first. From then on, release-over-release updates install cleanly.
 
 ## 5. Debugging
 
@@ -106,6 +142,7 @@ python -c "import qrcode; qrcode.make('Produkt z polskimi znakami ĄĘŻŹ | 123
 python -c "import qrcode; qrcode.make('to nie jest naklejka').save('test_qr_bad.png')"
 python -c "import qrcode; qrcode.make('Produkt | 500kg | 2026-07-07 10:00:00').save('test_qr_no_initials.png')"  # rejected: no initials
 python -c "import qrcode; qrcode.make('Produkt | 500kg | 2026-13-45 10:00:00 | KK').save('test_qr_bad_date.png')"  # rejected: invalid date
+python -c "import qrcode; qrcode.make('Produkt | 500kg | 2026-07-07 10:00 | KK').save('test_qr_no_seconds.png')"  # accepted: normalized to 2026-07-07 10:00:00
 ```
 
 You can also print real stickers with `GeneratorNaklejek` — that's the true end-to-end test.

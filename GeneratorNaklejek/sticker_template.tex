@@ -1,30 +1,42 @@
 \documentclass{article}
-\usepackage[paperwidth=10cm, paperheight=6cm, margin=3mm]{geometry}
+\usepackage[paperwidth=10cm, paperheight=6cm, left=2mm, right=6mm, top=3mm, bottom=3mm]{geometry}
 \usepackage{graphicx}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern} % Better font rendering
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
 
 \begin{document}
-\pagestyle{empty} % Remove page numbers
+\pagestyle{empty}
 
 \noindent
-{\centering \includegraphics[height=1.7cm, keepaspectratio]{logo.jpg}\par}
-\vspace{0.2cm}
-
-\noindent
-\begin{minipage}[c][3.3cm][c]{0.58\textwidth}
+\begin{minipage}[c][4.7cm][t]{0.49\textwidth}
+    {\raggedleft \includegraphics[width=\textwidth, height=1.5cm, keepaspectratio]{logo.jpg}\par}
+    \vspace{0.1cm}
     \raggedright
-    {\linespread{1.05}\Large\selectfont {\normalsize \textbf{Nazwa:}} \textbf{<< product_name >>}\par}
-    \vspace{0.25cm}
-    {\Large \textbf{Ilość netto:} << weight >> kg\par}
-    \vspace{0.15cm}
-    {\Large \textbf{Data:} \\ << datetime >> \textbf{<< operator >>}\par}
+    {\raggedright \small Nazwa:\par}
+    \vspace{0.04cm}
+<BLOCK> if product_name|length <= 9 </BLOCK>
+    {\huge \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> elif product_name|length <= 20 </BLOCK>
+    {\LARGE \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> elif product_name|length <= 35 </BLOCK>
+    {\Large \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> elif product_name|length <= 50 </BLOCK>
+    {\large \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> else </BLOCK>
+    {\normalsize \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> endif </BLOCK>
+    \vspace{0.1cm}
+    {\raggedright \small Ilość netto:\par}
+    \vspace{0.04cm}
+    {\huge \linespread{0.75}\selectfont \textbf{<< weight >> << unit >>}\par}
 \end{minipage}\hfill
-\begin{minipage}[c][3.3cm][c]{0.38\textwidth}
-    \begin{flushright}
-        \includegraphics[width=3.1cm, height=3.1cm, keepaspectratio]{<< qr_path >>}
-    \end{flushright}
+\begin{minipage}[c][4.7cm][t]{0.47\textwidth}
+    {\raggedleft \includegraphics[width=4.2cm, height=4.2cm, keepaspectratio]{<< qr_path >>}\par}
 \end{minipage}
+\vspace{0.15cm}
 
+\noindent
+{\huge \textbf{\hspace*{0.75cm}<< datetime[:10] >>\hfill << datetime[11:] >> << operator >>\hspace*{0.75cm}}\par}
 \end{document}

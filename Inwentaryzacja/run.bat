@@ -1,9 +1,9 @@
 @echo off
-echo Uruchamianie Skanera Inwentaryzacji...
+echo Uruchamianie Systemu Kontroli Inwentaryzacji...
 
 cd /d "%~dp0"
 
-:: Sprawdzanie czy aplikacja zostala przeniesiona
+:: Check if the app was moved by comparing the saved path
 set "CURRENT_DIR=%CD%"
 if exist .venv_path.txt (
     set /p SAVED_DIR=<.venv_path.txt
@@ -25,7 +25,7 @@ if %ERRORLEVEL% equ 0 (
     set HAS_UV=0
 )
 
-:: Sprawdzanie i tworzenie wirtualnego srodowiska
+:: Check if virtual environment exists, create if it doesn't
 if not exist .venv\Scripts\activate.bat (
     echo Tworzenie wirtualnego srodowiska...
     
@@ -41,16 +41,16 @@ if not exist .venv\Scripts\activate.bat (
         .venv\Scripts\python.exe -m pip install -r requirements.txt
     )
     
-    :: Zapis aktualnej sciezki
+    :: Save the current directory path
     echo %CURRENT_DIR%>.venv_path.txt
 )
 
-:: Aktywacja srodowiska
+:: Activate virtual environment
 if exist .venv\Scripts\activate.bat (
     call .venv\Scripts\activate.bat
 ) else (
     echo [OSTRZEZENIE] Nie udalo sie utworzyc wirtualnego srodowiska. Proba uruchomienia za pomoca glownego pythona...
 )
 
-:: Uruchamianie aplikacji GUI
-python gui.py
+:: Run the main script
+python main.py

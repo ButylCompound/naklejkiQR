@@ -22,19 +22,23 @@ object CsvExporter {
     fun buildCsv(session: Session): String {
         val sb = StringBuilder()
         sb.append('\uFEFF') // BOM — dzięki temu Excel poprawnie odczyta polskie znaki
-        sb.append("Lp;Produkt;Waga (kg);Inicjały;Data naklejki;Data skanowania\r\n")
+        sb.append("Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania\r\n")
         session.items.forEachIndexed { i, item ->
             sb.append(i + 1).append(';')
+                .append(item.alley).append(';')
                 .append(esc(item.product)).append(';')
-                .append(Format.weightCsv(item.weightKg)).append(';')
+                .append(Format.numberCsv(item.quantity)).append(';')
+                .append(esc(item.unit)).append(';')
                 .append(esc(item.initials)).append(';')
                 .append(esc(item.labelDate)).append(';')
                 .append(esc(item.scannedAt)).append("\r\n")
         }
         sb.append("\r\n")
         sb.append("Liczba palet;").append(session.items.size).append("\r\n")
-        sb.append("Łączna waga (kg);")
-            .append(Format.weightCsv(session.items.sumOf { it.weightKg })).append("\r\n")
+        session.items.groupBy { it.unit }.forEach { (unit, group) ->
+            sb.append("Łączna ilość (").append(esc(unit)).append(");")
+                .append(Format.numberCsv(group.sumOf { it.quantity })).append("\r\n")
+        }
         sb.append("Sesja;").append(esc(session.name)).append("\r\n")
         sb.append("Utworzono;").append(esc(session.createdAt)).append("\r\n")
         return sb.toString()
