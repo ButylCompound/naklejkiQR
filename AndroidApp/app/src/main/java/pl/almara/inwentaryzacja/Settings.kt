@@ -59,6 +59,9 @@ object Settings {
         val p = prefs(context)
         val seq = if (p.getInt(KEY_RW_YEAR, 0) == year) p.getInt(KEY_RW_SEQ, 0) + 1 else 1
         p.edit().putInt(KEY_RW_YEAR, year).putInt(KEY_RW_SEQ, seq).apply()
-        return "RW/%d/%02d".format(year, seq)
+        return formatRwNumber(year, seq)
     }
+
+    /** "RW/RRRR/NN" — numer dopełniany do 2 cyfr, powyżej 99 rośnie do 3+. */
+    fun formatRwNumber(year: Int, seq: Int): String = "RW/%d/%02d".format(year, seq)
 }

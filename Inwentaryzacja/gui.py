@@ -565,9 +565,9 @@ class MainWindow(tk.Tk):
         
     def update_excel_dates(self):
         records = getattr(self.tab_palety, 'all_records', [])
-        matched_rows = [r.get('Excel_Row') for r in records if r.get('Kategoria') == 'zgodne' and r.get('Excel_Row')]
+        matched_records = [r for r in records if r.get('Kategoria') == 'zgodne' and r.get('Excel_Row')]
         
-        if not matched_rows:
+        if not matched_records:
             messagebox.showinfo("Brak danych", "Brak zgodnych palet do zaktualizowania.")
             return
             
@@ -589,23 +589,35 @@ class MainWindow(tk.Tk):
                 wb = app_excel.books.open(os.path.abspath(excel_path))
                 ws = wb.sheets['palety']
                 
-                # Szybkie szukanie kolumny z datą w pierwszym wierszu (zakres A1:Z1)
-                header_row = ws.range('A1:Z1').value
-                col_idx = None
+                # Szukanie kolumn w pierwszym wierszu (szukamy do kolumny ZZ)
+                header_row = ws.range('A1:ZZ1').value
+                col_idx_date = None
+                col_idx_alejka = None
                 for i, val in enumerate(header_row):
-                    if val and str(val).strip().lower() == 'data inwentaryzacji':
-                        col_idx = i + 1  # xlwings indeksuje od 1
+                    if val:
+                        sval = str(val).strip().lower()
+                        if sval == 'data inwentaryzacji' and not col_idx_date:
+                            col_idx_date = i + 1
+                        elif sval == 'alejka' and not col_idx_alejka:
+                            col_idx_alejka = i + 1
+                    if col_idx_date and col_idx_alejka:
                         break
                         
-                if not col_idx:
+                if not col_idx_date:
                     messagebox.showerror("Błąd", "Nie znaleziono kolumny 'data inwentaryzacji' w arkuszu 'palety'.")
                     return
                     
                 today = datetime.now().date()
                 
-                # Zapisujemy daty bez naruszania struktury pliku
-                for row_idx in matched_rows:
-                    ws.range((row_idx, col_idx)).value = today
+                # Zapisujemy daty (i lokalizacje) bez naruszania struktury pliku
+                for rec in matched_records:
+                    row_idx = rec['Excel_Row']
+                    ws.range((row_idx, col_idx_date)).value = today
+                    
+                    if col_idx_alejka:
+                        alejka = str(rec.get('Alejka', '')).strip()
+                        if alejka:
+                            ws.range((row_idx, col_idx_alejka)).value = alejka
                     
                 wb.save()
                 
