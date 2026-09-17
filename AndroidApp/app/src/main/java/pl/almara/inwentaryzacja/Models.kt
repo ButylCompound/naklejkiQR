@@ -9,7 +9,7 @@ data class ScanItem(
     val scannedAt: String,   // kiedy zeskanowano telefonem
     val initials: String,    // inicjały operatora z naklejki
     val raw: String,         // surowa zawartość kodu QR (klucz deduplikacji)
-    val alley: Int = 1       // alejka ustawiona ręcznie podczas skanowania
+    val alley: String = "1"  // alejka ustawiona ręcznie podczas skanowania (numer lub nazwa)
 )
 
 /** Sesja inwentaryzacji. */
@@ -17,8 +17,14 @@ data class Session(
     val id: String,
     val name: String,
     val createdAt: String,
+    val type: String = TYPE_PRODUCT,   // "product" lub "raw" (surowce)
     val items: MutableList<ScanItem>
-)
+) {
+    companion object {
+        const val TYPE_PRODUCT = "product"
+        const val TYPE_RAW = "raw"
+    }
+}
 
 /** Dokument RW — wewnętrzne pobranie materiałów. */
 data class RwDocument(
@@ -31,9 +37,17 @@ data class RwDocument(
 )
 
 object Format {
-    /** "500.0" -> "500", "500.5" -> "500.5" */
-    fun number(n: Double): String =
-        if (n == Math.floor(n) && !n.isInfinite()) n.toLong().toString() else n.toString()
+    /**
+     * "500.0" -> "500", "500.5" -> "500.5". Zaokrągla do 3 miejsc, żeby suma
+     * kilku wag nie pokazywała szumu zmiennoprzecinkowego (np. 12345.6999999).
+     */
+    fun number(n: Double): String {
+        val rounded = Math.round(n * 1000.0) / 1000.0
+        return if (rounded == Math.floor(rounded) && !rounded.isInfinite())
+            rounded.toLong().toString()
+        else
+            rounded.toString()
+    }
 
     /** Wersja do CSV — polski Excel oczekuje przecinka dziesiętnego. */
     fun numberCsv(n: Double): String = number(n).replace('.', ',')

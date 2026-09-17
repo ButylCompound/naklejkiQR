@@ -1,11 +1,10 @@
 import typer
-import qrcode
 import json
 import os
 import subprocess
-from datetime import datetime
 import sys
-import jinja2
+
+from label_generator import LatexError, TemplateError, generate_pdf, run_pdflatex
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
 
@@ -26,6 +25,9 @@ def safe_print(text, err=False):
         typer.echo(text, err=err)
     except UnicodeEncodeError:
         typer.echo(str(text).encode('ascii', 'replace').decode('ascii'), err=err)
+
+
+_run_pdflatex = run_pdflatex
 
 def load_state():
     if os.path.exists(STATE_FILE):
@@ -62,86 +64,31 @@ def create(
     
     if operator is None:
         operator = state.get("last_operator", "")
-    
-    # Save the used product name
+
+    if copies < 1:
+        safe_print("Error: Number of copies must be at least 1.", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        pdf_path = generate_pdf(
+            product_name,
+            weight,
+            operator=operator,
+            date_override=date_override,
+            unit=unit,
+            template_file=template_file,
+        )
+    except (ValueError, TemplateError, LatexError) as error:
+        safe_print(f"Error: {error}", err=True)
+        raise typer.Exit(code=1)
+
     state["last_product_name"] = product_name
     state["last_operator"] = operator
     save_state(state)
-    
-    if date_override:
-        try:
-            dt = datetime.strptime(date_override, "%Y-%m-%d %H:%M")
-            now = dt.strftime("%Y-%m-%d %H:%M")
-        except ValueError:
-            try:
-                dt = datetime.strptime(date_override, "%Y-%m-%d %H:%M:%S")
-                now = dt.strftime("%Y-%m-%d %H:%M")
-            except ValueError:
-                safe_print("Error: Invalid date format! Must be YYYY-MM-DD HH:MM", err=True)
-                raise typer.Exit(code=1)
-    else:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    
-    # Generate QR Code
-    qr_data = f"{product_name} | {weight} {unit} | {now}"
-    if operator:
-        qr_data += f" | {operator}"
-    safe_print(f"Generating QR for: {qr_data}")
-    
-    qr = qrcode.QRCode(version=1, box_size=10, border=0)
-    qr.add_data(qr_data)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    qr_path = "current_qr.png"
-    img.save(qr_path)
-    
-    # Setup Jinja2 for LaTeX
-    env = jinja2.Environment(
-        block_start_string='<BLOCK>',
-        block_end_string='</BLOCK>',
-        variable_start_string='<<',
-        variable_end_string='>>',
-        comment_start_string='<#',
-        comment_end_string='#>',
-        loader=jinja2.FileSystemLoader(os.path.abspath('.'))
-    )
-    
-    try:
-        template = env.get_template(template_file)
-    except jinja2.exceptions.TemplateNotFound:
-        safe_print(f"Error: Template file {template_file} not found.", err=True)
-        raise typer.Exit(code=1)
-        
-    # Render template (replace backslashes for LaTeX path compatibility)
-    tex_content = template.render(
-        product_name=product_name,
-        weight=weight,
-        unit=unit,
-        datetime=now,
-        operator=operator,
-        qr_path=qr_path.replace("\\", "/")
-    )
-    
-    out_tex = "output.tex"
-    with open(out_tex, "w", encoding="utf-8") as f:
-        f.write(tex_content)
-        
-    safe_print("Compiling LaTeX to PDF...")
-    # Compile PDF using pdflatex
-    result = subprocess.run(["pdflatex.exe", "-interaction=nonstopmode", out_tex], capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
-    
-    if result.returncode != 0:
-        safe_print("Error compiling LaTeX:", err=True)
-        safe_print(result.stdout, err=True)
-        safe_print("Ensure that 'pdflatex.exe' is installed and in your PATH.", err=True)
-        raise typer.Exit(code=1)
-        
-    safe_print("PDF successfully generated: output.pdf")
+    safe_print(f"PDF successfully generated: {pdf_path}")
     
     if print_job:
         safe_print(f"Sending {copies} copies to printer '{printer_name}'...")
-        pdf_path = os.path.abspath("output.pdf")
-        
         # Check OS environment
         is_wsl = False
         try:
@@ -154,12 +101,15 @@ def create(
         
         for _ in range(copies):
             if is_windows:
-                _print_windows(pdf_path, printer_name)
+                print_succeeded = _print_windows(pdf_path, printer_name)
             elif is_wsl:
-                _print_wsl(pdf_path, printer_name)
+                print_succeeded = _print_wsl(pdf_path, printer_name)
             else:
-                safe_print("Auto-printing is only configured for Windows/WSL with SumatraPDF. Please print manually.")
-                break
+                safe_print("Error: Auto-printing is only configured for Windows/WSL with SumatraPDF.", err=True)
+                raise typer.Exit(code=1)
+
+            if not print_succeeded:
+                raise typer.Exit(code=1)
 
 def _print_windows(pdf_path, printer_name):
     import glob
@@ -174,10 +124,13 @@ def _print_windows(pdf_path, printer_name):
     try:
         subprocess.run(print_cmd, check=True, creationflags=CREATE_NO_WINDOW)
         safe_print("Print job sent successfully!")
+        return True
     except FileNotFoundError:
         safe_print("Error: SumatraPDF.exe not found. Please place it in this directory or add it to PATH.", err=True)
+        return False
     except Exception as e:
         safe_print(f"Failed to print: {e}", err=True)
+        return False
 
 def _print_wsl(pdf_path, printer_name):
     safe_print("WSL Environment Detected.")
@@ -189,10 +142,13 @@ def _print_wsl(pdf_path, printer_name):
         print_cmd = ["SumatraPDF.exe", "-print-to", printer_name, "-silent", win_pdf_path]
         subprocess.run(print_cmd, check=True, creationflags=CREATE_NO_WINDOW)
         safe_print("Print job sent successfully from WSL!")
+        return True
     except FileNotFoundError:
         safe_print("Error: 'SumatraPDF.exe' not found. It must be accessible from WSL (e.g. in your Windows PATH).", err=True)
+        return False
     except Exception as e:
         safe_print(f"Failed to print from WSL: {e}", err=True)
+        return False
 
 if __name__ == "__main__":
     app()

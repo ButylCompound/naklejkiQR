@@ -3,12 +3,10 @@ package pl.almara.inwentaryzacja
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import pl.almara.inwentaryzacja.databinding.ActivityMainBinding
+import pl.almara.inwentaryzacja.databinding.DialogNewSessionBinding
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -55,28 +53,18 @@ class MainActivity : AppCompatActivity() {
             R.string.default_session_name,
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         )
-        val input = EditText(this).apply {
-            setText(defaultName)
-            hint = getString(R.string.session_name_hint)
-            setSelectAllOnFocus(true)
-        }
-        val pad = (20 * resources.displayMetrics.density).toInt()
-        val container = FrameLayout(this).apply {
-            setPadding(pad, pad / 2, pad, 0)
-            addView(
-                input,
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
+        val dialog = DialogNewSessionBinding.inflate(layoutInflater).apply {
+            sessionNameInput.setText(defaultName)
+            sessionNameInput.setSelectAllOnFocus(true)
         }
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.new_session)
-            .setView(container)
+            .setView(dialog.root)
             .setPositiveButton(R.string.start) { _, _ ->
-                val name = input.text.toString().trim().ifEmpty { defaultName }
-                val session = SessionStore.createSession(this, name)
+                val name = dialog.sessionNameInput.text.toString().trim().ifEmpty { defaultName }
+                val type = if (dialog.sessionTypeGroup.checkedRadioButtonId == R.id.typeRaw)
+                    Session.TYPE_RAW else Session.TYPE_PRODUCT
+                val session = SessionStore.createSession(this, name, type)
                 startActivity(
                     Intent(this, ScanActivity::class.java)
                         .putExtra(ScanActivity.EXTRA_SESSION_ID, session.id)

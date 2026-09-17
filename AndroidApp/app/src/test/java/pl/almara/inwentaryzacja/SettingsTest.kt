@@ -1,9 +1,29 @@
 package pl.almara.inwentaryzacja
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsTest {
+
+    @Test
+    fun customAlleyNameRejectsPureNumbers() {
+        assertFalse(Settings.isValidCustomAlleyName("5"))
+        assertFalse(Settings.isValidCustomAlleyName("01"))
+        assertFalse(Settings.isValidCustomAlleyName("007"))
+        assertFalse(Settings.isValidCustomAlleyName(" 12 "))
+        assertFalse(Settings.isValidCustomAlleyName(""))
+        assertFalse(Settings.isValidCustomAlleyName("   "))
+    }
+
+    @Test
+    fun customAlleyNameAcceptsNonNumeric() {
+        assertTrue(Settings.isValidCustomAlleyName("o1"))
+        assertTrue(Settings.isValidCustomAlleyName("A5"))
+        assertTrue(Settings.isValidCustomAlleyName("rampa"))
+        assertTrue(Settings.isValidCustomAlleyName("12b"))
+    }
 
     @Test
     fun rwNumberPadsToTwoDigits() {

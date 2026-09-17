@@ -24,6 +24,6 @@ object ItemJson {
         scannedAt = o.optString("scannedAt"),
         initials = o.optString("initials"),
         raw = o.optString("raw"),
-        alley = o.optInt("alley", 1)
+        alley = o.optString("alley", "1")
     )
 }

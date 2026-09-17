@@ -10,11 +10,14 @@ object Settings {
 
     private const val PREFS = "settings"
     private const val KEY_ALLEYS = "alley_count"
+    private const val KEY_CUSTOM_ALLEYS = "custom_alleys"
     private const val KEY_REQUESTERS = "rw_requesters"
     private const val KEY_MANAGERS = "rw_managers"
     private const val KEY_RW_YEAR = "rw_year"
     private const val KEY_RW_SEQ = "rw_seq"
+    private const val KEY_GROUP_BY_ALLEY = "group_scans_by_alley"
     private const val DEFAULT_ALLEYS = 32
+    private val DEFAULT_CUSTOM_ALLEYS = listOf("o1", "o2", "o3", "o4", "o5")
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -25,6 +28,23 @@ object Settings {
 
     fun setAlleyCount(context: Context, value: Int) {
         prefs(context).edit().putInt(KEY_ALLEYS, value.coerceAtLeast(1)).apply()
+    }
+
+    /** Alejki niestandardowe (dopisywane na końcu listy wyboru w skanerze). */
+    fun customAlleys(context: Context): List<String> {
+        val raw = prefs(context).getString(KEY_CUSTOM_ALLEYS, null) ?: return DEFAULT_CUSTOM_ALLEYS
+        return raw.split('\n').map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    fun setCustomAlleys(context: Context, value: List<String>) = setNames(context, KEY_CUSTOM_ALLEYS, value)
+
+    /**
+     * Nazwa alejki niestandardowej musi się różnić od alejek numerycznych —
+     * nie może być pusta ani samą liczbą (np. "5", "01", "007").
+     */
+    fun isValidCustomAlleyName(name: String): Boolean {
+        val trimmed = name.trim()
+        return trimmed.isNotEmpty() && !trimmed.matches(Regex("\\d+"))
     }
 
     /** Lista osób zamawiających materiały (RW). */
@@ -46,9 +66,18 @@ object Settings {
         prefs(context).edit().putString(key, cleaned.joinToString("\n")).apply()
     }
 
-    /** Przywraca ustawienia domyślne: liczba alejek = 32, puste listy osób. */
+    /** Widok pozycji w sesji: pogrupowany wg alejki (true) czy wg czasu (false). */
+    fun groupScansByAlley(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_GROUP_BY_ALLEY, false)
+
+    fun setGroupScansByAlley(context: Context, value: Boolean) {
+        prefs(context).edit().putBoolean(KEY_GROUP_BY_ALLEY, value).apply()
+    }
+
+    /** Przywraca domyślne: 32 alejki, domyślne alejki niestandardowe, puste listy osób. */
     fun resetDefaults(context: Context) {
         setAlleyCount(context, DEFAULT_ALLEYS)
+        setCustomAlleys(context, DEFAULT_CUSTOM_ALLEYS)
         setRequesters(context, emptyList())
         setManagers(context, emptyList())
     }

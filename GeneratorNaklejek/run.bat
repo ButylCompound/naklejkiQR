@@ -52,5 +52,7 @@ if exist .venv\Scripts\activate.bat (
     echo [OSTRZEZENIE] Nie udalo sie utworzyc wirtualnego srodowiska. Proba uruchomienia za pomoca glownego pythona...
 )
 
-:: Run the GUI script
-python gui.py
+:: Run the standard GUI or the separate numbered-packs version
+set "APP_SCRIPT=gui.py"
+if /I "%~1"=="packs" set "APP_SCRIPT=gui_packs.py"
+python "%APP_SCRIPT%"

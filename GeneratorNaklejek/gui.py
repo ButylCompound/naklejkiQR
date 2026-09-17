@@ -1,17 +1,15 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import qrcode
 import json
 import os
 import subprocess
-from datetime import datetime
-import jinja2
+
+from label_generator import generate_pdf
+from label_utils import normalize_label_date, numbered_pack_names, validate_label_input
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
 
 STATE_FILE = "state.json"
-TEMPLATE_FILE = "sticker_template.tex"
-
 def load_state():
     if os.path.exists(STATE_FILE):
         try:
@@ -40,69 +38,6 @@ def get_printers():
         except Exception:
             pass
     return printers
-
-def generate_pdf(product_name, weight, operator="", date_override=None, unit="kg"):
-    if date_override:
-        try:
-            dt = datetime.strptime(date_override, "%Y-%m-%d %H:%M")
-            now = dt.strftime("%Y-%m-%d %H:%M")
-        except ValueError:
-            try:
-                dt = datetime.strptime(date_override, "%Y-%m-%d %H:%M:%S")
-                now = dt.strftime("%Y-%m-%d %H:%M")
-            except ValueError:
-                now = date_override[:16]
-    else:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    qr_data = f"{product_name} | {weight} {unit} | {now}"
-    if operator:
-        qr_data += f" | {operator}"
-    
-    qr = qrcode.QRCode(version=1, box_size=10, border=0)
-    qr.add_data(qr_data)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    qr_path = "current_qr.png"
-    img.save(qr_path)
-    
-    env = jinja2.Environment(
-        block_start_string='<BLOCK>',
-        block_end_string='</BLOCK>',
-        variable_start_string='<<',
-        variable_end_string='>>',
-        comment_start_string='<#',
-        comment_end_string='#>',
-        loader=jinja2.FileSystemLoader(os.path.abspath('.'))
-    )
-    
-    try:
-        template = env.get_template(TEMPLATE_FILE)
-    except jinja2.exceptions.TemplateNotFound:
-        raise Exception(f"Nie znaleziono pliku szablonu {TEMPLATE_FILE}.")
-        
-    tex_content = template.render(
-        product_name=product_name,
-        weight=weight,
-        unit=unit,
-        datetime=now,
-        operator=operator,
-        qr_path=qr_path.replace("\\", "/")
-    )
-    
-    out_tex = "output.tex"
-    with open(out_tex, "w", encoding="utf-8") as f:
-        f.write(tex_content)
-        
-    # Try calling pdflatex.exe first (Windows), fallback to pdflatex (Linux/WSL)
-    try:
-        result = subprocess.run(["pdflatex.exe", "-interaction=nonstopmode", out_tex], capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
-    except FileNotFoundError:
-        result = subprocess.run(["pdflatex", "-interaction=nonstopmode", out_tex], capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
-        
-    if result.returncode != 0:
-        raise Exception(f"Błąd kompilacji LaTeX.\n{result.stdout[-500:]}")
-            
-    return os.path.abspath("output.pdf")
 
 def print_pdf(pdf_path, printer_name="Zebra ZD421"):
     is_wsl = False
@@ -136,10 +71,15 @@ def print_pdf(pdf_path, printer_name="Zebra ZD421"):
         raise Exception("Automatyczne drukowanie jest skonfigurowane tylko dla Windows/WSL.")
 
 class App:
-    def __init__(self, root):
+    def __init__(self, root, pack_mode=False):
         self.root = root
-        self.root.title("Naklejki QR - Generator")
-        self.root.geometry("450x660")
+        self.pack_mode = pack_mode
+        if self.pack_mode:
+            self.root.title("Naklejki QR - Generator opakowań")
+            self.root.geometry("450x735")
+        else:
+            self.root.title("Naklejki QR - Generator")
+            self.root.geometry("450x660")
         self.root.configure(padx=25, pady=25)
         
         # Setup clean style
@@ -155,7 +95,8 @@ class App:
         
         self.state = load_state()
         
-        ttk.Label(root, text="Kreator Naklejek", style='Header.TLabel').pack(anchor="center", pady=(0, 20))
+        header_text = "Kreator Naklejek - Opakowania" if self.pack_mode else "Kreator Naklejek"
+        ttk.Label(root, text=header_text, style='Header.TLabel').pack(anchor="center", pady=(0, 20))
         
         ttk.Label(root, text="Nazwa Produktu:").pack(anchor="w", pady=(0, 5))
         self.name_var = tk.StringVar(value=self.state.get("last_product_name", ""))
@@ -198,6 +139,18 @@ class App:
         self.date_var = tk.StringVar()
         self.date_entry = ttk.Entry(root, textvariable=self.date_var, font=('Segoe UI', 12))
         self.date_entry.pack(fill="x", pady=(0, 15))
+
+        if self.pack_mode:
+            ttk.Label(root, text="Liczba opakowań:").pack(anchor="w", pady=(0, 5))
+            self.pack_count_var = tk.StringVar(value=str(self.state.get("last_pack_count", 1)))
+            self.pack_count_spinbox = ttk.Spinbox(
+                root,
+                from_=1,
+                to=1000,
+                textvariable=self.pack_count_var,
+                font=('Segoe UI', 12),
+            )
+            self.pack_count_spinbox.pack(fill="x", pady=(0, 15))
         
         ttk.Label(root, text="Liczba kopii:").pack(anchor="w", pady=(0, 5))
         self.copies_var = tk.StringVar(value="1")
@@ -225,7 +178,8 @@ class App:
         else:
             self.name_entry.focus()
         
-        self.print_btn = ttk.Button(root, text="Drukuj naklejkę", command=self.on_print)
+        print_button_text = "Drukuj naklejki dla opakowań" if self.pack_mode else "Drukuj naklejkę"
+        self.print_btn = ttk.Button(root, text=print_button_text, command=self.on_print)
         self.print_btn.pack(fill="x", pady=5, ipady=8)
         
         self.pdf_btn = ttk.Button(root, text="Wygeneruj PDF bez drukowania", command=self.on_generate)
@@ -245,82 +199,127 @@ class App:
         operator = self.operator_var.get().strip()
         date_override = self.date_var.get().strip()
         
-        if not prod_name:
-            messagebox.showerror("Błąd", "Proszę podać nazwę produktu!")
-            return
-        if not weight:
-            messagebox.showerror("Błąd", "Proszę podać ilość netto!")
-            return
-            
         try:
-            val = float(weight.replace(',', '.'))
-            if val <= 0:
-                raise ValueError()
-        except ValueError:
-            messagebox.showerror("Błąd", "Ilość netto musi być dodatnią wartością liczbową (np. 500 lub 123.5)!")
+            prod_name, weight, unit, operator = validate_label_input(
+                prod_name,
+                weight,
+                unit,
+                operator,
+            )
+            label_date = normalize_label_date(date_override)
+        except ValueError as error:
+            messagebox.showerror("Błąd", str(error))
             return
-            
-        if len(operator) not in (0, 2, 3):
-            messagebox.showerror("Błąd", "Inicjały operatora muszą składać się z 2 lub 3 znaków (lub pozostać puste)!")
-            return
-            
-        if date_override:
-            try:
-                from datetime import datetime
-                try:
-                    datetime.strptime(date_override, "%Y-%m-%d %H:%M")
-                except ValueError:
-                    datetime.strptime(date_override, "%Y-%m-%d %H:%M:%S")
-            except ValueError:
-                messagebox.showerror("Błąd", "Nieprawidłowy format daty!\n\nOczekiwano: YYYY-MM-DD HH:MM\nPrzykład: 2024-01-25 14:30")
-                return
             
         try:
             copies = int(self.copies_var.get().strip())
             if copies < 1:
-                copies = 1
+                raise ValueError()
         except ValueError:
-            copies = 1
+            messagebox.showerror("Błąd", "Liczba kopii musi być dodatnią liczbą całkowitą!")
+            return
+
+        pack_count = 1
+        if self.pack_mode:
+            try:
+                pack_count = int(self.pack_count_var.get().strip())
+                if pack_count < 1:
+                    raise ValueError()
+            except ValueError:
+                messagebox.showerror("Błąd", "Liczba opakowań musi być dodatnią liczbą całkowitą!")
+                return
+
+        label_names = numbered_pack_names(prod_name, pack_count) if self.pack_mode else [prod_name]
+        total_labels = len(label_names) * copies
+
+        if do_print and self.pack_mode:
+            confirmed = messagebox.askyesno(
+                "Potwierdzenie wydruku",
+                f"Liczba opakowań: {pack_count}\n"
+                f"Kopie na opakowanie: {copies}\n"
+                f"Łącznie naklejek: {total_labels}\n\n"
+                "Czy rozpocząć drukowanie?",
+            )
+            if not confirmed:
+                return
             
         self.status_var.set("Generowanie PDF...")
         self.root.update_idletasks()
         
+        printed_count = 0
         try:
-            pdf_path = generate_pdf(prod_name, weight, operator=operator, date_override=date_override if date_override else None, unit=unit)
+            pdf_paths = []
+            for pack_number, label_name in enumerate(label_names, 1):
+                if self.pack_mode:
+                    self.status_var.set(f"Generowanie opakowania {pack_number}/{pack_count}...")
+                    output_stem = f"output_pack_{pack_number:03d}"
+                else:
+                    output_stem = "output"
+                self.root.update_idletasks()
+
+                pdf_path = generate_pdf(
+                    label_name,
+                    weight,
+                    operator=operator,
+                    date_override=label_date,
+                    unit=unit,
+                    output_stem=output_stem,
+                )
+                pdf_paths.append(pdf_path)
+
+                if do_print:
+                    for _ in range(copies):
+                        self.status_var.set(f"Wysyłanie do drukarki ({printed_count + 1}/{total_labels})...")
+                        self.root.update_idletasks()
+                        print_pdf(pdf_path, printer_name=self.printer_var.get())
+                        printed_count += 1
             
             # Save state
             self.state["last_product_name"] = prod_name
             self.state["last_operator"] = operator
             self.state["last_printer"] = self.printer_var.get()
+            if self.pack_mode:
+                self.state["last_pack_count"] = pack_count
             save_state(self.state)
             
             if do_print:
-                self.status_var.set(f"Wysyłanie do drukarki ({copies} kopii)...")
-                self.root.update_idletasks()
-                for _ in range(copies):
-                    print_pdf(pdf_path, printer_name=self.printer_var.get())
-                self.status_var.set(f"Wydrukowano: {prod_name} ({weight} {unit}) x{copies}")
-            else:
-                self.status_var.set("PDF wygenerowany pomyślnie.")
-                if hasattr(os, 'startfile'):
-                    os.startfile(pdf_path) # Auto-open PDF if on Windows
+                if self.pack_mode:
+                    self.status_var.set(f"Wydrukowano {total_labels} naklejek ({pack_count} opakowań x {copies} kopii).")
                 else:
-                    import sys
-                    if sys.platform == "darwin":
-                        subprocess.call(["open", pdf_path])
+                    self.status_var.set(f"Wydrukowano: {prod_name} ({weight} {unit}) x{copies}")
+            else:
+                if self.pack_mode and len(pdf_paths) > 1:
+                    output_directory = os.path.dirname(pdf_paths[0])
+                    self.status_var.set(f"Wygenerowano {len(pdf_paths)} plików PDF.")
+                    messagebox.showinfo(
+                        "Gotowe",
+                        f"Wygenerowano {len(pdf_paths)} plików PDF w folderze:\n{output_directory}",
+                    )
+                else:
+                    self.status_var.set("PDF wygenerowany pomyślnie.")
+                    pdf_path = pdf_paths[0]
+                    if hasattr(os, 'startfile'):
+                        os.startfile(pdf_path) # Auto-open PDF if on Windows
                     else:
-                        # Try xdg-open for Linux, or wslview for WSL
-                        try:
-                            subprocess.call(["wslview", pdf_path])
-                        except FileNotFoundError:
-                            subprocess.call(["xdg-open", pdf_path])
+                        import sys
+                        if sys.platform == "darwin":
+                            subprocess.call(["open", pdf_path])
+                        else:
+                            # Try xdg-open for Linux, or wslview for WSL
+                            try:
+                                subprocess.call(["wslview", pdf_path])
+                            except FileNotFoundError:
+                                subprocess.call(["xdg-open", pdf_path])
 
             # Clear weight for the next print
             self.weight_var.set("")
             self.weight_entry.focus()
                 
         except Exception as e:
-            self.status_var.set("Wystąpił błąd.")
+            if do_print and printed_count:
+                self.status_var.set(f"Błąd po wydrukowaniu {printed_count}/{total_labels} naklejek.")
+            else:
+                self.status_var.set("Wystąpił błąd.")
             messagebox.showerror("Błąd", str(e))
             
     def on_print(self):

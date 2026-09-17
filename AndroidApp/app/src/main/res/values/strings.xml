@@ -11,17 +11,20 @@
     <!-- Ustawienia -->
     <string name="settings_alley_count">Liczba alejek</string>
     <string name="settings_alley_count_invalid">Podaj liczbę większą od zera</string>
+    <string name="settings_custom_alleys">Alejki niestandardowe</string>
     <string name="settings_requesters">Osoby pobierające</string>
     <string name="settings_managers">Kierownicy zmiany</string>
-    <string name="settings_people_count">%1$d os.</string>
     <string name="settings_people_empty">Brak — dotknij, aby dodać</string>
     <string name="settings_reset">Przywróć ustawienia domyślne</string>
-    <string name="settings_reset_confirm">Ustawić liczbę alejek na 32 i wyczyścić listy osób? Tej operacji nie można cofnąć.</string>
+    <string name="settings_reset_confirm">Ustawić liczbę alejek na 32, przywrócić domyślne alejki niestandardowe i wyczyścić listy osób? Tej operacji nie można cofnąć.</string>
     <string name="settings_reset_yes">Przywróć</string>
     <string name="people_add">Dodaj</string>
     <string name="people_name_hint">Imię i nazwisko</string>
     <string name="people_empty">Brak osób.\nDodaj pierwszą osobę poniżej.</string>
-    <string name="people_duplicate">Ta osoba już jest na liście</string>
+    <string name="people_duplicate">Ten wpis już jest na liście</string>
+    <string name="alley_name_hint">Nazwa alejki</string>
+    <string name="alley_numeric_invalid">Nazwa alejki nie może być samą liczbą</string>
+    <string name="alley_empty">Brak alejek niestandardowych.\nDodaj pierwszą poniżej.</string>
     <string name="ok">OK</string>
 
     <!-- RW — wewnętrzne pobranie materiałów -->
@@ -53,6 +56,9 @@
     <string name="new_session">Nowa sesja</string>
     <string name="default_session_name">Inwentaryzacja %1$s</string>
     <string name="session_name_hint">Nazwa sesji</string>
+    <string name="session_type">Rodzaj sesji</string>
+    <string name="session_type_products">Produkty</string>
+    <string name="session_type_raw">Surowce</string>
     <string name="start">Rozpocznij</string>
     <string name="cancel">Anuluj</string>
     <string name="no_sessions">Brak sesji.\nKliknij „Nowa sesja”, aby rozpocząć skanowanie.\n\n(Przytrzymaj sesję na liście, aby ją usunąć)</string>
@@ -63,11 +69,14 @@
     <string name="status_ok_format">OK: %1$s (%2$s)</string>
     <string name="status_duplicate">Już zeskanowano!</string>
     <string name="status_updated_format">Zmieniono: %1$s (%2$s)</string>
+    <string name="pallet_count_prompt">Ile palet tego surowca?</string>
+    <string name="status_pallets_added">Dodano palet: %2$d — %1$s</string>
+    <string name="status_pallets_dup">%1$s — wszystkie palety już zeskanowane</string>
     <string name="status_invalid">Nieprawidłowy kod QR</string>
     <string name="status_session_missing">Błąd: nie znaleziono sesji</string>
     <string name="finish_session">Zakończ</string>
     <string name="scanned_count">Zeskanowano: %1$d</string>
-    <string name="alley_label">Alejka %1$d</string>
+    <string name="alley_label">Alejka %1$s</string>
     <string name="alley_prev">Poprzednia alejka</string>
     <string name="alley_next">Następna alejka</string>
     <string name="camera_permission_denied">Brak uprawnienia do aparatu. Nadaj uprawnienie w Ustawieniach i spróbuj ponownie.</string>
@@ -79,6 +88,8 @@
     <string name="save_csv">Zapisz CSV</string>
     <string name="stat_pallets">Palety</string>
     <string name="stat_weight">Łączna ilość</string>
+    <string name="group_by_alley">Grupuj wg alejki</string>
+    <string name="alley_group_format">%1$s  •  Pozycji: %2$d  •  %3$s</string>
     <string name="item_dates_format">Naklejka: %1$s  •  Skan: %2$s</string>
     <string name="csv_saved">Zapisano plik CSV</string>
     <string name="csv_saved_tap_to_open">%1$s — dotknij, aby otworzyć</string>

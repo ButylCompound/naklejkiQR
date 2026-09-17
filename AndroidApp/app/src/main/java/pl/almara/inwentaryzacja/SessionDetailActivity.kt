@@ -144,6 +144,11 @@ class SessionDetailActivity : AppCompatActivity() {
             (binding.itemsList.getItemAtPosition(position) as? ScanItem)?.let { confirmDeleteItem(it) }
             true
         }
+        binding.groupSwitch.isChecked = Settings.groupScansByAlley(this)
+        binding.groupSwitch.setOnCheckedChangeListener { _, checked ->
+            Settings.setGroupScansByAlley(this, checked)
+            applyViewMode(checked)
+        }
     }
 
     override fun onResume() {
@@ -163,6 +168,14 @@ class SessionDetailActivity : AppCompatActivity() {
         binding.statCount.text = s.items.size.toString()
         binding.statWeight.text = Format.totals(s.items)
         binding.itemsList.adapter = ScanItemAdapter(this, s.items)
+        binding.itemsGrouped.setAdapter(AlleyGroupAdapter(this, s.items))
+        applyViewMode(binding.groupSwitch.isChecked)
+    }
+
+    /** Przełącza między widokiem wg czasu (lista) a wg alejki (rozwijane grupy). */
+    private fun applyViewMode(grouped: Boolean) {
+        binding.itemsList.visibility = if (grouped) android.view.View.GONE else android.view.View.VISIBLE
+        binding.itemsGrouped.visibility = if (grouped) android.view.View.VISIBLE else android.view.View.GONE
     }
 
     private fun confirmDeleteItem(item: ScanItem) {

@@ -22,8 +22,9 @@ class SettingsActivity : AppCompatActivity() {
 
         binding.toolbar.setNavigationOnClickListener { finish() }
         binding.rowAlleys.setOnClickListener { editAlleys() }
-        binding.rowRequesters.setOnClickListener { editPeople(PeopleEditActivity.LIST_REQUESTERS) }
-        binding.rowManagers.setOnClickListener { editPeople(PeopleEditActivity.LIST_MANAGERS) }
+        binding.rowCustomAlleys.setOnClickListener { editList(PeopleEditActivity.LIST_CUSTOM_ALLEYS) }
+        binding.rowRequesters.setOnClickListener { editList(PeopleEditActivity.LIST_REQUESTERS) }
+        binding.rowManagers.setOnClickListener { editList(PeopleEditActivity.LIST_MANAGERS) }
         binding.resetButton.setOnClickListener { confirmReset() }
     }
 
@@ -44,7 +45,7 @@ class SettingsActivity : AppCompatActivity() {
         refresh()
     }
 
-    private fun editPeople(which: String) {
+    private fun editList(which: String) {
         startActivity(
             Intent(this, PeopleEditActivity::class.java)
                 .putExtra(PeopleEditActivity.EXTRA_LIST, which)
@@ -53,13 +54,13 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun refresh() {
         binding.alleysValue.text = Settings.alleyCount(this).toString()
-        binding.requestersValue.text = peopleSummary(Settings.requesters(this))
-        binding.managersValue.text = peopleSummary(Settings.managers(this))
+        binding.customAlleysValue.text = listSummary(Settings.customAlleys(this))
+        binding.requestersValue.text = listSummary(Settings.requesters(this))
+        binding.managersValue.text = listSummary(Settings.managers(this))
     }
 
-    private fun peopleSummary(people: List<String>): String =
-        if (people.isEmpty()) getString(R.string.settings_people_empty)
-        else getString(R.string.settings_people_count, people.size) + ": " + people.joinToString(", ")
+    private fun listSummary(items: List<String>): String =
+        items.joinToString(", ").ifEmpty { getString(R.string.settings_people_empty) }
 
     private fun editAlleys() {
         val input = EditText(this).apply {

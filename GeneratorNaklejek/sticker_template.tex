@@ -16,13 +16,13 @@
     \raggedright
     {\raggedright \small Nazwa:\par}
     \vspace{0.04cm}
-<BLOCK> if product_name|length <= 9 </BLOCK>
+<BLOCK> if product_name_length <= 9 </BLOCK>
     {\huge \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
-<BLOCK> elif product_name|length <= 20 </BLOCK>
+<BLOCK> elif product_name_length <= 20 </BLOCK>
     {\LARGE \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
-<BLOCK> elif product_name|length <= 35 </BLOCK>
+<BLOCK> elif product_name_length <= 35 </BLOCK>
     {\Large \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
-<BLOCK> elif product_name|length <= 50 </BLOCK>
+<BLOCK> elif product_name_length <= 50 </BLOCK>
     {\large \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
 <BLOCK> else </BLOCK>
     {\normalsize \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}

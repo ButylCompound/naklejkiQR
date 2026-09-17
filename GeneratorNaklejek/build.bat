@@ -37,6 +37,10 @@ echo Kompilowanie wersji GUI (GeneratorNaklejek.exe)...
 .venv\Scripts\pyinstaller.exe --noconfirm --onefile --windowed --name "GeneratorNaklejek" gui.py
 
 echo.
+echo Kompilowanie wersji dla opakowan (GeneratorNaklejek_Paczki.exe)...
+.venv\Scripts\pyinstaller.exe --noconfirm --onefile --windowed --name "GeneratorNaklejek_Paczki" gui_packs.py
+
+echo.
 echo Kompilowanie wersji CLI (GeneratorNaklejek_CLI.exe)...
 .venv\Scripts\pyinstaller.exe --noconfirm --onefile --console --name "GeneratorNaklejek_CLI" main.py
 

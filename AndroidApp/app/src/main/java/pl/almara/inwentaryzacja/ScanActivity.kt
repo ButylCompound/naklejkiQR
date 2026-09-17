@@ -19,8 +19,10 @@ class ScanActivity : BaseScanActivity() {
     private lateinit var sessionId: String
 
     private var scannedCount = 0
-    private var currentAlley = 1
-    private var maxAlley = 1
+    private var rawMaterials = false
+    /** Kolejność wyboru: alejki numeryczne 1..N, potem niestandardowe (np. o1). */
+    private var alleys: List<String> = listOf("1")
+    private var alleyIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,18 +35,23 @@ class ScanActivity : BaseScanActivity() {
             return
         }
         sessionId = id
-        maxAlley = Settings.alleyCount(this)
-        val existing = SessionStore.getSession(this, sessionId)?.items
+        alleys = (1..Settings.alleyCount(this)).map { it.toString() } + Settings.customAlleys(this)
+        val session = SessionStore.getSession(this, sessionId)
+        rawMaterials = session?.type == Session.TYPE_RAW
+        val existing = session?.items
         scannedCount = existing?.size ?: 0
-        currentAlley = (existing?.lastOrNull()?.alley ?: 1).coerceIn(1, maxAlley)
+        alleyIndex = alleys.indexOf(existing?.lastOrNull()?.alley).coerceAtLeast(0)
         updateCounter()
         updateAlley()
 
+        // Zawijanie: w lewo z pierwszej alejki -> ostatnia, w prawo z ostatniej -> pierwsza
         binding.alleyPrevButton.setOnClickListener {
-            if (currentAlley > 1) { currentAlley--; updateAlley() }
+            alleyIndex = (alleyIndex - 1 + alleys.size) % alleys.size
+            updateAlley()
         }
         binding.alleyNextButton.setOnClickListener {
-            if (currentAlley < maxAlley) { currentAlley++; updateAlley() }
+            alleyIndex = (alleyIndex + 1) % alleys.size
+            updateAlley()
         }
         binding.finishButton.setOnClickListener { finishSession() }
 
@@ -52,12 +59,16 @@ class ScanActivity : BaseScanActivity() {
     }
 
     override fun onQr(raw: String) {
-        val item = QrParser.parse(raw, SessionStore.timestamp())?.copy(alley = currentAlley)
+        val item = QrParser.parse(raw, SessionStore.timestamp())?.copy(alley = alleys[alleyIndex])
         if (item == null) {
             showStatus(getString(R.string.status_invalid), R.color.status_error)
             feedback(error = true)
             return
         }
+        if (rawMaterials) promptPallets(item) else addSingle(item)
+    }
+
+    private fun addSingle(item: ScanItem) {
         when (SessionStore.addItem(this, sessionId, item)) {
             SessionStore.AddResult.ADDED -> {
                 scannedCount++
@@ -79,6 +90,45 @@ class ScanActivity : BaseScanActivity() {
         }
     }
 
+    /** Surowce: pytamy o liczbę palet i rozbijamy skan na oddzielne wpisy (1)..(n). */
+    private fun promptPallets(item: ScanItem) {
+        pauseScanning()
+        val base = PalletName.base(item.product)
+        PalletPrompt.show(
+            context = this,
+            base = base,
+            prefill = PalletName.number(item.product) ?: 1,
+            onOk = { count -> addPallets(item, base, count) },
+            onCancel = { resumeScanning() }
+        )
+    }
+
+    private fun addPallets(item: ScanItem, base: String, count: Int) {
+        var added = 0
+        for (entry in PalletExpansion.expand(item, count)) {
+            when (SessionStore.addItem(this, sessionId, entry)) {
+                SessionStore.AddResult.ADDED -> added++
+                SessionStore.AddResult.DUPLICATE -> {}
+                null -> {
+                    showStatus(getString(R.string.status_session_missing), R.color.status_error)
+                    feedback(error = true)
+                    resumeScanning()
+                    return
+                }
+            }
+        }
+        scannedCount += added
+        updateCounter()
+        if (added > 0) {
+            showStatus(getString(R.string.status_pallets_added, base, added), R.color.status_ok)
+            feedback(error = false)
+        } else {
+            showStatus(getString(R.string.status_pallets_dup, base), R.color.status_warn)
+            feedback(error = true)
+        }
+        resumeScanning()
+    }
+
     private fun finishSession() {
         startActivity(
             Intent(this, SessionDetailActivity::class.java)
@@ -92,8 +142,6 @@ class ScanActivity : BaseScanActivity() {
     }
 
     private fun updateAlley() {
-        binding.alleyText.text = getString(R.string.alley_label, currentAlley)
-        binding.alleyPrevButton.isEnabled = currentAlley > 1
-        binding.alleyNextButton.isEnabled = currentAlley < maxAlley
+        binding.alleyText.text = getString(R.string.alley_label, alleys[alleyIndex])
     }
 }

@@ -33,12 +33,19 @@ try:
             print('\t'.join(row))
 except Exception as e:
     print('Błąd Pythona:', e, file=sys.stderr)
+    sys.exit(1)
 ")
 
+if [[ $? -ne 0 ]]; then
+    echo "Błąd: Nie udało się odczytać lub posortować pliku CSV."
+    exit 1
+fi
+
 count=0
+had_error=0
 
 # Odczyt tab-separated output from Python
-echo "$sorted_data" | while IFS=$'\t' read -r nazwa data waga operator kopie; do
+while IFS=$'\t' read -r nazwa data waga operator kopie; do
     if [[ -z "$nazwa" ]]; then continue; fi
     if [[ -z "$kopie" ]]; then kopie=1; fi
     
@@ -47,16 +54,26 @@ echo "$sorted_data" | while IFS=$'\t' read -r nazwa data waga operator kopie; do
         break
     fi
     
-    count=$((count + 1))
+    next_count=$((count + 1))
     echo "=========================================================="
-    echo "Drukowanie [$count]: $nazwa | Waga: $waga kg | Data: $data | Kopie: $kopie"
+    echo "Drukowanie [$next_count]: $nazwa | Waga: $waga kg | Data: $data | Kopie: $kopie"
     
     if [[ -f $exe_path ]]; then
-        ./$exe_path --weight "$waga" --name "$nazwa" --date "$data" --operator "$operator" --copies "$kopie" --printer "ZDesigner ZD421-300dpi ZPL" < /dev/null
+        if ! ./$exe_path --weight "$waga" --name "$nazwa" --date "$data" --operator "$operator" --copies "$kopie" --printer "ZDesigner ZD421-300dpi ZPL" < /dev/null; then
+            echo "Błąd: Nie udało się wydrukować pozycji [$next_count]: $nazwa"
+            had_error=1
+            break
+        fi
     else
         echo "Nie znaleziono pliku .exe, uruchamiam przez Pythona..."
-        .venv/Scripts/python.exe main.py --weight "$waga" --name "$nazwa" --date "$data" --operator "$operator" --copies "$kopie" --printer "ZDesigner ZD421-300dpi ZPL" < /dev/null
+        if ! .venv/Scripts/python.exe main.py --weight "$waga" --name "$nazwa" --date "$data" --operator "$operator" --copies "$kopie" --printer "ZDesigner ZD421-300dpi ZPL" < /dev/null; then
+            echo "Błąd: Nie udało się wydrukować pozycji [$next_count]: $nazwa"
+            had_error=1
+            break
+        fi
     fi
+
+    count=$next_count
     
     if [[ $limit -ne -1 && $count -ge $limit ]]; then
         echo "Wysłano zadanie nr $count (Limit)."
@@ -90,7 +107,12 @@ echo "$sorted_data" | while IFS=$'\t' read -r nazwa data waga operator kopie; do
         
         if [[ $delay -eq 0 ]]; then break; fi
     done
-done
+done <<< "$sorted_data"
 
 echo "=========================================================="
+if [[ $had_error -ne 0 ]]; then
+    echo "Przerwano po błędzie. Pomyślnie wydrukowano etykiety dla $count palet."
+    exit 1
+fi
+
 echo "Zakończono. Wydrukowano etykiety dla $count palet."

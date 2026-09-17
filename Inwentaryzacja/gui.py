@@ -576,7 +576,7 @@ class MainWindow(tk.Tk):
             messagebox.showerror("Błąd", "Plik Excel nie istnieje lub nie został wybrany.")
             return
             
-        confirm = messagebox.askyesno("Potwierdzenie", f"Czy na pewno chcesz zapisać dzisiejszą datę w kolumnie 'data inwentaryzacji' dla {len(matched_rows)} zgodnych palet w pliku oryginalnym?\n\nUWAGA: Zmiany zostaną naniesione bezpośrednio na plik:\n{os.path.basename(excel_path)}")
+        confirm = messagebox.askyesno("Potwierdzenie", f"Czy na pewno chcesz zapisać dzisiejszą datę w kolumnie 'data inwentaryzacji' dla {len(matched_records)} zgodnych palet w pliku oryginalnym?\n\nUWAGA: Zmiany zostaną naniesione bezpośrednio na plik:\n{os.path.basename(excel_path)}")
         if not confirm:
             return
             

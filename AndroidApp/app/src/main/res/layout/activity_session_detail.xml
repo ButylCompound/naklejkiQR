@@ -83,17 +83,43 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <ListView
-            android:id="@+id/itemsList"
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/groupSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingVertical="4dp"
+            android:text="@string/group_by_alley"
+            android:textColor="@color/brand_blue" />
+
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="12dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:divider="@null"
-            android:dividerHeight="0dp"
-            android:paddingBottom="8dp"
-            android:scrollbars="none" />
+            android:layout_marginTop="8dp"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/itemsList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:divider="@null"
+                android:dividerHeight="0dp"
+                android:paddingBottom="8dp"
+                android:scrollbars="none" />
+
+            <ExpandableListView
+                android:id="@+id/itemsGrouped"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:childDivider="@null"
+                android:clipToPadding="false"
+                android:divider="@null"
+                android:groupIndicator="@null"
+                android:paddingBottom="8dp"
+                android:scrollbars="none"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <Button
             android:id="@+id/scanButton"

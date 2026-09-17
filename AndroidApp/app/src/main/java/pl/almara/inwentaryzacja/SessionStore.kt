@@ -38,8 +38,8 @@ object SessionStore {
         return runCatching { fromJson(f.readText()) }.getOrNull()
     }
 
-    fun createSession(context: Context, name: String): Session {
-        val session = Session(UUID.randomUUID().toString(), name, timestamp(), mutableListOf())
+    fun createSession(context: Context, name: String, type: String = Session.TYPE_PRODUCT): Session {
+        val session = Session(UUID.randomUUID().toString(), name, timestamp(), type, mutableListOf())
         save(context, session)
         return session
     }
@@ -81,6 +81,7 @@ object SessionStore {
         o.put("id", s.id)
         o.put("name", s.name)
         o.put("createdAt", s.createdAt)
+        o.put("type", s.type)
         val arr = JSONArray()
         for (item in s.items) arr.put(ItemJson.toJson(item))
         o.put("items", arr)
@@ -92,6 +93,12 @@ object SessionStore {
         val items = mutableListOf<ScanItem>()
         val arr = o.optJSONArray("items") ?: JSONArray()
         for (i in 0 until arr.length()) items.add(ItemJson.fromJson(arr.getJSONObject(i)))
-        return Session(o.getString("id"), o.getString("name"), o.optString("createdAt"), items)
+        return Session(
+            o.getString("id"),
+            o.getString("name"),
+            o.optString("createdAt"),
+            o.optString("type", Session.TYPE_PRODUCT),
+            items
+        )
     }
 }

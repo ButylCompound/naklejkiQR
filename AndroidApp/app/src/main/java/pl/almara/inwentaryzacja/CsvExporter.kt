@@ -25,7 +25,7 @@ object CsvExporter {
         sb.append("Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania\r\n")
         session.items.forEachIndexed { i, item ->
             sb.append(i + 1).append(';')
-                .append(item.alley).append(';')
+                .append(esc(item.alley)).append(';')
                 .append(esc(item.product)).append(';')
                 .append(Format.numberCsv(item.quantity)).append(';')
                 .append(esc(item.unit)).append(';')

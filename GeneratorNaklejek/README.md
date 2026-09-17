@@ -25,23 +25,34 @@ python gui.py
 
 *(On Windows, you can also just double-click `run.bat` which will automatically activate the `.venv` virtual environment and start the GUI).*
 
+### Numbered Packs Interface
+
+For raw-material deliveries consisting of multiple packs, run:
+
+```bash
+python gui_packs.py
+```
+
+On Windows, double-click `run_packs.bat`. This version adds a pack-count field and creates labels named `Product (1)` through `Product (n)`. The copies value applies to every pack, so 12 packs and 6 copies produce 72 stickers. The build script creates this version as `GeneratorNaklejek_Paczki.exe`.
+
 ### Command Line Interface (CLI)
 Run the CLI application using Python:
 
 ```bash
 # Print a sticker for a new product
-python main.py 500 -n "Product XYZ"
+python main.py --weight 500 --name "Product XYZ"
 
 # Print another sticker for the same product, just provide the new weight
-python main.py 520
+python main.py --weight 520
 
 # Run without printing (just generates the PDF for testing)
-python main.py 500 --no-print
+python main.py --weight 500 --no-print
 ```
 
 ### Options:
-*   `weight`: (Required) The weight of the pallet in kg.
+*   `--weight`, `-w`: Required quantity shown on the label.
 *   `--name`, `-n`: The product name. If omitted, the last used product name is pulled from `state.json`.
+*   `--unit`, `-u`: Unit shown on the label (defaults to `kg`).
 *   `--printer`, `-p`: The exact name of your Zebra printer as registered in Windows (defaults to "Zebra ZD421").
 *   `--print` / `--no-print`: Whether to automatically send the PDF to the printer.
 
@@ -49,3 +60,7 @@ python main.py 500 --no-print
 To add a company logo to the sticker:
 1. Place a file named `logo.png` in this directory.
 2. Open `sticker_template.tex` and uncomment the line `% \includegraphics[height=1.2cm]{logo.png} \\[0.2cm]` by removing the `%`.
+
+## Tests
+
+On Windows, run `run_tests.bat`. The suite does not send jobs to a printer. If `pdflatex.exe` is in `PATH`, it also compiles a real label with Polish letters and LaTeX special characters.

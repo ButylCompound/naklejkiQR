@@ -6,7 +6,12 @@ output.pdf
 output.tex
 output.aux
 output.log
+output_pack_*.pdf
+output_pack_*.tex
+output_pack_*.aux
+output_pack_*.log
 current_qr.png
+*_qr.png
 *.pyc
 
 # PyInstaller & Build artifacts

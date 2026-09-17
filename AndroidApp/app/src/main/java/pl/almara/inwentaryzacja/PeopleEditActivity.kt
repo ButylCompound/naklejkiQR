@@ -13,6 +13,7 @@ class PeopleEditActivity : AppCompatActivity() {
         const val EXTRA_LIST = "list"
         const val LIST_REQUESTERS = "requesters"
         const val LIST_MANAGERS = "managers"
+        const val LIST_CUSTOM_ALLEYS = "custom_alleys"
     }
 
     private lateinit var binding: ActivityPeopleEditBinding
@@ -27,7 +28,17 @@ class PeopleEditActivity : AppCompatActivity() {
 
         which = intent.getStringExtra(EXTRA_LIST) ?: run { finish(); return }
         binding.toolbar.title = getString(
-            if (which == LIST_MANAGERS) R.string.settings_managers else R.string.settings_requesters
+            when (which) {
+                LIST_MANAGERS -> R.string.settings_managers
+                LIST_CUSTOM_ALLEYS -> R.string.settings_custom_alleys
+                else -> R.string.settings_requesters
+            }
+        )
+        binding.nameInput.setHint(
+            if (which == LIST_CUSTOM_ALLEYS) R.string.alley_name_hint else R.string.people_name_hint
+        )
+        binding.emptyState.setText(
+            if (which == LIST_CUSTOM_ALLEYS) R.string.alley_empty else R.string.people_empty
         )
         binding.toolbar.setNavigationOnClickListener { finish() }
 
@@ -45,6 +56,10 @@ class PeopleEditActivity : AppCompatActivity() {
     private fun add() {
         val name = binding.nameInput.text.toString().trim()
         if (name.isEmpty()) return
+        if (which == LIST_CUSTOM_ALLEYS && !Settings.isValidCustomAlleyName(name)) {
+            Toast.makeText(this, R.string.alley_numeric_invalid, Toast.LENGTH_SHORT).show()
+            return
+        }
         if (names.any { it.equals(name, ignoreCase = true) }) {
             Toast.makeText(this, R.string.people_duplicate, Toast.LENGTH_SHORT).show()
             return
@@ -57,14 +72,18 @@ class PeopleEditActivity : AppCompatActivity() {
     private fun persist() {
         when (which) {
             LIST_MANAGERS -> Settings.setManagers(this, names)
+            LIST_CUSTOM_ALLEYS -> Settings.setCustomAlleys(this, names)
             else -> Settings.setRequesters(this, names)
         }
         adapter.notifyDataSetChanged()
         refreshEmpty()
     }
 
-    private fun load(): List<String> =
-        if (which == LIST_MANAGERS) Settings.managers(this) else Settings.requesters(this)
+    private fun load(): List<String> = when (which) {
+        LIST_MANAGERS -> Settings.managers(this)
+        LIST_CUSTOM_ALLEYS -> Settings.customAlleys(this)
+        else -> Settings.requesters(this)
+    }
 
     private fun refreshEmpty() {
         binding.emptyState.visibility = if (names.isEmpty()) View.VISIBLE else View.GONE
