@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -402,6 +403,82 @@ class PackModeTests(GeneratorTestCase):
                 with patch.object(generator_gui.messagebox, 'showerror') as show_error:
                     generator_gui.App._process(fake_app, do_print=True)
                 self.assertIn(message, show_error.call_args.args[1])
+
+
+class FactoryModeTests(GeneratorTestCase):
+    @staticmethod
+    def app(date_value):
+        return SimpleNamespace(
+            pack_mode=False,
+            name_var=FakeVar('Product'),
+            weight_var=FakeVar('25'),
+            unit_var=FakeVar('kg'),
+            operator_var=FakeVar('QC'),
+            date_var=FakeVar(date_value),
+            copies_var=FakeVar('1'),
+            printer_var=FakeVar('Zebra'),
+            status_var=FakeVar('Gotowy.'),
+            state={},
+            root=SimpleNamespace(update_idletasks=lambda: None),
+            weight_entry=SimpleNamespace(focus=lambda: None),
+        )
+
+    def test_date_and_time_are_required(self):
+        fake_app = self.app('')
+        with (
+            patch.object(generator_gui.messagebox, 'showerror') as show_error,
+            patch.object(generator_gui, 'generate_pdf') as generate,
+        ):
+            generator_gui.App._process(fake_app, do_print=False)
+
+        self.assertIn('Data i czas są wymagane', show_error.call_args.args[1])
+        generate.assert_not_called()
+
+    def test_empty_quantity_error_is_polish(self):
+        fake_app = self.app('2026-09-17 08:00')
+        fake_app.weight_var = FakeVar('')
+        with (
+            patch.object(generator_gui.messagebox, 'showerror') as show_error,
+            patch.object(generator_gui, 'generate_pdf') as generate,
+        ):
+            generator_gui.App._process(fake_app, do_print=False)
+
+        self.assertEqual(show_error.call_args.args[1], 'Ilość netto jest wymagana!')
+        generate.assert_not_called()
+
+    def test_shared_errors_are_translated_for_the_gui(self):
+        cases = [
+            ('Product name is required.', 'Nazwa produktu jest wymagana.'),
+            ('Quantity must be greater than zero.', 'Ilość netto musi być większa od zera.'),
+            ('Date must use the format YYYY-MM-DD HH:MM or YYYY-MM-DD HH:MM:SS.', 'Data i czas muszą mieć format RRRR-MM-DD GG:MM.'),
+            ("The product name cannot contain the '|' character because it is reserved as the QR field separator.", 'Nazwa produktu nie może zawierać znaku „|”, ponieważ oddziela on pola kodu QR.'),
+            ("Template file 'missing.tex' was not found.", 'Nie znaleziono pliku szablonu „missing.tex”.'),
+            ("Neither 'pdflatex.exe' nor 'pdflatex' could be run from PATH.", 'Nie można uruchomić programu pdflatex. Sprawdź, czy jest dostępny w zmiennej PATH.'),
+            ('Błąd drukowania (Windows): returned non-zero exit status 1', 'Nie udało się wysłać pliku PDF do drukarki w systemie Windows.'),
+        ]
+
+        for message, expected in cases:
+            with self.subTest(message=message):
+                self.assertEqual(generator_gui.polish_error_message(Exception(message)), expected)
+
+    def test_only_today_and_yesterday_avoid_warning(self):
+        today = date(2026, 9, 17)
+
+        self.assertFalse(generator_gui.factory_date_needs_warning('2026-09-17 08:00', today))
+        self.assertFalse(generator_gui.factory_date_needs_warning('2026-09-16 23:59', today))
+        self.assertTrue(generator_gui.factory_date_needs_warning('2026-09-15 23:59', today))
+        self.assertTrue(generator_gui.factory_date_needs_warning('2026-09-18 00:00', today))
+
+    def test_unusual_date_requires_confirmation(self):
+        fake_app = self.app('2000-01-01 08:00')
+        with (
+            patch.object(generator_gui.messagebox, 'askyesno', return_value=False) as confirm,
+            patch.object(generator_gui, 'generate_pdf') as generate,
+        ):
+            generator_gui.App._process(fake_app, do_print=False)
+
+        self.assertIn('nie jest dzisiejsza ani wczorajsza', confirm.call_args.args[1])
+        generate.assert_not_called()
 
 
 class PrintingTests(GeneratorTestCase):

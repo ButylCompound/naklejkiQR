@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import datetime, timedelta
 import json
 import os
 import subprocess
@@ -22,6 +23,56 @@ def load_state():
 def save_state(state):
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
+
+def factory_date_needs_warning(label_date, today=None):
+    today = today or datetime.now().date()
+    entered_date = datetime.strptime(label_date, "%Y-%m-%d %H:%M").date()
+    return entered_date not in (today, today - timedelta(days=1))
+
+def polish_error_message(error):
+    message = str(error)
+    translations = {
+        'Product name is required.': 'Nazwa produktu jest wymagana.',
+        'Product name cannot contain line breaks or tabs.': 'Nazwa produktu nie może zawierać nowych wierszy ani tabulatorów.',
+        'Quantity must be a number, for example 500 or 123.5.': 'Ilość netto musi być liczbą, na przykład 500 lub 123,5.',
+        'Quantity must be greater than zero.': 'Ilość netto musi być większa od zera.',
+        "Unit must be 'kg', 'szt.' or empty.": "Jednostką musi być „kg” lub „szt.”.",
+        'Operator initials must contain 2 or 3 characters, or be empty.': 'Inicjały operatora muszą mieć 2 lub 3 znaki albo pozostać puste.',
+        'Operator initials cannot contain line breaks or tabs.': 'Inicjały operatora nie mogą zawierać nowych wierszy ani tabulatorów.',
+        'Date must use the format YYYY-MM-DD HH:MM or YYYY-MM-DD HH:MM:SS.': 'Data i czas muszą mieć format RRRR-MM-DD GG:MM.',
+        'Pack count must be a positive integer.': 'Liczba opakowań musi być dodatnią liczbą całkowitą.',
+    }
+    if message in translations:
+        return translations[message]
+
+    qr_fields = {
+        'product name': 'Nazwa produktu',
+        'quantity': 'Ilość netto',
+        'unit': 'Jednostka',
+        'operator': 'Inicjały operatora',
+    }
+    for english_name, polish_name in qr_fields.items():
+        if message.startswith(f'The {english_name} cannot contain'):
+            return f"{polish_name} nie może zawierać znaku „|”, ponieważ oddziela on pola kodu QR."
+
+    if message.startswith("Template file '"):
+        template_name = message.split("'", 2)[1]
+        if message.endswith(' was not found.'):
+            return f'Nie znaleziono pliku szablonu „{template_name}”.'
+        return f'Plik szablonu „{template_name}” jest nieprawidłowy.'
+    if message.startswith("Neither 'pdflatex.exe'"):
+        return 'Nie można uruchomić programu pdflatex. Sprawdź, czy jest dostępny w zmiennej PATH.'
+    if message.startswith('pdflatex failed while compiling'):
+        return 'Nie udało się utworzyć pliku PDF etykiety.'
+    if message.startswith('pdflatex did not create the expected PDF file'):
+        return 'Program pdflatex nie utworzył oczekiwanego pliku PDF.'
+    if message.startswith('Błąd drukowania (Windows):'):
+        return 'Nie udało się wysłać pliku PDF do drukarki w systemie Windows.'
+    if message.startswith('Błąd drukowania z WSL:'):
+        return 'Nie udało się wysłać pliku PDF do drukarki z WSL.'
+    if message.startswith(('Błąd ', 'Automatyczne ')):
+        return message
+    return 'Wystąpił nieoczekiwany błąd.'
 
 def get_printers():
     printers = ["Zebra ZD421"]
@@ -135,7 +186,12 @@ class App:
         self.operator_entry = ttk.Entry(root, textvariable=self.operator_var, font=('Segoe UI', 12), validate='key', validatecommand=vcmd_operator)
         self.operator_entry.pack(fill="x", pady=(0, 15))
         
-        ttk.Label(root, text="Własna data (opcjonalnie, format YYYY-MM-DD HH:MM):").pack(anchor="w", pady=(0, 5))
+        date_label = (
+            "Własna data (opcjonalnie, format YYYY-MM-DD HH:MM):"
+            if self.pack_mode
+            else "Data i czas (wymagane, format YYYY-MM-DD HH:MM):"
+        )
+        ttk.Label(root, text=date_label).pack(anchor="w", pady=(0, 5))
         self.date_var = tk.StringVar()
         self.date_entry = ttk.Entry(root, textvariable=self.date_var, font=('Segoe UI', 12))
         self.date_entry.pack(fill="x", pady=(0, 15))
@@ -198,6 +254,13 @@ class App:
         unit = self.unit_var.get()
         operator = self.operator_var.get().strip()
         date_override = self.date_var.get().strip()
+
+        if not self.pack_mode and not date_override:
+            messagebox.showerror("Błąd", "Data i czas są wymagane!")
+            return
+        if not weight:
+            messagebox.showerror("Błąd", "Ilość netto jest wymagana!")
+            return
         
         try:
             prod_name, weight, unit, operator = validate_label_input(
@@ -208,7 +271,7 @@ class App:
             )
             label_date = normalize_label_date(date_override)
         except ValueError as error:
-            messagebox.showerror("Błąd", str(error))
+            messagebox.showerror("Błąd", polish_error_message(error))
             return
             
         try:
@@ -227,6 +290,15 @@ class App:
                     raise ValueError()
             except ValueError:
                 messagebox.showerror("Błąd", "Liczba opakowań musi być dodatnią liczbą całkowitą!")
+                return
+
+        if not self.pack_mode and factory_date_needs_warning(label_date):
+            confirmed = messagebox.askyesno(
+                "Ostrzeżenie",
+                f"Wprowadzona data ({label_date[:10]}) nie jest dzisiejsza ani wczorajsza.\n\n"
+                "Czy chcesz kontynuować?",
+            )
+            if not confirmed:
                 return
 
         label_names = numbered_pack_names(prod_name, pack_count) if self.pack_mode else [prod_name]
@@ -320,7 +392,7 @@ class App:
                 self.status_var.set(f"Błąd po wydrukowaniu {printed_count}/{total_labels} naklejek.")
             else:
                 self.status_var.set("Wystąpił błąd.")
-            messagebox.showerror("Błąd", str(e))
+            messagebox.showerror("Błąd", polish_error_message(e))
             
     def on_print(self):
         self._process(do_print=True)
