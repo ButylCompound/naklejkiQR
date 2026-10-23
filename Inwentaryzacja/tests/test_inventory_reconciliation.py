@@ -12,6 +12,31 @@ from reconciliation import reconcile_inventory
 
 
 class PalletReconciliationTests(unittest.TestCase):
+    def test_ids_are_display_only_and_keep_leading_zeroes(self):
+        self.write_excel([
+            self.expected('Matched', 100),
+            self.expected('Missing', 200),
+        ])
+        rows = [
+            self.scan('Matched', 100),
+            self.scan('Matched', 100, number=2),
+            self.scan('Unknown', 50, number=3),
+        ]
+        self.write_csv(rows)
+        legacy = reconcile_inventory(self.excel_path, self.csv_path)
+        for row, label_id in zip(rows, ['00000001', '00000002', '']):
+            row['ID'] = label_id
+        self.write_csv(rows)
+        recent = reconcile_inventory(self.excel_path, self.csv_path)
+
+        self.assertEqual(recent['summary'], legacy['summary'])
+        self.assertEqual([r['ID'] for r in recent['records']], ['00000001', '00000002', '', ''])
+        self.assertTrue(all(r['ID'] == '' for r in legacy['records']))
+        self.assertEqual(
+            [{k: v for k, v in r.items() if k != 'ID'} for r in recent['records']],
+            [{k: v for k, v in r.items() if k != 'ID'} for r in legacy['records']],
+        )
+
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)

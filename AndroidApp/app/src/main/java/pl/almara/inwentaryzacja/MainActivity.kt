@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import pl.almara.inwentaryzacja.databinding.ActivityMainBinding
 import pl.almara.inwentaryzacja.databinding.DialogNewSessionBinding
@@ -53,25 +54,35 @@ class MainActivity : AppCompatActivity() {
             R.string.default_session_name,
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         )
-        val dialog = DialogNewSessionBinding.inflate(layoutInflater).apply {
+        val form = DialogNewSessionBinding.inflate(layoutInflater).apply {
             sessionNameInput.setText(defaultName)
             sessionNameInput.setSelectAllOnFocus(true)
         }
-        MaterialAlertDialogBuilder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(R.string.new_session)
-            .setView(dialog.root)
-            .setPositiveButton(R.string.start) { _, _ ->
-                val name = dialog.sessionNameInput.text.toString().trim().ifEmpty { defaultName }
-                val type = if (dialog.sessionTypeGroup.checkedRadioButtonId == R.id.typeRaw)
+            .setView(form.root)
+            .setPositiveButton(R.string.start, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+        form.sessionNameInput.doAfterTextChanged { form.sessionNameInput.error = null }
+        dialog.setOnShowListener {
+            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                val name = form.sessionNameInput.text.toString().trim().ifEmpty { defaultName }
+                val type = if (form.sessionTypeGroup.checkedRadioButtonId == R.id.typeRaw)
                     Session.TYPE_RAW else Session.TYPE_PRODUCT
                 val session = SessionStore.createSession(this, name, type)
+                if (session == null) {
+                    form.sessionNameInput.error = getString(R.string.session_name_exists)
+                    return@setOnClickListener
+                }
+                dialog.dismiss()
                 startActivity(
                     Intent(this, ScanActivity::class.java)
                         .putExtra(ScanActivity.EXTRA_SESSION_ID, session.id)
                 )
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        }
+        dialog.show()
     }
 
     private fun confirmDelete(session: Session) {

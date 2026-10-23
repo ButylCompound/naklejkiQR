@@ -1,5 +1,6 @@
 import os
 import errno
+import secrets
 import subprocess
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from label_utils import escape_latex, normalize_label_date, validate_label_input
 
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
+LABEL_SIZES = ('100 × 60 mm', '100 × 150 mm')
 
 
 class TemplateError(RuntimeError):
@@ -55,6 +57,7 @@ def generate_pdf(
     unit='kg',
     output_stem='output',
     template_file='sticker_template.tex',
+    label_size=LABEL_SIZES[0],
 ):
     product_name, weight, unit, operator = validate_label_input(
         product_name,
@@ -63,9 +66,8 @@ def generate_pdf(
         operator,
     )
     label_date = normalize_label_date(date_override)
-    qr_data = f'{product_name} | {weight} {unit} | {label_date}'
-    if operator:
-        qr_data += f' | {operator}'
+    label_id = secrets.token_urlsafe(6)
+    qr_data = f'{product_name} | {weight} {unit} | {label_date} | {operator} | {label_id}'
 
     qr_path = Path(f'{output_stem}_qr.png')
     qr = qrcode.QRCode(version=1, box_size=10, border=0)
@@ -99,6 +101,23 @@ def generate_pdf(
     except jinja2.TemplateError as error:
         raise TemplateError(f"Template file '{template_file}' is invalid: {error}") from error
 
+    if label_size == LABEL_SIZES[1]:
+        design_pdf = compile_pdf(tex_content, f'{output_stem}_design')
+        tex_content = (
+            r'\documentclass{article}' '\n'
+            r'\usepackage{graphicx}' '\n'
+            r'\begin{document}' '\n'
+            r'\pdfpagewidth=100mm\pdfpageheight=150mm' '\n'
+            r'\pdfhorigin=0pt\pdfvorigin=0pt' '\n'
+            r'\shipout\hbox{\hskip5mm'
+            r'\includegraphics[angle=90,height=150mm]{'
+            + Path(design_pdf).name + '}}\n'
+            r'\end{document}' '\n'
+        )
+    return compile_pdf(tex_content, output_stem)
+
+
+def compile_pdf(tex_content, output_stem):
     tex_path = Path(f'{output_stem}.tex')
     pdf_path = Path(f'{output_stem}.pdf')
     tex_path.write_text(tex_content, encoding='utf-8')

@@ -1,91 +1,72 @@
 package pl.almara.inwentaryzacja
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PalletExpansionTest {
+    private fun sticker(product: String = "MAT (1)", quantity: String = "100 kg", date: String = "2026-10-16 08:00") =
+        QrParser.parse("$product | $quantity | $date | QC | aB3dE_fG", "2026-10-16 09:00:00")!!
 
-    private fun sticker(
-        product: String,
-        qty: Double = 500.0,
-        date: String = "2026-01-01 01:01:01",
-        scannedAt: String = "2026-09-02 10:00:00"
-    ) = ScanItem(product, qty, "kg", date, scannedAt, "", "qr:$product", "1")
+    @Test
+    fun fiveThenThreeAddsEightPallets() {
+        val first = PalletExpansion.expand(sticker(), 5)
+        val more = PalletExpansion.expand(sticker("MAT (7)"), 3, first)
+        assertEquals((1..8).map { "MAT ($it)" }, (first + more).map { it.product })
+        assertEquals("800 kg", Format.totals(first + more))
+        assertEquals(5, PalletExpansion.matching(sticker(), first).size)
+    }
 
-    /** Odwzorowanie deduplikacji SessionStore.addItem (po polu raw). Zwraca liczbę dodanych. */
-    private fun addAll(session: MutableList<ScanItem>, entries: List<ScanItem>): Int {
-        var added = 0
-        for (e in entries) if (session.none { it.raw == e.raw }) {
-            session.add(e)
-            added++
+    @Test
+    fun addingContinuesAfterTheLargestRemainingNumberFollowingDeletion() {
+        val first = PalletExpansion.expand(sticker(), 5).filterNot { it.product == "MAT (2)" }
+        val more = PalletExpansion.expand(sticker(), 3, first)
+        assertEquals(listOf("MAT (6)", "MAT (7)", "MAT (8)"), more.map { it.product })
+        assertEquals(7, (first + more).map { it.key }.toSet().size)
+    }
+
+    @Test
+    fun addedPalletsUseTheCurrentAlleyAndIdWithoutChangingExistingEntries() {
+        val first = PalletExpansion.expand(sticker().copy(alley = "1", labelId = "00000001"), 5)
+        val more = PalletExpansion.expand(sticker().copy(alley = "2", labelId = "00000002"), 3, first)
+        assertTrue(first.all { it.alley == "1" && it.labelId == "00000001" })
+        assertTrue(more.all { it.alley == "2" && it.labelId == "00000002" })
+        assertEquals(listOf("MAT (6)", "MAT (7)", "MAT (8)"), more.map { it.product })
+    }
+
+    @Test
+    fun differentPackingQuantitiesUnitsDatesAndInitialsHaveSeparateCounts() {
+        val source = sticker()
+        val first = PalletExpansion.expand(source, 5)
+        for (other in listOf(
+            sticker(quantity = "200 kg"),
+            sticker(quantity = "100 szt."),
+            sticker(date = "2026-10-17 08:00"),
+            source.copy(initials = "AB"),
+            sticker(product = "OTHER (1)")
+        )) {
+            assertTrue(PalletExpansion.matching(other, first).isEmpty())
+            assertEquals(PalletName.numbered(PalletName.base(other.product), 1),
+                PalletExpansion.expand(other, 1, first).single().product)
         }
-        return added
     }
 
     @Test
-    fun expandNumbersEntriesAndReplicatesScanData() {
-        val entries = PalletExpansion.expand(sticker("MATERIAL XYZ-123 (3)", qty = 250.0), 3)
-        assertEquals(
-            listOf("MATERIAL XYZ-123 (1)", "MATERIAL XYZ-123 (2)", "MATERIAL XYZ-123 (3)"),
-            entries.map { it.product }
-        )
-        // waga, jednostka i data takie same dla wszystkich palet z tego skanu
-        assertEquals(listOf(250.0, 250.0, 250.0), entries.map { it.quantity })
-        assertEquals(setOf("2026-01-01 01:01:01"), entries.map { it.labelDate }.toSet())
+    fun oldLabelsNewIdsAndUnitAliasesBelongToTheSameDelivery() {
+        val old = QrParser.parse("MAT (3) | 100 kg | 2026-10-16 08:00 | QC", "now")!!
+        val first = PalletExpansion.expand(old, 5)
+        val recent = sticker(quantity = "100 KG").copy(labelId = "00000002")
+        assertEquals(5, PalletExpansion.matching(recent, first).size)
+        val more = PalletExpansion.expand(recent, 3, first)
+        assertEquals("MAT (6)", more.first().product)
+        assertTrue(more.all { it.labelId == "00000002" && it.unit == "kg" })
     }
 
     @Test
-    fun rescanningSameStickerAddsNothing() {
-        val session = mutableListOf<ScanItem>()
-        val s = sticker("MATERIAL XYZ-123 (3)")
-        assertEquals(12, addAll(session, PalletExpansion.expand(s, 12)))
-        // ten sam skan ponownie (inny czas skanu nie ma znaczenia)
-        val again = sticker("MATERIAL XYZ-123 (3)", scannedAt = "2026-09-02 11:30:00")
-        assertEquals(0, addAll(session, PalletExpansion.expand(again, 12)))
-        assertEquals(12, session.size)
-    }
-
-    @Test
-    fun rescanningDifferentStickerFromSameSeriesAddsNothing() {
-        val session = mutableListOf<ScanItem>()
-        assertEquals(12, addAll(session, PalletExpansion.expand(sticker("MATERIAL XYZ-123 (3)"), 12)))
-        // inny numer na naklejce, ta sama seria (baza + waga + data) -> te same klucze
-        assertEquals(0, addAll(session, PalletExpansion.expand(sticker("MATERIAL XYZ-123 (7)"), 12)))
-        assertEquals(12, session.size)
-    }
-
-    @Test
-    fun rescanningWithSameCountAddsNothing() {
-        val session = mutableListOf<ScanItem>()
-        addAll(session, PalletExpansion.expand(sticker("MAT (5)"), 12))
-        assertEquals(0, addAll(session, PalletExpansion.expand(sticker("MAT (5)"), 12)))
-        assertEquals(12, session.size)
-    }
-
-    @Test
-    fun rescanningWithFewerPalletsRemovesNothing() {
-        val session = mutableListOf<ScanItem>()
-        addAll(session, PalletExpansion.expand(sticker("MAT (5)"), 12))
-        // mniejsza liczba nie usuwa nadmiarowych wpisów (6..12 zostają)
-        assertEquals(0, addAll(session, PalletExpansion.expand(sticker("MAT (5)"), 5)))
-        assertEquals(12, session.size)
-    }
-
-    @Test
-    fun rescanningWithMorePalletsAddsOnlyNewOnes() {
-        val session = mutableListOf<ScanItem>()
-        addAll(session, PalletExpansion.expand(sticker("MAT (5)"), 12))
-        assertEquals(3, addAll(session, PalletExpansion.expand(sticker("MAT (5)"), 15)))
-        assertEquals(15, session.size)
-        assertEquals((1..15).map { "MAT ($it)" }.toSet(), session.map { it.product }.toSet())
-    }
-
-    @Test
-    fun differentWeightIsTreatedAsSeparateSeries() {
-        val session = mutableListOf<ScanItem>()
-        addAll(session, PalletExpansion.expand(sticker("MAT (1)", qty = 500.0), 3))
-        // ta sama nazwa, inna waga -> inne klucze -> osobne wpisy
-        assertEquals(3, addAll(session, PalletExpansion.expand(sticker("MAT (1)", qty = 600.0), 3)))
-        assertEquals(6, session.size)
+    fun idsDoNotChangePalletKeys() {
+        val source = sticker()
+        val withId = PalletExpansion.expand(source, 2)
+        val withoutId = PalletExpansion.expand(source.copy(labelId = ""), 2)
+        assertEquals(withoutId.map { it.key }, withId.map { it.key })
     }
 }

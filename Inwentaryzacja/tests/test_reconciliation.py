@@ -16,6 +16,96 @@ from reconciliation import reconcile_raw_materials
 
 
 class RawMaterialsMatchingTests(unittest.TestCase):
+    def compare_units(self, expected, rows):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            excel_path = Path(temp_dir) / 'expected.xlsx'
+            csv_path = Path(temp_dir) / 'scans.csv'
+            self._write_expected(excel_path, expected)
+            pd.DataFrame(rows).to_csv(csv_path, sep=';', index=False)
+            return reconcile_raw_materials(excel_path, csv_path)
+
+    def test_mixed_units_cannot_be_added_into_a_false_excel_match(self):
+        result = self.compare_units([('Material', 520)], [
+            {'Lp': 1, 'Produkt': 'Material (1)', 'Ilość': 500, 'Jednostka': 'kg', 'ID': '00000001'},
+            {'Lp': 2, 'Produkt': 'Material (2)', 'Ilość': 20, 'Jednostka': 'szt.', 'ID': '00000002'},
+        ])
+        record = result['records'][0]
+        self.assertEqual(record['Kategoria'], 'weryfikacja')
+        self.assertEqual(record['Zeskanowana Ilość'], '500 kg, 20 szt.')
+        self.assertEqual(record['Różnica'], '')
+        self.assertEqual(record['ID'], '00000001, 00000002')
+        self.assertEqual(result['summary']['matched_groups'], 0)
+        self.assertEqual(result['summary']['review_groups'], 1)
+        self.assertEqual(result['summary']['total_scanned'], '500 kg, 20 szt.')
+
+    def test_unit_aliases_do_not_create_false_mixed_unit_warnings(self):
+        for variants, unit in [(('kg', ' KG '), 'kg'), (('szt.', 'SZT'), 'szt.')]:
+            with self.subTest(unit=unit):
+                result = self.compare_units([('Material', 30)], [
+                    {'Lp': 1, 'Produkt': 'Material', 'Ilość': 10, 'Jednostka': variants[0]},
+                    {'Lp': 2, 'Produkt': 'Material', 'Ilość': 20, 'Jednostka': variants[1]},
+                ])
+                self.assertEqual(result['records'][0]['Kategoria'], 'zgodne')
+                self.assertEqual(result['records'][0]['Jednostka'], unit)
+                self.assertEqual(result['summary']['review_groups'], 0)
+
+    def test_different_materials_with_different_units_compare_separately(self):
+        result = self.compare_units([('Weight Material', 500), ('Piece Material', 20)], [
+            {'Lp': 1, 'Produkt': 'Weight Material', 'Ilość': 500, 'Jednostka': 'kg'},
+            {'Lp': 2, 'Produkt': 'Piece Material', 'Ilość': 20, 'Jednostka': 'szt.'},
+        ])
+        self.assertEqual(result['summary']['matched_groups'], 2)
+        self.assertEqual(result['summary']['review_groups'], 0)
+        self.assertEqual(result['summary']['total_scanned'], '500 kg, 20 szt.')
+
+    def test_units_embedded_in_quantities_are_also_kept_separate(self):
+        result = self.compare_units([('Material', 30)], [
+            {'Lp': 1, 'Produkt': 'Material', 'Ilość': '10 kg'},
+            {'Lp': 2, 'Produkt': 'Material', 'Ilość': '20 szt'},
+        ])
+        self.assertEqual(result['records'][0]['Kategoria'], 'weryfikacja')
+        self.assertEqual(result['records'][0]['Zeskanowana Ilość'], '10 kg, 20 szt.')
+
+    def test_unknown_materials_and_missing_units_cannot_hide_mixed_quantities(self):
+        for name, units in [('ZZZZ', ('kg', 'szt.')), ('Material', ('kg', ''))]:
+            with self.subTest(name=name):
+                result = self.compare_units([('Material', 30)], [
+                    {'Lp': 1, 'Produkt': name, 'Ilość': 10, 'Jednostka': units[0]},
+                    {'Lp': 2, 'Produkt': name, 'Ilość': 20, 'Jednostka': units[1]},
+                ])
+                self.assertEqual(result['summary']['review_groups'], 1)
+                review = next(r for r in result['records'] if r['Kategoria'] == 'weryfikacja')
+                self.assertEqual(review['Różnica'], '')
+
+    def test_ids_are_shown_for_exact_fuzzy_and_unknown_groups_without_affecting_matching(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            excel_path = Path(temp_dir) / 'expected.xlsx'
+            csv_path = Path(temp_dir) / 'scans.csv'
+            self._write_expected(excel_path, [('Raw Material', 30), ('Missing', 5)])
+            rows = [
+                {'Lp': 1, 'Produkt': 'Raw Material', 'Ilość': 10},
+                {'Lp': 2, 'Produkt': 'Raw Material (2)', 'Ilość': 20},
+                {'Lp': 3, 'Produkt': 'ZZZZ', 'Ilość': 2},
+                {'Lp': 4, 'Produkt': 'ZZZZ', 'Ilość': 3},
+                {'Lp': 5, 'Produkt': 'ZZZZ', 'Ilość': 1},
+            ]
+            pd.DataFrame(rows).to_csv(csv_path, sep=';', index=False)
+            legacy = reconcile_raw_materials(excel_path, csv_path)
+            for row, label_id in zip(rows, ['00000001', '00000002', 'aB3dE_fG', 'aB3dE_fG', '']):
+                row['ID'] = label_id
+            pd.DataFrame(rows).to_csv(csv_path, sep=';', index=False)
+            recent = reconcile_raw_materials(excel_path, csv_path)
+            records = {r['Produkt']: r for r in recent['records']}
+
+            self.assertEqual(records['Raw Material']['ID'], '00000001, 00000002')
+            self.assertEqual(records['ZZZZ (Brak w bazie)']['ID'], 'aB3dE_fG')
+            self.assertEqual(records['Missing']['ID'], '')
+            self.assertEqual(recent['summary'], legacy['summary'])
+            self.assertEqual(
+                [{k: v for k, v in r.items() if k != 'ID'} for r in recent['records']],
+                [{k: v for k, v in r.items() if k != 'ID'} for r in legacy['records']],
+            )
+
     def _write_expected(self, path, items):
         workbook = Workbook()
         sheet = workbook.active
@@ -111,6 +201,7 @@ class RawMaterialsMatchingTests(unittest.TestCase):
                 'matched_groups': 1,
                 'missing_groups': 1,
                 'surplus_groups': 2,
+                'review_groups': 0,
             })
             self.assertEqual(records['Matched']['Kategoria'], 'zgodne')
             self.assertEqual(records['Missing']['Różnica'], -30)

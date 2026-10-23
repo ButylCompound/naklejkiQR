@@ -14,16 +14,18 @@ object ItemJson {
         put("initials", item.initials)
         put("raw", item.raw)
         put("alley", item.alley)
+        put("labelId", item.labelId)
     }
 
     fun fromJson(o: JSONObject): ScanItem = ScanItem(
         product = o.getString("product"),
         quantity = o.optDouble("quantity", o.optDouble("weightKg", 0.0)),
-        unit = o.optString("unit", "kg"),
+        unit = Units.normalize(o.optString("unit", "kg")),
         labelDate = o.optString("labelDate"),
         scannedAt = o.optString("scannedAt"),
         initials = o.optString("initials"),
         raw = o.optString("raw"),
-        alley = o.optString("alley", "1")
+        alley = o.optString("alley", "1"),
+        labelId = o.optString("labelId")
     )
 }

@@ -4,10 +4,10 @@ Android app for warehouse operators: scan pallet QR stickers (printed by `Genera
 
 ## How it works (operator's view, UI is in Polish)
 
-1. **Nowa sesja** — start a new inventory session (name defaults to `Inwentaryzacja <date>`).
+1. **Nowa sesja** — start a new inventory session (name defaults to `Inwentaryzacja <date>`). Names must be unique across product and raw-material sessions; letter case and extra spaces do not distinguish names. A duplicate name leaves the dialog open with an error.
 2. Point the camera at a sticker. The app scans automatically — no button press:
    - 🟢 **OK: <product> (<weight> kg)** — recorded, with a beep + short vibration.
-   - 🟠 **Już zeskanowano!** — this exact QR code is already in the session; it is not added again (error tone + long vibration). Note: stickers printed as *copies* share the same QR code, so each pallet needs its own individually printed sticker to be countable.
+   - 🟠 **Już zeskanowano!** — in product sessions, the same product, quantity, unit, label date, and initials are already recorded. The display ID does not distinguish duplicates.
    - 🔴 **Nieprawidłowy kod QR** — QR found but not in the expected `Nazwa | 500kg | data` format.
    - After every read there is a **2-second cooldown** before the next scan.
 3. **Zakończ** — shows the session summary (pallet list, count, total weight).
@@ -15,22 +15,34 @@ Android app for warehouse operators: scan pallet QR stickers (printed by `Genera
    - **Wyślij CSV** — opens the Android share sheet; pick Outlook/Gmail to e-mail it, or OneDrive/Teams to upload to SharePoint. The file is handed to the chosen app, which uploads whenever connectivity is available.
    - **Zapisz CSV** — save the file to a folder on the phone (e.g. a OneDrive-synced folder). A notification confirms the save; tapping it opens the file (on Android 13+ the first save asks for notification permission).
 
-Sessions are stored on the device (app-private storage) and survive app restarts and offline periods. Data is only removed when you delete a session (long-press it on the list, or the **Usuń sesję** button).
+Sessions are stored on the device (app-private storage) and survive app restarts and offline periods. Inventory and RW saves use Android's atomic file replacement, retaining the last complete file if a write is interrupted. A bulk pallet addition saves the whole batch once. Data is only removed when you delete a session (long-press it on the list, or the **Usuń sesję** button). Each shared CSV uses its own file path so later exports cannot overwrite an earlier attachment.
+
+In raw-material sessions, each scan asks **Ile palet dodać (1–999)?** The dialog shows the label date, quantity per pallet, number already recorded for that delivery and packing quantity, and the total after adding. The input starts at 1, accepts up to three digits, and always means additional pallets: record 5, then enter 3 to reach 8. New pallets use the current alley; earlier entries keep their locations. Pallet numbering continues after the largest remaining number. Different quantities per pallet, units, label dates, or initials have separate counts; label IDs do not affect these counts.
+
+Units `KG`/`kg` and `szt`/`szt.` use the common forms `kg` and `szt.`. The same material and date can have both `500 kg` and `20 szt.` entries. They remain separate in duplicate checks, totals, and CSV exports. Label quantity always means quantity per pallet: three pallets labelled `100 szt.` give `300 szt.`.
+
+To delete scan entries, long-press a row to select it, tap other rows to select or deselect them, then tap the trash icon and confirm once. Back exits selection mode. Selection works in the plain and alley-grouped inventory lists and in editable RW documents; finalized RW documents stay locked. Outside selection mode, tapping an RW row edits its issued quantity.
+
+RW PDFs show the full label date and time on separate lines and wrap product names without shortening them. Rows continue onto another A4 page when needed; the document and table headers repeat, and signatures appear on the last page. A product name that spans pages continues under the same row number, marked `cd.`, without repeating the issued quantity.
 
 ### QR payload contract
 
-Same format as the desktop tools: `ALBU T4D | 500kg | 2026-07-07 10:00:00 | XX` (name | weight | print date | operator initials). All four segments are required and the date must be a valid `yyyy-MM-dd HH:mm:ss` or `yyyy-MM-dd HH:mm` timestamp (older stickers without seconds are accepted and normalized to `:00` when stored/reported) — anything else is rejected as **Nieprawidłowy kod QR**. Weight accepts `,` or `.` decimals.
+New labels use `ALBU T4D | 500 kg | 2026-07-07 10:00 | XX | aB3dE_fG` (name | quantity and unit | date | operator initials | ID). The ID has 8 URL-safe characters (`A–Z`, `a–z`, `0–9`, `_`, `-`); the initials field may be empty. Older labels with three or four fields and no ID are also accepted. Dates must be valid `yyyy-MM-dd HH:mm:ss` or `yyyy-MM-dd HH:mm` timestamps and are stored/reported with seconds. Quantities must be finite and greater than zero. They accept `,` or `.` decimals, including `.5`, `12.`, and scientific notation such as `1e3`. Units accept any letter case of `kg`, `szt`, or `szt.` and normalize to `kg` or `szt.`; a missing unit means `kg`. Unknown units are rejected.
+
+IDs persist with scans and appear in CSV reports. They are display-only: duplicate checks, RW item updates, raw-material pallet expansion keys, and desktop Excel comparisons ignore them. Older scans have a blank ID. The desktop inventory app shows IDs in both tabs and includes them in exported tables; grouped raw materials list their distinct scanned IDs together.
+
+The desktop raw-material comparison keeps scanned quantities separate by unit. If one material has several units, it shows the amounts with their units, leaves the difference blank, and marks the row **Do sprawdzenia** rather than adding kilograms to pieces. This review state has its own count and filter. The Excel source does not supply a unit conversion, so these rows require review against Excel.
 
 ### CSV format
 
 Semicolon-separated, UTF-8 with BOM, decimal comma — opens correctly in Polish Excel:
 
 ```
-Lp;Produkt;Waga (kg);Inicjały;Data naklejki;Data skanowania
-1;ALBU T4D;500;XX;2026-07-07 10:00:00;2026-07-07 12:31:05
+Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania;ID
+1;1;ALBU T4D;500;kg;XX;2026-07-07 10:00:00;2026-07-07 12:31:05;aB3dE_fG
 ...
 Liczba palet;12
-Łączna waga (kg);6250
+Łączna ilość (kg);6250
 ```
 
 ---
@@ -106,13 +118,15 @@ keyPassword=<same password — modern keytool's PKCS12 format requires store and
 
 > **⚠️ Back up `keystore/almara-skaner-release.jks` and `keystore.properties` somewhere outside this checkout** (a password manager attachment, a company secrets vault) — both are gitignored on purpose (a signing key must never sit in source control) but that also means a lost laptop or a wiped repo clone loses them for good. Losing the keystore means every operator's phone needs a fresh uninstall + reinstall to receive any future update, and old scan sessions on their phones would be lost in the process.
 
-**Build it:**
+**Build it with the production release script:**
 
 ```bash
-gradlew.bat assembleRelease
+build_release.bat
 ```
 
-Result: `app/build/outputs/apk/release/app-release.apk` — this is the file to distribute to operators going forward. Verify it's actually signed with your key any time via:
+The script uses `keystore.properties` and enables v1, v2, and v3 signatures. The v1 signature is needed by some MIUI installers and is not enabled by the plain Gradle release build at this minimum SDK.
+
+Result: `app/build/outputs/apk/release/app-release.apk` — this is the file to distribute to operators going forward. Install it over the existing release without uninstalling the app or clearing its data. Each update must keep the application ID and signing key and increase `versionCode`. Verify it's actually signed with your key any time via:
 
 ```bash
 "%ANDROID_HOME%\build-tools\<version>\apksigner.bat" verify --print-certs app\build\outputs\apk\release\app-release.apk

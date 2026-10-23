@@ -3,49 +3,65 @@ package pl.almara.inwentaryzacja
 import android.content.Context
 import android.text.InputFilter
 import android.text.InputType
-import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-/** Dialog liczby palet danego surowca (rozbijanej na oddzielne wpisy). */
 object PalletPrompt {
-
     fun show(
         context: Context,
-        base: String,
-        prefill: Int,
+        item: ScanItem,
+        existingCount: Int,
         onOk: (Int) -> Unit,
         onCancel: () -> Unit = {}
     ) {
         val input = EditText(context).apply {
             inputType = InputType.TYPE_CLASS_NUMBER
-            // maks. 2 cyfry -> 99 palet
-            filters = arrayOf(InputFilter.LengthFilter(2))
-            setText(prefill.coerceIn(1, 99).toString())
+            filters = arrayOf(InputFilter.LengthFilter(3))
+            setText("1")
             setSelectAllOnFocus(true)
         }
+        val preview = TextView(context)
         val pad = (20 * context.resources.displayMetrics.density).toInt()
-        val container = FrameLayout(context).apply {
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, 0)
-            addView(
-                input,
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            )
+            addView(input)
+            addView(preview)
         }
-        MaterialAlertDialogBuilder(context)
-            .setTitle(base)
-            .setMessage(R.string.pallet_count_prompt)
+        val dialog = MaterialAlertDialogBuilder(context)
+            .setTitle(PalletName.base(item.product))
+            .setMessage(context.getString(
+                R.string.pallet_count_prompt, item.labelDate, Format.quantity(item), existingCount
+            ))
             .setView(container)
-            .setPositiveButton(R.string.ok) { _, _ ->
-                val count = input.text.toString().toIntOrNull()
-                if (count != null && count > 0) onOk(count) else onCancel()
-            }
+            .setPositiveButton(R.string.add_pallets, null)
             .setNegativeButton(R.string.cancel) { _, _ -> onCancel() }
             .setOnCancelListener { onCancel() }
-            .show()
+            .create()
+
+        dialog.setOnShowListener {
+            val add = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE)
+            fun updatePreview() {
+                val count = input.text.toString().toIntOrNull() ?: 0
+                add.isEnabled = count > 0
+                add.text = context.getString(R.string.add_pallet_count, count)
+                preview.text = if (count > 0) context.getString(
+                    R.string.pallet_count_preview,
+                    existingCount + count,
+                    Format.quantity(item.copy(quantity = (existingCount + count) * item.quantity))
+                ) else ""
+            }
+            input.doAfterTextChanged { updatePreview() }
+            updatePreview()
+            add.setOnClickListener {
+                val count = input.text.toString().toInt()
+                dialog.dismiss()
+                onOk(count)
+            }
+        }
+        dialog.show()
     }
 }

@@ -1,5 +1,6 @@
 import pandas as pd
 from collections import defaultdict
+from contextlib import closing
 import re
 import unicodedata
 
@@ -41,9 +42,29 @@ def parse_number(value, source):
     return float(match.group())
 
 
+def normalize_unit(value):
+    if pd.isna(value):
+        return ''
+    unit = str(value).strip()
+    return {'kg': 'kg', 'szt': 'szt.', 'szt.': 'szt.'}.get(unit.lower(), unit)
+
+
+def scan_unit(row, quantity_column):
+    unit = normalize_unit(row.get('Jednostka', ''))
+    if not unit:
+        quantity_text = str(row[quantity_column]).strip().replace(',', '.')
+        suffix = re.sub(r'^[-+]?\d*\.?\d+\s*', '', quantity_text)
+        unit = normalize_unit(suffix)
+    if not unit and 'kg' in quantity_column.lower():
+        unit = 'kg'
+    return unit
+
+
 def read_csv_report(csv_path):
     try:
-        return pd.read_csv(csv_path, sep=';')
+        report = pd.read_csv(csv_path, sep=';', dtype={'ID': str})
+        report['ID'] = report['ID'].fillna('') if 'ID' in report else ''
+        return report
     except Exception as error:
         raise RuntimeError(f"Błąd podczas wczytywania pliku CSV ({csv_path}): {error}") from error
 
@@ -173,6 +194,7 @@ def reconcile_inventory(excel_path, csv_path, excel_sheet='palety'):
             matched_ex_indices.add(match_idx)
             records.append({
                 'Alejka': alejka_val,
+                'ID': csv_r['ID'],
                 'Produkt': prod_val,
                 'Ilość': ilosc_val,
                 'Data': data_val,
@@ -184,6 +206,7 @@ def reconcile_inventory(excel_path, csv_path, excel_sheet='palety'):
             # Nadwyżka (zeskanowane na magazynie, ale brak w systemie lub status Wydana)
             records.append({
                 'Alejka': alejka_val,
+                'ID': csv_r['ID'],
                 'Produkt': prod_val,
                 'Ilość': ilosc_val,
                 'Data': data_val,
@@ -200,6 +223,7 @@ def reconcile_inventory(excel_path, csv_path, excel_sheet='palety'):
                 
             records.append({
                 'Produkt': prod_val,
+                'ID': '',
                 'Ilość': ilosc_val,
                 'Data': data_val,
                 'Status': '🔴 Brak w skanach',
@@ -242,32 +266,31 @@ def reconcile_raw_materials(excel_path, csv_path, excel_sheet='Stan magazynowy s
 
     import openpyxl
     try:
-        wb = openpyxl.load_workbook(excel_path, data_only=True, read_only=True)
-        ws = wb[excel_sheet]
+        with closing(openpyxl.load_workbook(excel_path, data_only=True, read_only=True)) as wb:
+            ws = wb[excel_sheet]
+            ex_items = {}
+            for row in ws.iter_rows(min_row=3, min_col=1, max_col=2):
+                cell_name = row[0]
+                cell_qty = row[1]
+
+                name = str(cell_name.value).strip()
+                if name in ['Etykiety wierszy', '(puste)', '0', 'nan', 'Suma końcowa', 'None'] or not name:
+                    continue
+
+                # Ignorowanie nagłówków grup (Tabela Przestawna ustawia indent=0 dla grup, indent>0 dla pozycji)
+                indent = cell_name.alignment.indent if cell_name.alignment else 0
+                if indent == 0:
+                    continue
+
+                qty = parse_number(cell_qty.value, f"arkuszu Excel, wiersz {cell_name.row}")
+
+                norm_name = norm(name) or name.casefold()
+                if norm_name not in ex_items:
+                    ex_items[norm_name] = {'Name': name, 'ExpectedQty': qty, 'ScannedByUnit': defaultdict(float), 'IDs': []}
+                else:
+                    ex_items[norm_name]['ExpectedQty'] += qty
     except Exception as error:
         raise RuntimeError(f"Błąd podczas wczytywania pliku Excel ({excel_path}): {error}") from error
-    
-    ex_items = {}
-    for row in ws.iter_rows(min_row=3, min_col=1, max_col=2):
-        cell_name = row[0]
-        cell_qty = row[1]
-        
-        name = str(cell_name.value).strip()
-        if name in ['Etykiety wierszy', '(puste)', '0', 'nan', 'Suma końcowa', 'None'] or not name:
-            continue
-            
-        # Ignorowanie nagłówków grup (Tabela Przestawna ustawia indent=0 dla grup, indent>0 dla pozycji)
-        indent = cell_name.alignment.indent if cell_name.alignment else 0
-        if indent == 0:
-            continue
-            
-        qty = parse_number(cell_qty.value, f"arkuszu Excel, wiersz {cell_name.row}")
-            
-        norm_name = norm(name) or name.casefold()
-        if norm_name not in ex_items:
-            ex_items[norm_name] = {'Name': name, 'ExpectedQty': qty, 'ScannedQty': 0.0}
-        else:
-            ex_items[norm_name]['ExpectedQty'] += qty
 
     if not ex_items:
         raise RuntimeError(
@@ -288,14 +311,21 @@ def reconcile_raw_materials(excel_path, csv_path, excel_sheet='Stan magazynowy s
     import difflib
     
     unmatched_scans = {}
+    totals_by_unit = defaultdict(float)
+
+    def add_scan(target, row, quantity, unit):
+        target['ScannedByUnit'][unit] += quantity
+        if row['ID']:
+            target['IDs'].append(row['ID'])
+
     ex_list_for_matching = [{'Name': v['Name'], 'NormName': k} for k, v in ex_items.items()]
 
     for _, row in df_csv.iterrows():
         name = str(row.get('Produkt', '')).strip()
         if not name or name == 'nan': continue
         qty = parse_number(row.get(ilosc_col), f"raporcie CSV, wiersz {row.name + 2}")
-        alejka_val = str(row.get('Alejka', '')).strip()
-        if alejka_val.lower() == 'nan': alejka_val = ''
+        unit = scan_unit(row, ilosc_col)
+        totals_by_unit[unit] += qty
         
         c_norm = norm(name) or name.casefold()
 
@@ -303,7 +333,7 @@ def reconcile_raw_materials(excel_path, csv_path, excel_sheet='Stan magazynowy s
         # przybliżonym. Inaczej krótsza nazwa mogła przegrać remis z dłuższą,
         # np. "P1M22 ..." z "P1M22 ... poza tolerancją".
         if c_norm in ex_items:
-            ex_items[c_norm]['ScannedQty'] += qty
+            add_scan(ex_items[c_norm], row, qty, unit)
             continue
 
         candidates = []
@@ -332,70 +362,67 @@ def reconcile_raw_materials(excel_path, csv_path, excel_sheet='Stan magazynowy s
                 key=lambda x: (x['Score'], -x['LengthDelta'], -x['Len'])
             )
             best_match_norm = best_match['NormName']
-            ex_items[best_match_norm]['ScannedQty'] += qty
+            add_scan(ex_items[best_match_norm], row, qty, unit)
         else:
             if c_norm not in unmatched_scans:
-                unmatched_scans[c_norm] = {'Name': name, 'ExpectedQty': 0.0, 'ScannedQty': qty}
-            else:
-                unmatched_scans[c_norm]['ScannedQty'] += qty
+                unmatched_scans[c_norm] = {
+                    'Name': name + ' (Brak w bazie)', 'ExpectedQty': 0.0,
+                    'ScannedByUnit': defaultdict(float), 'IDs': [],
+                }
+            add_scan(unmatched_scans[c_norm], row, qty, unit)
 
     records = []
-    # Zgodne / Braki / Nadwyżki z bazy
-    for k, v in ex_items.items():
-        if v['ExpectedQty'] == 0 and v['ScannedQty'] == 0:
+    for name, item in {**ex_items, **unmatched_scans}.items():
+        by_unit = item['ScannedByUnit']
+        mixed = len(by_unit) > 1
+        scanned = next(iter(by_unit.values()), 0.0)
+        if not mixed and item['ExpectedQty'] == 0 and scanned == 0:
             continue
-        
-        diff = v['ScannedQty'] - v['ExpectedQty']
-        if abs(diff) < 0.01:
-            status = '🟢 Zgodne'
-            cat = 'zgodne'
-        elif diff < 0:
-            status = '🔴 Braki'
-            cat = 'brakujace'
+
+        if mixed:
+            diff = ''
+            status = '⚠ Różne jednostki — sprawdź w Excelu'
+            category = 'weryfikacja'
+            scanned = ', '.join(f"{format_qty(qty)} {unit or '(brak jednostki)'}" for unit, qty in by_unit.items())
         else:
-            status = '🟡 Nadwyżka'
-            cat = 'nadwyzka'
-            
+            diff = scanned - item['ExpectedQty']
+            if name in unmatched_scans:
+                status, category = '🟡 Nadwyżka (Nieznane)', 'nadwyzka'
+            elif abs(diff) < 0.01:
+                status, category = '🟢 Zgodne', 'zgodne'
+            elif diff < 0:
+                status, category = '🔴 Braki', 'brakujace'
+            else:
+                status, category = '🟡 Nadwyżka', 'nadwyzka'
+
         records.append({
-            'Lp': 0,
-            'Produkt': v['Name'],
-            'Oczekiwana Ilość': format_qty(v['ExpectedQty']),
-            'Zeskanowana Ilość': format_qty(v['ScannedQty']),
+            'Produkt': item['Name'],
+            'ID': ', '.join(dict.fromkeys(item['IDs'])),
+            'Jednostka': ', '.join(unit or '(brak jednostki)' for unit in by_unit),
+            'Oczekiwana Ilość': format_qty(item['ExpectedQty']),
+            'Zeskanowana Ilość': format_qty(scanned),
             'Różnica': format_qty(diff),
             'Status': status,
-            'Kategoria': cat
+            'Kategoria': category,
         })
-        
-    # Nieodnalezione w bazie (Nadwyżki)
-    for k, v in unmatched_scans.items():
-        diff = v['ScannedQty']
-        records.append({
-            'Lp': 0,
-            'Produkt': v['Name'] + ' (Brak w bazie)',
-            'Oczekiwana Ilość': 0,
-            'Zeskanowana Ilość': format_qty(v['ScannedQty']),
-            'Różnica': format_qty(diff),
-            'Status': '🟡 Nadwyżka (Nieznane)',
-            'Kategoria': 'nadwyzka'
-        })
-        
-    # Sortowanie i numeracja
-    records.sort(key=lambda x: str(x['Produkt']).lower())
-    for i, rec in enumerate(records, 1):
-        rec['Lp'] = i
-        
-    summary = {
-        'total_expected': sum(v['ExpectedQty'] for v in ex_items.values()),
-        'total_scanned': sum(v['ScannedQty'] for v in ex_items.values()) + sum(v['ScannedQty'] for v in unmatched_scans.values()),
-        'matched_groups': sum(1 for v in ex_items.values() if abs(v['ScannedQty'] - v['ExpectedQty']) < 0.01 and (v['ExpectedQty'] > 0 or v['ScannedQty'] > 0)),
-        'missing_groups': sum(1 for v in ex_items.values() if v['ExpectedQty'] > 0 and v['ScannedQty'] < v['ExpectedQty']),
-        'surplus_groups': sum(1 for v in ex_items.values() if v['ScannedQty'] > v['ExpectedQty']) + len(unmatched_scans)
-    }
 
-    return {
-        'summary': summary,
-        'records': records
+    records.sort(key=lambda record: str(record['Produkt']).lower())
+    for index, record in enumerate(records, 1):
+        record['Lp'] = index
+
+    total_scanned = (
+        totals_by_unit.get('', 0.0) if not any(totals_by_unit)
+        else ', '.join(f"{format_qty(qty)} {unit or '(brak jednostki)'}" for unit, qty in totals_by_unit.items())
+    )
+    summary = {
+        'total_expected': sum(item['ExpectedQty'] for item in ex_items.values()),
+        'total_scanned': total_scanned,
+        'matched_groups': sum(record['Kategoria'] == 'zgodne' for record in records),
+        'missing_groups': sum(record['Kategoria'] == 'brakujace' for record in records),
+        'surplus_groups': sum(record['Kategoria'] == 'nadwyzka' for record in records),
+        'review_groups': sum(record['Kategoria'] == 'weryfikacja' for record in records),
     }
+    return {'summary': summary, 'records': records}
 
 if __name__ == '__main__':
     # Szybki test modułu

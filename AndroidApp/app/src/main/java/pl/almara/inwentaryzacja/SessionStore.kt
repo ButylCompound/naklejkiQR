@@ -1,6 +1,9 @@
 package pl.almara.inwentaryzacja
 
 import android.content.Context
+import android.util.AtomicFile
+import androidx.core.util.readText
+import androidx.core.util.writeText
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -27,53 +30,61 @@ object SessionStore {
         File(dir(context), "$id.json")
 
     fun listSessions(context: Context): List<Session> =
-        dir(context).listFiles { f -> f.extension == "json" }
-            ?.mapNotNull { runCatching { fromJson(it.readText()) }.getOrNull() }
+        dir(context).listFiles { f -> f.name.endsWith(".json") || f.name.endsWith(".json.bak") }
+            ?.map { File(it.parentFile, it.name.removeSuffix(".bak")) }
+            ?.distinct()
+            ?.mapNotNull { read(it) }
             ?.sortedByDescending { it.createdAt }
             ?: emptyList()
 
-    fun getSession(context: Context, id: String): Session? {
-        val f = file(context, id)
-        if (!f.exists()) return null
-        return runCatching { fromJson(f.readText()) }.getOrNull()
-    }
+    fun getSession(context: Context, id: String): Session? = read(file(context, id))
 
-    fun createSession(context: Context, name: String, type: String = Session.TYPE_PRODUCT): Session {
-        val session = Session(UUID.randomUUID().toString(), name, timestamp(), type, mutableListOf())
+    private fun read(file: File): Session? =
+        runCatching { fromJson(AtomicFile(file).readText()) }.getOrNull()
+
+    @Synchronized
+    fun createSession(context: Context, name: String, type: String = Session.TYPE_PRODUCT): Session? {
+        val normalized = name.trim().replace(Regex("\\s+"), " ")
+        if (listSessions(context).any {
+            it.name.trim().replace(Regex("\\s+"), " ").equals(normalized, ignoreCase = true)
+        }) return null
+        val session = Session(UUID.randomUUID().toString(), normalized, timestamp(), type, mutableListOf())
         save(context, session)
         return session
     }
 
     fun deleteSession(context: Context, id: String) {
-        file(context, id).delete()
+        AtomicFile(file(context, id)).delete()
     }
 
     /**
-     * Dodaje pozycję do sesji. Zwraca DUPLICATE, jeżeli identyczny kod QR
-     * został już zeskanowany w tej sesji.
+     * Dodaje pozycję; jednostki mają wspólny zapis, a ID nie wpływa na porównanie.
      */
-    fun addItem(context: Context, sessionId: String, item: ScanItem): AddResult? {
+    fun addItem(context: Context, sessionId: String, item: ScanItem): AddResult? =
+        addItems(context, sessionId, listOf(item))?.let {
+            if (it == 0) AddResult.DUPLICATE else AddResult.ADDED
+        }
+
+    fun addItems(context: Context, sessionId: String, items: List<ScanItem>): Int? {
         val session = getSession(context, sessionId) ?: return null
-        if (session.items.any { it.raw == item.raw }) return AddResult.DUPLICATE
-        session.items.add(item)
-        save(context, session)
-        return AddResult.ADDED
+        val keys = session.items.mapTo(mutableSetOf()) { it.key }
+        val added = items.filter { keys.add(it.key) }
+        if (added.isNotEmpty()) {
+            session.items.addAll(added)
+            save(context, session)
+        }
+        return added.size
     }
 
-    /** Usuwa pozycję (po surowej zawartości QR — kluczu deduplikacji). */
-    fun deleteItem(context: Context, sessionId: String, raw: String) {
+    /** Usuwa zaznaczone pozycje jednym zapisem sesji. */
+    fun deleteItems(context: Context, sessionId: String, selected: Set<String>) {
         val session = getSession(context, sessionId) ?: return
-        session.items.removeAll { it.raw == raw }
+        session.items.removeAll { it.raw in selected }
         save(context, session)
     }
 
     private fun save(context: Context, session: Session) {
-        // Zapis przez plik tymczasowy, żeby awaria w trakcie zapisu nie uszkodziła sesji
-        val target = file(context, session.id)
-        val tmp = File(target.parentFile, "${session.id}.tmp")
-        tmp.writeText(toJson(session))
-        if (target.exists()) target.delete()
-        tmp.renameTo(target)
+        AtomicFile(file(context, session.id)).writeText(toJson(session))
     }
 
     private fun toJson(s: Session): String {

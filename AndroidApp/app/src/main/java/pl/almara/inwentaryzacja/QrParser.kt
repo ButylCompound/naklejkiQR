@@ -7,8 +7,9 @@ import java.time.format.ResolverStyle
 
 /**
  * Parser zawartości kodu QR z naklejki.
- * Format (ten sam co w GeneratorNaklejek / Inwentaryzacja/skaner.py):
- *   "Nazwa produktu | 500 kg | 2026-07-07 10:00:00 | XX"
+ * Format: "Nazwa produktu | 500 kg | 2026-07-07 10:00:00 | XX | aB3dE_fG".
+ * Starsze naklejki mają 3 lub 4 pola. ID służy tylko do wyświetlania;
+ * pole raw zachowuje dotychczasowy klucz deduplikacji bez ID.
  * Jednostka ("kg" lub "szt.") jest częścią segmentu ilości; brak jednostki
  *   (starsze naklejki "500kg") traktujemy jako "kg".
  * Inicjały operatora są opcjonalne — naklejki na surowce mogą ich nie mieć
@@ -25,18 +26,21 @@ object QrParser {
 
     fun parse(raw: String, scannedAt: String): ScanItem? {
         val parts = raw.split("|").map { it.trim() }
-        if (parts.size != 3 && parts.size != 4) return null
+        if (parts.size !in 3..5) return null
 
         val product = parts[0]
         val quantityPart = parts[1]
         val labelDateRaw = parts[2]
         val initials = parts.getOrElse(3) { "" }
+        val labelId = parts.getOrElse(4) { "" }
+        if (parts.size == 5 && !Regex("[A-Za-z0-9_-]{8}").matches(labelId)) return null
         if (product.isEmpty()) return null
 
         // "20 szt." / "500 kg" / "500kg" -> liczba + jednostka (brak jednostki = "kg")
-        val match = QUANTITY.find(quantityPart) ?: return null
-        val quantity = match.groupValues[1].replace(',', '.').toDouble()
-        val unit = match.groupValues[2].trim().ifEmpty { "kg" }
+        val match = QUANTITY.matchEntire(quantityPart) ?: return null
+        val quantity = match.groupValues[1].replace(',', '.').toDoubleOrNull()
+            ?.takeIf { it.isFinite() && it > 0 } ?: return null
+        val unit = Units.normalize(match.groupValues[2])
 
         val labelDate = normalizeLabelDate(labelDateRaw) ?: return null
 
@@ -47,11 +51,18 @@ object QrParser {
             labelDate = labelDate,
             scannedAt = scannedAt,
             initials = initials,
-            raw = raw
+            raw = if (parts.size == 5) {
+                val withoutId = raw.substringBeforeLast('|').trimEnd()
+                if (initials.isEmpty()) withoutId.substringBeforeLast('|').trimEnd() else withoutId
+            } else raw,
+            labelId = labelId
         )
     }
 
-    private val QUANTITY = Regex("""^(\d+(?:[.,]\d+)?)\s*(.*)$""")
+    private val QUANTITY = Regex(
+        """([+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?)\s*(kg|szt\.?)?""",
+        RegexOption.IGNORE_CASE
+    )
 
     private fun normalizeLabelDate(value: String): String? {
         val parsed = parseStrict(value, WITH_SECONDS) ?: parseStrict(value, WITHOUT_SECONDS)

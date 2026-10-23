@@ -135,6 +135,27 @@ class LabelInputTests(GeneratorTestCase):
 
 
 class PdfGenerationTests(GeneratorTestCase):
+    def test_qr_contains_a_fresh_short_id_without_printing_it_as_text(self):
+        for operator in ('QC', ''):
+            with self.subTest(operator=operator), self.project_directory(production_template=True):
+                with (
+                    patch.object(label_generator.qrcode, 'QRCode') as qr,
+                    patch.object(label_generator, 'compile_pdf', return_value='label.pdf') as compile_pdf,
+                    patch.object(
+                        label_generator.secrets, 'token_urlsafe',
+                        wraps=label_generator.secrets.token_urlsafe,
+                    ) as token,
+                ):
+                    for _ in range(2):
+                        generate_pdf('Materiał (1)', '12,5', operator=operator, date_override='2026-10-16 08:00')
+                        payload = qr.return_value.add_data.call_args.args[0]
+                        fields = [field.strip() for field in payload.split('|')]
+                        self.assertEqual(fields[:4], ['Materiał (1)', '12,5 kg', '2026-10-16 08:00', operator])
+                        self.assertRegex(fields[4], r'^[A-Za-z0-9_-]{8}$')
+                        self.assertNotIn(fields[4], compile_pdf.call_args.args[0])
+                    self.assertEqual(token.call_count, 2)
+                    token.assert_called_with(6)
+
     def test_gui_and_cli_use_the_shared_generator(self):
         self.assertIs(generator_gui.generate_pdf, label_generator.generate_pdf)
         self.assertIs(main.generate_pdf, label_generator.generate_pdf)
@@ -224,17 +245,20 @@ class PdfGenerationTests(GeneratorTestCase):
     @unittest.skipUnless(PDFLATEX, 'pdflatex.exe or pdflatex is not available')
     def test_real_pdflatex_compiles_production_template_with_unusual_characters(self):
         with self.project_directory(production_template=True):
-            pdf_path = generate_pdf(
-                'Zażółć & 50%_A#1',
-                '12,5',
-                operator='Q#',
-                date_override='2026-08-25 09:05',
-            )
+            for label_size in label_generator.LABEL_SIZES:
+                with self.subTest(label_size=label_size):
+                    pdf_path = generate_pdf(
+                        'Zażółć & 50%_A#1',
+                        '12,5',
+                        operator='Q#',
+                        date_override='2026-08-25 09:05',
+                        label_size=label_size,
+                    )
 
-            pdf = Path(pdf_path)
-            self.assertTrue(pdf.is_file())
-            self.assertGreater(pdf.stat().st_size, 1000)
-            self.assertEqual(pdf.read_bytes()[:4], b'%PDF')
+                    pdf = Path(pdf_path)
+                    self.assertTrue(pdf.is_file())
+                    self.assertGreater(pdf.stat().st_size, 1000)
+                    self.assertEqual(pdf.read_bytes()[:4], b'%PDF')
 
 
 class PdflatexCommandTests(GeneratorTestCase):
@@ -340,8 +364,9 @@ class CliTests(GeneratorTestCase):
 
 
 class PackModeTests(GeneratorTestCase):
-    def test_twelve_packs_and_six_copies_print_seventy_two_labels(self):
-        fake_app = SimpleNamespace(
+    @staticmethod
+    def app(label_size=label_generator.LABEL_SIZES[0]):
+        return SimpleNamespace(
             pack_mode=True,
             name_var=FakeVar('Raw Material'),
             weight_var=FakeVar('25'),
@@ -350,6 +375,7 @@ class PackModeTests(GeneratorTestCase):
             date_var=FakeVar(''),
             copies_var=FakeVar('6'),
             pack_count_var=FakeVar('12'),
+            label_size_var=FakeVar(label_size),
             printer_var=FakeVar('Zebra'),
             status_var=FakeVar('Gotowy.'),
             state={},
@@ -357,6 +383,8 @@ class PackModeTests(GeneratorTestCase):
             weight_entry=SimpleNamespace(focus=lambda: None),
         )
 
+    def test_twelve_packs_and_six_copies_print_seventy_two_labels(self):
+        fake_app = self.app()
         with (
             patch.object(generator_gui.messagebox, 'askyesno', return_value=True) as confirm,
             patch.object(generator_gui.messagebox, 'showerror') as show_error,
@@ -375,9 +403,34 @@ class PackModeTests(GeneratorTestCase):
         self.assertEqual(len(generated_dates), 1)
         self.assertEqual(generate.call_count, 12)
         self.assertEqual(print_label.call_count, 72)
+        self.assertEqual(generate.call_args.kwargs['label_size'], label_generator.LABEL_SIZES[0])
+        self.assertTrue(print_label.call_args.kwargs['match_pdf_size'])
         self.assertIn('Łącznie naklejek: 72', confirm.call_args.args[1])
         self.assertIn('Wydrukowano 72 naklejek', fake_app.status_var.get())
         show_error.assert_not_called()
+
+    def test_both_sizes_apply_to_every_pack_when_printing_or_saving(self):
+        for label_size in label_generator.LABEL_SIZES:
+            for do_print in (True, False):
+                with self.subTest(label_size=label_size, do_print=do_print):
+                    fake_app = self.app(label_size)
+                    with (
+                        patch.object(generator_gui.messagebox, 'askyesno', return_value=True),
+                        patch.object(generator_gui.messagebox, 'showinfo'),
+                        patch.object(generator_gui.messagebox, 'showerror') as show_error,
+                        patch.object(generator_gui, 'generate_pdf', return_value='label.pdf') as generate,
+                        patch.object(generator_gui, 'print_pdf') as print_label,
+                        patch.object(generator_gui, 'save_state') as save_state,
+                    ):
+                        generator_gui.App._process(fake_app, do_print=do_print)
+
+                    self.assertEqual(generate.call_count, 12)
+                    self.assertTrue(all(call.kwargs['label_size'] == label_size for call in generate.call_args_list))
+                    self.assertEqual(print_label.call_count, 72 if do_print else 0)
+                    self.assertTrue(all(call.kwargs['match_pdf_size'] for call in print_label.call_args_list))
+                    self.assertEqual(save_state.call_args.args[0]['last_label_size'], label_size)
+                    self.assertEqual(save_state.call_args.args[0]['last_pack_count'], 12)
+                    show_error.assert_not_called()
 
     def test_invalid_copy_and_pack_counts_have_clear_errors(self):
         base = {
@@ -416,6 +469,7 @@ class FactoryModeTests(GeneratorTestCase):
             operator_var=FakeVar('QC'),
             date_var=FakeVar(date_value),
             copies_var=FakeVar('1'),
+            label_size_var=FakeVar(label_generator.LABEL_SIZES[0]),
             printer_var=FakeVar('Zebra'),
             status_var=FakeVar('Gotowy.'),
             state={},
@@ -480,8 +534,79 @@ class FactoryModeTests(GeneratorTestCase):
         self.assertIn('nie jest dzisiejsza ani wczorajsza', confirm.call_args.args[1])
         generate.assert_not_called()
 
+    def test_selected_size_is_used_for_generation_printing_and_saved(self):
+        for label_size in label_generator.LABEL_SIZES:
+            with self.subTest(label_size=label_size):
+                fake_app = self.app('2026-10-16 08:00')
+                fake_app.label_size_var.set(label_size)
+                with (
+                    patch.object(generator_gui, 'factory_date_needs_warning', return_value=False),
+                    patch.object(generator_gui, 'generate_pdf', return_value='label.pdf') as generate,
+                    patch.object(generator_gui, 'print_pdf') as print_label,
+                    patch.object(generator_gui, 'save_state') as save_state,
+                    patch.object(generator_gui.messagebox, 'showerror') as show_error,
+                ):
+                    generator_gui.App._process(fake_app, do_print=True)
+
+                self.assertEqual(generate.call_args.kwargs['label_size'], label_size)
+                print_label.assert_called_once_with('label.pdf', printer_name='Zebra', match_pdf_size=True)
+                self.assertEqual(save_state.call_args.args[0]['last_label_size'], label_size)
+                show_error.assert_not_called()
+
+    def test_selected_size_is_used_when_saving_a_pdf(self):
+        fake_app = self.app('2026-10-16 08:00')
+        fake_app.label_size_var.set(label_generator.LABEL_SIZES[1])
+        with (
+            patch.object(generator_gui, 'factory_date_needs_warning', return_value=False),
+            patch.object(generator_gui, 'generate_pdf', return_value='label.pdf') as generate,
+            patch.object(generator_gui, 'print_pdf') as print_label,
+            patch.object(generator_gui, 'save_state'),
+            patch.object(generator_gui.subprocess, 'call'),
+            patch.object(generator_gui.os, 'startfile', create=True),
+            patch.object(generator_gui.messagebox, 'showerror') as show_error,
+        ):
+            generator_gui.App._process(fake_app, do_print=False)
+
+        self.assertEqual(generate.call_args.kwargs['label_size'], label_generator.LABEL_SIZES[1])
+        print_label.assert_not_called()
+        show_error.assert_not_called()
+
 
 class PrintingTests(GeneratorTestCase):
+    def test_factory_windows_printing_uses_pdf_paper_size_without_forcing_landscape(self):
+        with (
+            patch.object(generator_gui.os, 'name', 'nt'),
+            patch.object(generator_gui.subprocess, 'run') as run,
+        ):
+            generator_gui.print_pdf('label.pdf', 'Zebra', match_pdf_size=True)
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index('-print-settings') + 1], 'shrink,disable-auto-rotation')
+        self.assertIn('Zebra', command)
+
+    def test_default_windows_printing_uses_landscape(self):
+        with (
+            patch.object(generator_gui.os, 'name', 'nt'),
+            patch.object(generator_gui.subprocess, 'run') as run,
+        ):
+            generator_gui.print_pdf('label.pdf', 'Zebra')
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index('-print-settings') + 1], 'shrink,landscape')
+
+    @unittest.skipIf(os.name == 'nt', 'WSL-specific command test')
+    def test_factory_wsl_printing_uses_pdf_size_and_windows_path(self):
+        with (
+            patch.object(generator_gui.os, 'uname', return_value=SimpleNamespace(release='microsoft')),
+            patch.object(generator_gui.subprocess, 'run') as run,
+        ):
+            run.return_value.stdout = 'C:\\labels\\label.pdf\n'
+            generator_gui.print_pdf('/mnt/c/labels/label.pdf', 'Zebra', match_pdf_size=True)
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index('-print-settings') + 1], 'shrink,disable-auto-rotation')
+        self.assertEqual(command[-1], 'C:\\labels\\label.pdf')
+
     def test_windows_print_failure_is_returned_to_caller(self):
         with patch.object(
             main.subprocess,

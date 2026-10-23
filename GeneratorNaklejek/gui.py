@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 
-from label_generator import generate_pdf
+from label_generator import LABEL_SIZES, generate_pdf
 from label_utils import normalize_label_date, numbered_pack_names, validate_label_input
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
@@ -90,7 +90,7 @@ def get_printers():
             pass
     return printers
 
-def print_pdf(pdf_path, printer_name="Zebra ZD421"):
+def print_pdf(pdf_path, printer_name="Zebra ZD421", match_pdf_size=False):
     is_wsl = False
     try:
         if "microsoft" in os.uname().release.lower():
@@ -99,13 +99,14 @@ def print_pdf(pdf_path, printer_name="Zebra ZD421"):
         pass
         
     is_windows = os.name == 'nt'
+    print_settings = "shrink,disable-auto-rotation" if match_pdf_size else "shrink,landscape"
     
     if is_windows:
         import glob
         sumatra_paths = glob.glob("SumatraPDF*.exe")
         sumatra_path = sumatra_paths[0] if sumatra_paths else "SumatraPDF.exe"
         
-        print_cmd = [sumatra_path, "-print-settings", "shrink,landscape", "-print-to", printer_name, "-silent", pdf_path]
+        print_cmd = [sumatra_path, "-print-settings", print_settings, "-print-to", printer_name, "-silent", pdf_path]
         try:
             subprocess.run(print_cmd, check=True, creationflags=CREATE_NO_WINDOW)
         except Exception as e:
@@ -115,11 +116,70 @@ def print_pdf(pdf_path, printer_name="Zebra ZD421"):
             win_path_result = subprocess.run(["wslpath", "-w", pdf_path], capture_output=True, text=True, check=True, creationflags=CREATE_NO_WINDOW)
             win_pdf_path = win_path_result.stdout.strip()
             print_cmd = ["SumatraPDF.exe", "-print-to", printer_name, "-silent", win_pdf_path]
+            if match_pdf_size:
+                print_cmd[1:1] = ["-print-settings", print_settings]
             subprocess.run(print_cmd, check=True, creationflags=CREATE_NO_WINDOW)
         except Exception as e:
             raise Exception(f"Błąd drukowania z WSL: {e}")
     else:
         raise Exception("Automatyczne drukowanie jest skonfigurowane tylko dla Windows/WSL.")
+
+class ScrollableForm(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.canvas = tk.Canvas(self, highlightthickness=0, yscrollincrement=20)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar.grid(row=0, column=1, sticky="ns")
+        self.body = ttk.Frame(self.canvas, padding=25)
+        self.window = self.canvas.create_window((0, 0), window=self.body, anchor="nw")
+        self.canvas.bind('<Configure>', self._resize)
+        self.body.bind('<Configure>', self._resize)
+
+    def _resize(self, event):
+        self.canvas.itemconfigure(self.window, width=self.canvas.winfo_width())
+        height = self.body.winfo_reqheight()
+        self.canvas.configure(scrollregion=(0, 0, self.canvas.winfo_width(), height))
+        if height > self.canvas.winfo_height():
+            self.scrollbar.grid()
+        else:
+            self.scrollbar.grid_remove()
+            self.canvas.yview_moveto(0)
+
+    def bind_contents(self):
+        def bind(widget):
+            widget.bind('<MouseWheel>', self._wheel, add='+')
+            widget.bind('<Button-4>', self._wheel, add='+')
+            widget.bind('<Button-5>', self._wheel, add='+')
+            widget.bind('<FocusIn>', self._show_focus, add='+')
+            for child in widget.winfo_children():
+                bind(child)
+        bind(self)
+
+    def _wheel(self, event):
+        if self.body.winfo_reqheight() <= self.canvas.winfo_height():
+            return
+        if event.num in (4, 5):
+            steps = -1 if event.num == 4 else 1
+        else:
+            steps = (-1 if event.delta > 0 else 1) * max(1, abs(event.delta) // 120)
+        self.canvas.yview_scroll(steps * 3, 'units')
+        return 'break'
+
+    def _show_focus(self, event):
+        widget = event.widget
+        top = widget.winfo_rooty() - self.body.winfo_rooty() - 20
+        bottom = top + widget.winfo_height() + 40
+        visible_top = self.canvas.canvasy(0)
+        visible_height = self.canvas.winfo_height()
+        if top < visible_top:
+            self.canvas.yview_moveto(top / self.body.winfo_reqheight())
+        elif bottom > visible_top + visible_height:
+            self.canvas.yview_moveto((bottom - visible_height) / self.body.winfo_reqheight())
+
 
 class App:
     def __init__(self, root, pack_mode=False):
@@ -127,11 +187,10 @@ class App:
         self.pack_mode = pack_mode
         if self.pack_mode:
             self.root.title("Naklejki QR - Generator opakowań")
-            self.root.geometry("450x735")
         else:
             self.root.title("Naklejki QR - Generator")
-            self.root.geometry("450x660")
-        self.root.configure(padx=25, pady=25)
+        height = min(835 if self.pack_mode else 760, self.root.maxsize()[1])
+        self.root.geometry(f"450x{height}")
         
         # Setup clean style
         style = ttk.Style()
@@ -145,6 +204,9 @@ class App:
         style.configure('TButton', font=('Segoe UI', 11))
         
         self.state = load_state()
+        self.form = ScrollableForm(root)
+        self.form.pack(fill="both", expand=True)
+        root = self.form.body
         
         header_text = "Kreator Naklejek - Opakowania" if self.pack_mode else "Kreator Naklejek"
         ttk.Label(root, text=header_text, style='Header.TLabel').pack(anchor="center", pady=(0, 20))
@@ -212,6 +274,16 @@ class App:
         self.copies_var = tk.StringVar(value="1")
         self.copies_spinbox = ttk.Spinbox(root, from_=1, to=100, textvariable=self.copies_var, font=('Segoe UI', 12))
         self.copies_spinbox.pack(fill="x", pady=(0, 15))
+
+        ttk.Label(root, text="Rozmiar etykiety:").pack(anchor="w", pady=(0, 5))
+        self.label_size_var = tk.StringVar(value=self.state.get("last_label_size", LABEL_SIZES[0]))
+        ttk.Combobox(
+            root,
+            textvariable=self.label_size_var,
+            values=LABEL_SIZES,
+            state="readonly",
+            font=('Segoe UI', 11),
+        ).pack(fill="x", pady=(0, 15))
         
         ttk.Label(root, text="Drukarka:").pack(anchor="w", pady=(0, 5))
         self.printer_var = tk.StringVar()
@@ -244,6 +316,7 @@ class App:
         self.status_var = tk.StringVar(value="Gotowy.")
         self.status_label = ttk.Label(root, textvariable=self.status_var, font=('Segoe UI', 9), foreground="gray")
         self.status_label.pack(side="bottom", anchor="w", pady=(10, 0))
+        self.form.bind_contents()
 
         # Bind Enter key to Print
         self.root.bind('<Return>', lambda e: self.on_print())
@@ -336,6 +409,7 @@ class App:
                     date_override=label_date,
                     unit=unit,
                     output_stem=output_stem,
+                    label_size=self.label_size_var.get(),
                 )
                 pdf_paths.append(pdf_path)
 
@@ -343,13 +417,18 @@ class App:
                     for _ in range(copies):
                         self.status_var.set(f"Wysyłanie do drukarki ({printed_count + 1}/{total_labels})...")
                         self.root.update_idletasks()
-                        print_pdf(pdf_path, printer_name=self.printer_var.get())
+                        print_pdf(
+                            pdf_path,
+                            printer_name=self.printer_var.get(),
+                            match_pdf_size=True,
+                        )
                         printed_count += 1
             
             # Save state
             self.state["last_product_name"] = prod_name
             self.state["last_operator"] = operator
             self.state["last_printer"] = self.printer_var.get()
+            self.state["last_label_size"] = self.label_size_var.get()
             if self.pack_mode:
                 self.state["last_pack_count"] = pack_count
             save_state(self.state)

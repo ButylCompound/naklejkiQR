@@ -1,21 +1,22 @@
 package pl.almara.inwentaryzacja
 
 /**
- * Rozbicie skanu surowca na oddzielne palety (1)..(n) w formacie generatora.
- * Klucz deduplikacji palety odtwarza zawartość QR pojedynczej palety, więc nie
- * zależy od numeru na zeskanowanej naklejce — ponowne zeskanowanie tej samej
- * serii (baza, waga, jednostka, data, inicjały) daje te same klucze.
+ * Dodawanie palet z tej samej dostawy z zachowaniem numerów zapisanych pozycji.
  */
 object PalletExpansion {
 
-    fun expand(item: ScanItem, count: Int): List<ScanItem> {
+    fun matching(item: ScanItem, existing: List<ScanItem>): List<ScanItem> =
+        existing.filter { key(PalletName.base(it.product), it) == key(PalletName.base(item.product), item) }
+
+    fun expand(item: ScanItem, count: Int, existing: List<ScanItem> = emptyList()): List<ScanItem> {
         val base = PalletName.base(item.product)
-        return (1..count).map { i ->
-            val name = PalletName.numbered(base, i)
-            item.copy(product = name, raw = key(name, item))
+        val lastNumber = matching(item, existing).maxOfOrNull { PalletName.number(it.product) ?: 0 } ?: 0
+        return (1..count).map { offset ->
+            val name = PalletName.numbered(base, lastNumber + offset)
+            item.copy(product = name, unit = Units.normalize(item.unit), raw = key(name, item))
         }
     }
 
     fun key(name: String, item: ScanItem): String =
-        "$name | ${Format.number(item.quantity)} ${item.unit} | ${item.labelDate} | ${item.initials}"
+        item.copy(product = name).key
 }

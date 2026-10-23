@@ -1,6 +1,9 @@
 package pl.almara.inwentaryzacja
 
 import android.content.Context
+import android.util.AtomicFile
+import androidx.core.util.readText
+import androidx.core.util.writeText
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -16,16 +19,17 @@ object RwStore {
         File(dir(context), "$id.json")
 
     fun list(context: Context): List<RwDocument> =
-        dir(context).listFiles { f -> f.extension == "json" }
-            ?.mapNotNull { runCatching { fromJson(it.readText()) }.getOrNull() }
+        dir(context).listFiles { f -> f.name.endsWith(".json") || f.name.endsWith(".json.bak") }
+            ?.map { File(it.parentFile, it.name.removeSuffix(".bak")) }
+            ?.distinct()
+            ?.mapNotNull { read(it) }
             ?.sortedByDescending { it.createdAt }
             ?: emptyList()
 
-    fun get(context: Context, id: String): RwDocument? {
-        val f = file(context, id)
-        if (!f.exists()) return null
-        return runCatching { fromJson(f.readText()) }.getOrNull()
-    }
+    fun get(context: Context, id: String): RwDocument? = read(file(context, id))
+
+    private fun read(file: File): RwDocument? =
+        runCatching { fromJson(AtomicFile(file).readText()) }.getOrNull()
 
     fun create(context: Context): RwDocument {
         val doc = RwDocument(UUID.randomUUID().toString(), "", SessionStore.timestamp(), "", "", mutableListOf())
@@ -34,7 +38,7 @@ object RwStore {
     }
 
     fun delete(context: Context, id: String) {
-        file(context, id).delete()
+        AtomicFile(file(context, id)).delete()
     }
 
     enum class PutResult { ADDED, UPDATED }
@@ -45,7 +49,7 @@ object RwStore {
      */
     fun putItem(context: Context, id: String, item: ScanItem): PutResult? {
         val doc = get(context, id) ?: return null
-        val i = doc.items.indexOfFirst { it.raw == item.raw }
+        val i = doc.items.indexOfFirst { it.sourceKey == item.sourceKey }
         val result = if (i >= 0) {
             doc.items[i] = item
             PutResult.UPDATED
@@ -57,9 +61,10 @@ object RwStore {
         return result
     }
 
-    fun deleteItem(context: Context, id: String, raw: String) {
+    fun deleteItems(context: Context, id: String, selected: Set<String>) {
         val doc = get(context, id) ?: return
-        doc.items.removeAll { it.raw == raw }
+        if (doc.number.isNotEmpty()) return
+        doc.items.removeAll { it.raw in selected }
         save(context, doc)
     }
 
@@ -88,11 +93,7 @@ object RwStore {
     }
 
     private fun save(context: Context, doc: RwDocument) {
-        val target = file(context, doc.id)
-        val tmp = File(target.parentFile, "${doc.id}.tmp")
-        tmp.writeText(toJson(doc))
-        if (target.exists()) target.delete()
-        tmp.renameTo(target)
+        AtomicFile(file(context, doc.id)).writeText(toJson(doc))
     }
 
     private fun toJson(doc: RwDocument): String {

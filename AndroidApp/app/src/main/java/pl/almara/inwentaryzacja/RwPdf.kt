@@ -14,6 +14,9 @@ import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintDocumentInfo
 import android.print.PrintManager
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.FileOutputStream
@@ -28,7 +31,8 @@ object RwPdf {
     private const val PAGE_W = 595   // A4 @ 72 dpi (punkty)
     private const val PAGE_H = 842
     private const val MARGIN = 36f
-    private const val ROW_H = 20f
+    private const val ROW_PADDING = 10f
+    private const val TABLE_BOTTOM = PAGE_H - MARGIN - 90f
 
     // Krawędzie kolumn
     private const val X_LP = MARGIN
@@ -40,7 +44,7 @@ object RwPdf {
 
     private val title = Paint().apply { textSize = 16f; isFakeBoldText = true }
     private val head = Paint().apply { textSize = 11f; isFakeBoldText = true }
-    private val text = Paint().apply { textSize = 11f }
+    private val text = TextPaint().apply { textSize = 11f }
     private val small = Paint().apply { textSize = 9f }
     private val line = Paint().apply { strokeWidth = 0.7f }
 
@@ -56,13 +60,27 @@ object RwPdf {
         var y = drawHeader(page.canvas, doc)
 
         for ((i, item) in doc.items.withIndex()) {
-            if (y > PAGE_H - MARGIN - 90f) {
-                pdf.finishPage(page)
-                pageNo++
-                page = pdf.startPage(PdfDocument.PageInfo.Builder(PAGE_W, PAGE_H, pageNo).create())
-                y = drawTableHead(page.canvas, drawHeaderTitleOnly(page.canvas, doc))
-            }
-            y = drawRow(page.canvas, i + 1, item, y)
+            val name = StaticLayout.Builder.obtain(item.product, 0, item.product.length, text,
+                (X_QTY_END - 40f - X_NAME - 6f).toInt())
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setIncludePad(false)
+                .build()
+            var firstLine = 0
+            do {
+                if (y + text.fontSpacing * 2 + ROW_PADDING > TABLE_BOTTOM) {
+                    pdf.finishPage(page)
+                    pageNo++
+                    page = pdf.startPage(PdfDocument.PageInfo.Builder(PAGE_W, PAGE_H, pageNo).create())
+                    y = drawHeader(page.canvas, doc)
+                }
+                val availableHeight = TABLE_BOTTOM - y - ROW_PADDING
+                var endLine = firstLine + 1
+                while (endLine < name.lineCount &&
+                    name.getLineBottom(endLine) - name.getLineTop(firstLine) <= availableHeight
+                ) endLine++
+                y = drawRow(page.canvas, i + 1, item, y, name, firstLine, endLine)
+                firstLine = endLine
+            } while (firstLine < name.lineCount)
         }
 
         drawSignatures(page.canvas, doc)
@@ -93,22 +111,35 @@ object RwPdf {
 
     private fun drawTableHead(c: Canvas, top: Float): Float {
         c.drawText("Lp", X_LP, top, head)
-        c.drawText("Kod (data)", X_CODE, top, head)
+        c.drawText("Data naklejki", X_CODE, top, head)
         c.drawText("Nazwa materiału", X_NAME, top, head)
         c.drawText("Ilość", X_QTY_END - head.measureText("Ilość"), top, head)
         c.drawText("j.m.", X_UNIT, top, head)
         c.drawLine(MARGIN, top + 5f, X_RIGHT, top + 5f, line)
-        return top + ROW_H
+        return top + 12f
     }
 
-    private fun drawRow(c: Canvas, lp: Int, item: ScanItem, y: Float): Float {
-        c.drawText(lp.toString(), X_LP, y, text)
-        c.drawText(fit(item.labelDate.take(10), text, X_NAME - X_CODE - 6f), X_CODE, y, text)
-        c.drawText(fit(item.product, text, X_QTY_END - 40f - X_NAME - 6f), X_NAME, y, text)
-        val qty = Format.number(item.quantity)
-        c.drawText(qty, X_QTY_END - text.measureText(qty), y, text)
-        c.drawText(item.unit, X_UNIT, y, text)
-        return y + ROW_H
+    private fun drawRow(
+        c: Canvas, lp: Int, item: ScanItem, y: Float, name: StaticLayout, firstLine: Int, endLine: Int
+    ): Float {
+        val baseline = y - text.fontMetrics.ascent
+        val nameHeight = name.getLineBottom(endLine - 1) - name.getLineTop(firstLine)
+        c.drawText(lp.toString(), X_LP, baseline, text)
+        if (firstLine == 0) {
+            c.drawText(item.labelDate.substringBefore(' '), X_CODE, baseline, text)
+            c.drawText(item.labelDate.substringAfter(' ', ""), X_CODE, baseline + text.fontSpacing, text)
+            val qty = Format.number(item.quantity)
+            c.drawText(qty, X_QTY_END - text.measureText(qty), baseline, text)
+            c.drawText(Units.normalize(item.unit), X_UNIT, baseline, text)
+        } else {
+            c.drawText("cd.", X_LP, baseline + text.fontSpacing, small)
+        }
+        c.save()
+        c.clipRect(X_NAME, y, X_NAME + name.width, y + nameHeight)
+        c.translate(X_NAME, y - name.getLineTop(firstLine))
+        name.draw(c)
+        c.restore()
+        return y + maxOf(nameHeight.toFloat(), text.fontSpacing * 2) + ROW_PADDING
     }
 
     private fun drawSignatures(c: Canvas, doc: RwDocument) {

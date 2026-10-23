@@ -6,6 +6,7 @@ output.pdf
 output.tex
 output.aux
 output.log
+output_design.*
 output_pack_*.pdf
 output_pack_*.tex
 output_pack_*.aux

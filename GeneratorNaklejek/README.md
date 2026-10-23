@@ -2,6 +2,8 @@
 
 This is a CLI application to generate and print QR code stickers for pallets. It creates a 10x6 cm sticker (PDF) using LaTeX and sends it to a Zebra ZD421 printer via SumatraPDF on Windows.
 
+Each generated label includes a random 8-character URL-safe ID in its QR payload: `name | quantity unit | date | initials | ID`. Initials may be empty. The ID does not appear as printed text; copies of a label share its ID, while generating another label draws a new ID without checking past IDs.
+
 ## Requirements
 *   **Python 3.8+**
 *   **python3-tk**: Required for the GUI on Linux/WSL (`sudo apt install python3-tk`).
@@ -25,6 +27,10 @@ python gui.py
 
 *(On Windows, you can also just double-click `run.bat` which will automatically activate the `.venv` virtual environment and start the GUI).*
 
+Both GUIs offer **Rozmiar etykiety**: **100 × 60 mm** or **100 × 150 mm**, and remember the last choice. The larger format rotates the existing design by 90° and scales it to 150%, centered on the label. Saved PDFs use the selected page size. GUI print jobs request that size through SumatraPDF without changing Windows printer defaults; the Zebra driver must accept it. Load the matching label roll before printing. The CLI uses 100 × 60 mm labels.
+
+If the form is taller than the window, a vertical scrollbar appears. Use the scrollbar or mouse wheel to reach the remaining controls. Tabbing to a field also scrolls it into view.
+
 ### Numbered Packs Interface
 
 For raw-material deliveries consisting of multiple packs, run:
@@ -33,7 +39,7 @@ For raw-material deliveries consisting of multiple packs, run:
 python gui_packs.py
 ```
 
-On Windows, double-click `run_packs.bat`. This version adds a pack-count field and creates labels named `Product (1)` through `Product (n)`. The copies value applies to every pack, so 12 packs and 6 copies produce 72 stickers. The build script creates this version as `GeneratorNaklejek_Paczki.exe`.
+On Windows, double-click `run_packs.bat`. This version adds a pack-count field and creates labels named `Product (1)` through `Product (n)`. The selected label size applies to every pack, both when printing and when saving PDFs. The copies value applies to every pack, so 12 packs and 6 copies produce 72 stickers. The build script creates this version as `GeneratorNaklejek_Paczki.exe`.
 
 ### Command Line Interface (CLI)
 Run the CLI application using Python:

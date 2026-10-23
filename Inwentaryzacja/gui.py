@@ -90,8 +90,7 @@ class PalletInventoryTab(BaseInventoryTab):
         self.table_frame = ttk.Frame(self)
         self.table_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
-        # Kolumny zgodne z wytycznymi L125: tylko te pola, które istnieją w CSV i arkuszu + Lp
-        columns = ("Lp", "Alejka", "Produkt", "Ilość", "Data", "Status")
+        columns = ("Lp", "Alejka", "Produkt", "Ilość", "Data", "Status", "ID")
         self.tree = ttk.Treeview(self.table_frame, columns=columns, show="headings", selectmode="extended")
         
         # Paski przewijania
@@ -113,12 +112,14 @@ class PalletInventoryTab(BaseInventoryTab):
         self.tree.heading("Ilość", text="Ilość", command=lambda: self.sort_column("Ilość"))
         self.tree.heading("Data", text="Data", command=lambda: self.sort_column("Data"))
         self.tree.heading("Status", text="Status", command=lambda: self.sort_column("Status"))
+        self.tree.heading("ID", text="ID", command=lambda: self.sort_column("ID"))
         
         self.tree.column("Lp", width=50, anchor="center")
         self.tree.column("Produkt", width=220, anchor="w")
         self.tree.column("Ilość", width=100, anchor="center")
         self.tree.column("Data", width=140, anchor="center")
         self.tree.column("Status", width=150, anchor="center")
+        self.tree.column("ID", width=100, anchor="w")
         
         # Konfiguracja tagów (kolorowanie wierszy)
         self.tree.tag_configure("zgodne", background="#e8f8e8", foreground="#000000")
@@ -187,7 +188,8 @@ class PalletInventoryTab(BaseInventoryTab):
                 rec.get("Produkt", ""),
                 rec.get("Ilość", ""),
                 rec.get("Data", ""),
-                rec.get("Status", "")
+                rec.get("Status", ""),
+                rec.get("ID", "")
             ), tags=(tag,))
             displayed_count += 1
             
@@ -237,7 +239,8 @@ class PalletInventoryTab(BaseInventoryTab):
                 "Produkt": vals[2],
                 "Ilość": vals[3],
                 "Data": vals[4],
-                "Status": vals[5]
+                "Status": vals[5],
+                "ID": vals[6]
             })
             
         df_export = pd.DataFrame(export_data)
@@ -274,6 +277,9 @@ class RawMaterialsTab(BaseInventoryTab):
         self.lbl_surplus = ttk.Label(self.kpi_frame, text="🟡 Nadwyżki: 0", font=("Segoe UI", 10, "bold"), foreground="#b57d00")
         self.lbl_surplus.pack(side="left", padx=15)
         
+        self.lbl_review = ttk.Label(self.kpi_frame, text="⚠ Do sprawdzenia: 0", font=("Segoe UI", 10, "bold"), foreground="#b57d00")
+        self.lbl_review.pack(side="left", padx=15)
+
         # 2. Panel Filtrowania
         self.filter_frame = ttk.Frame(self, padding=5)
         self.filter_frame.pack(fill="x", padx=10, pady=5)
@@ -284,6 +290,7 @@ class RawMaterialsTab(BaseInventoryTab):
         ttk.Radiobutton(self.filter_frame, text="🟢 Zgodne", variable=self.filter_var, value="zgodne", command=self.apply_filters).pack(side="left", padx=5)
         ttk.Radiobutton(self.filter_frame, text="🔴 Braki", variable=self.filter_var, value="brakujace", command=self.apply_filters).pack(side="left", padx=5)
         ttk.Radiobutton(self.filter_frame, text="🟡 Nadwyżki", variable=self.filter_var, value="nadwyzka", command=self.apply_filters).pack(side="left", padx=5)
+        ttk.Radiobutton(self.filter_frame, text="⚠ Do sprawdzenia", variable=self.filter_var, value="weryfikacja", command=self.apply_filters).pack(side="left", padx=5)
         
         ttk.Label(self.filter_frame, text=" |   🔍 Szukaj:").pack(side="left", padx=(15, 5))
         self.entry_search = ttk.Entry(self.filter_frame, width=25)
@@ -295,7 +302,7 @@ class RawMaterialsTab(BaseInventoryTab):
         self.table_frame = ttk.Frame(self)
         self.table_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
-        columns = ("Lp", "Produkt", "Oczekiwana Ilość", "Zeskanowana Ilość", "Różnica", "Status")
+        columns = ("Lp", "Produkt", "Oczekiwana Ilość", "Zeskanowana Ilość", "Różnica", "Status", "ID", "Jednostka")
         self.tree = ttk.Treeview(self.table_frame, columns=columns, show="headings", selectmode="extended")
         
         vsb = ttk.Scrollbar(self.table_frame, orient="vertical", command=self.tree.yview)
@@ -315,6 +322,8 @@ class RawMaterialsTab(BaseInventoryTab):
         self.tree.heading("Zeskanowana Ilość", text="Zeskanowana Ilość", command=lambda: self.sort_column("Zeskanowana Ilość"))
         self.tree.heading("Różnica", text="Różnica", command=lambda: self.sort_column("Różnica"))
         self.tree.heading("Status", text="Status", command=lambda: self.sort_column("Status"))
+        self.tree.heading("ID", text="ID", command=lambda: self.sort_column("ID"))
+        self.tree.heading("Jednostka", text="Jednostka", command=lambda: self.sort_column("Jednostka"))
         
         self.tree.column("Lp", width=40, anchor="center")
         self.tree.column("Produkt", width=250, anchor="w")
@@ -322,11 +331,15 @@ class RawMaterialsTab(BaseInventoryTab):
         self.tree.column("Zeskanowana Ilość", width=120, anchor="center")
         self.tree.column("Różnica", width=100, anchor="center")
         self.tree.column("Status", width=150, anchor="center")
+        self.tree.column("ID", width=160, anchor="w")
+        self.tree.column("Jednostka", width=90, anchor="center")
         
         self.tree.tag_configure("zgodne", background="#e8f8e8", foreground="#000000")
         self.tree.tag_configure("brakujace", background="#fde8e8", foreground="#000000")
         self.tree.tag_configure("nadwyzka", background="#fef6e4", foreground="#000000")
         
+        self.tree.tag_configure("weryfikacja", background="#fff0cf", foreground="#000000")
+
         # 4. Panel dolny z eksportem
         self.bottom_frame = ttk.Frame(self, padding=10)
         self.bottom_frame.pack(fill="x", padx=10, pady=5)
@@ -349,6 +362,8 @@ class RawMaterialsTab(BaseInventoryTab):
         self.lbl_missing.config(text=f"🔴 Braki: {summary.get('missing_groups', 0)}")
         self.lbl_surplus.config(text=f"🟡 Nadwyżki: {summary.get('surplus_groups', 0)}")
         
+        self.lbl_review.config(text=f"⚠ Do sprawdzenia: {summary.get('review_groups', 0)}")
+
         self.apply_filters()
         
     def apply_filters(self):
@@ -375,7 +390,9 @@ class RawMaterialsTab(BaseInventoryTab):
                 rec.get("Oczekiwana Ilość", ""),
                 rec.get("Zeskanowana Ilość", ""),
                 rec.get("Różnica", ""),
-                rec.get("Status", "")
+                rec.get("Status", ""),
+                rec.get("ID", ""),
+                rec.get("Jednostka", "")
             ), tags=(tag,))
             displayed_count += 1
             
@@ -422,7 +439,9 @@ class RawMaterialsTab(BaseInventoryTab):
                 "Oczekiwana Ilość": vals[2],
                 "Zeskanowana Ilość": vals[3],
                 "Różnica": vals[4],
-                "Status": vals[5]
+                "Status": vals[5],
+                "ID": vals[6],
+                "Jednostka": vals[7]
             })
             
         df_export = pd.DataFrame(export_data)
@@ -557,7 +576,7 @@ class MainWindow(tk.Tk):
             else:
                 results = reconcile_raw_materials(excel_path, csv_path)
                 self.tab_surowce.populate_data(results)
-                messagebox.showinfo("Gotowe", f"Porównanie surowców zakończone sukcesem!\n\nPrzeanalizowano:\n• Zgodne: {results['summary']['matched_groups']}\n• Braki: {results['summary']['missing_groups']}\n• Nadwyżki: {results['summary']['surplus_groups']}")
+                messagebox.showinfo("Gotowe", f"Porównanie surowców zakończone sukcesem!\n\nPrzeanalizowano:\n• Zgodne: {results['summary']['matched_groups']}\n• Braki: {results['summary']['missing_groups']}\n• Nadwyżki: {results['summary']['surplus_groups']}\n• Do sprawdzenia: {results['summary']['review_groups']}")
         except Exception as e:
             messagebox.showerror("Błąd przetwarzania", f"Wystąpił błąd podczas porównywania:\n\n{e}")
         finally:

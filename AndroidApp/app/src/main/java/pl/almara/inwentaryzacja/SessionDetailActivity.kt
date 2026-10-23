@@ -9,6 +9,10 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.widget.BaseAdapter
+import android.widget.BaseExpandableListAdapter
+import android.widget.ExpandableListView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +32,7 @@ class SessionDetailActivity : AppCompatActivity() {
     private lateinit var sessionId: String
     private var session: Session? = null
     private var lastSavedUri: Uri? = null
+    private lateinit var selection: ItemSelection
 
     /** "Zapisz CSV" — użytkownik wybiera lokalizację (np. folder OneDrive/SharePoint). */
     private val saveCsvLauncher =
@@ -124,6 +129,14 @@ class SessionDetailActivity : AppCompatActivity() {
             return
         }
         sessionId = id
+        selection = ItemSelection(
+            this, savedInstanceState?.getStringArrayList("selected_items").orEmpty(),
+            onChanged = ::updateSelection,
+            onDelete = { keys ->
+                SessionStore.deleteItems(this, sessionId, keys)
+                refresh()
+            }
+        )
 
         binding.toolbar.setNavigationOnClickListener { finish() }
 
@@ -141,8 +154,29 @@ class SessionDetailActivity : AppCompatActivity() {
         }
         binding.deleteButton.setOnClickListener { confirmDelete() }
         binding.itemsList.setOnItemLongClickListener { _, _, position, _ ->
-            (binding.itemsList.getItemAtPosition(position) as? ScanItem)?.let { confirmDeleteItem(it) }
+            selection.toggle(binding.itemsList.getItemAtPosition(position) as ScanItem)
             true
+        }
+        binding.itemsList.setOnItemClickListener { _, _, position, _ ->
+            if (selection.active) selection.toggle(binding.itemsList.getItemAtPosition(position) as ScanItem)
+        }
+        binding.itemsGrouped.setOnItemLongClickListener { _, _, position, _ ->
+            val packed = binding.itemsGrouped.getExpandableListPosition(position)
+            if (ExpandableListView.getPackedPositionType(packed) != ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+                false
+            } else {
+                selection.toggle(binding.itemsGrouped.expandableListAdapter.getChild(
+                    ExpandableListView.getPackedPositionGroup(packed),
+                    ExpandableListView.getPackedPositionChild(packed)
+                ) as ScanItem)
+                true
+            }
+        }
+        binding.itemsGrouped.setOnChildClickListener { _, _, group, child, _ ->
+            if (selection.active) {
+                selection.toggle(binding.itemsGrouped.expandableListAdapter.getChild(group, child) as ScanItem)
+                true
+            } else false
         }
         binding.groupSwitch.isChecked = Settings.groupScansByAlley(this)
         binding.groupSwitch.setOnCheckedChangeListener { _, checked ->
@@ -167,8 +201,9 @@ class SessionDetailActivity : AppCompatActivity() {
         binding.toolbar.title = s.name
         binding.statCount.text = s.items.size.toString()
         binding.statWeight.text = Format.totals(s.items)
-        binding.itemsList.adapter = ScanItemAdapter(this, s.items)
-        binding.itemsGrouped.setAdapter(AlleyGroupAdapter(this, s.items))
+        binding.itemsList.adapter = ScanItemAdapter(this, s.items, selection)
+        binding.itemsGrouped.setAdapter(AlleyGroupAdapter(this, s.items, selection))
+        selection.retain(s.items)
         applyViewMode(binding.groupSwitch.isChecked)
     }
 
@@ -178,16 +213,19 @@ class SessionDetailActivity : AppCompatActivity() {
         binding.itemsGrouped.visibility = if (grouped) android.view.View.VISIBLE else android.view.View.GONE
     }
 
-    private fun confirmDeleteItem(item: ScanItem) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.delete_item)
-            .setMessage(getString(R.string.delete_item_confirm, item.product))
-            .setPositiveButton(R.string.delete) { _, _ ->
-                SessionStore.deleteItem(this, sessionId, item.raw)
-                refresh()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+    private fun updateSelection() {
+        (binding.itemsList.adapter as? BaseAdapter)?.notifyDataSetChanged()
+        (binding.itemsGrouped.expandableListAdapter as? BaseExpandableListAdapter)?.notifyDataSetChanged()
+        binding.toolbar.visibility = if (selection.active) View.GONE else View.VISIBLE
+        binding.scanButton.isEnabled = !selection.active
+        binding.shareCsvButton.isEnabled = !selection.active
+        binding.saveCsvButton.isEnabled = !selection.active
+        binding.deleteButton.isEnabled = !selection.active
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putStringArrayList("selected_items", selection.saved())
+        super.onSaveInstanceState(outState)
     }
 
     private fun confirmDelete() {

@@ -3,6 +3,7 @@ package pl.almara.inwentaryzacja
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.BaseAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -18,6 +19,7 @@ class RwDetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRwDetailBinding
     private lateinit var rwId: String
     private lateinit var doc: RwDocument
+    private lateinit var selection: ItemSelection
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +32,14 @@ class RwDetailActivity : AppCompatActivity() {
             return
         }
         rwId = id
+        selection = ItemSelection(
+            this, savedInstanceState?.getStringArrayList("selected_items").orEmpty(),
+            onChanged = ::updateSelection,
+            onDelete = { keys ->
+                RwStore.deleteItems(this, rwId, keys)
+                refresh()
+            }
+        )
 
         binding.toolbar.setNavigationOnClickListener { finish() }
         binding.requesterButton.setOnClickListener {
@@ -45,10 +55,11 @@ class RwDetailActivity : AppCompatActivity() {
             }
         }
         binding.itemsList.setOnItemClickListener { _, _, position, _ ->
-            if (!locked()) editAmount(doc.items[position])
+            if (selection.active) selection.toggle(doc.items[position])
+            else if (!locked()) editAmount(doc.items[position])
         }
         binding.itemsList.setOnItemLongClickListener { _, _, position, _ ->
-            if (!locked()) confirmDeleteItem(doc.items[position])
+            if (!locked()) selection.toggle(doc.items[position])
             true
         }
         binding.resumeButton.setOnClickListener {
@@ -85,7 +96,8 @@ class RwDetailActivity : AppCompatActivity() {
         binding.requesterButton.isEnabled = !locked
         binding.managerButton.isEnabled = !locked
         binding.resumeButton.visibility = if (locked) View.GONE else View.VISIBLE
-        binding.itemsList.adapter = RwItemAdapter(this, d.items)
+        binding.itemsList.adapter = RwItemAdapter(this, d.items, selection)
+        if (locked) selection.clear() else selection.retain(d.items)
     }
 
     private fun locked(): Boolean = doc.number.isNotEmpty()
@@ -119,16 +131,20 @@ class RwDetailActivity : AppCompatActivity() {
         )
     }
 
-    private fun confirmDeleteItem(item: ScanItem) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.delete_item)
-            .setMessage(getString(R.string.delete_item_confirm, item.product))
-            .setPositiveButton(R.string.delete) { _, _ ->
-                RwStore.deleteItem(this, rwId, item.raw)
-                refresh()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+    private fun updateSelection() {
+        (binding.itemsList.adapter as? BaseAdapter)?.notifyDataSetChanged()
+        binding.toolbar.visibility = if (selection.active) View.GONE else View.VISIBLE
+        binding.requesterButton.isEnabled = !selection.active && !locked()
+        binding.managerButton.isEnabled = !selection.active && !locked()
+        binding.resumeButton.isEnabled = !selection.active
+        binding.printButton.isEnabled = !selection.active
+        binding.sendButton.isEnabled = !selection.active
+        binding.deleteButton.isEnabled = !selection.active
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putStringArrayList("selected_items", selection.saved())
+        super.onSaveInstanceState(outState)
     }
 
     /** Zatwierdza dokument (nadaje numer) i wykonuje akcję, o ile dane są komplet­ne. */

@@ -8,9 +8,16 @@ data class ScanItem(
     val labelDate: String,   // data z naklejki (kiedy wydrukowano)
     val scannedAt: String,   // kiedy zeskanowano telefonem
     val initials: String,    // inicjały operatora z naklejki
-    val raw: String,         // surowa zawartość kodu QR (klucz deduplikacji)
-    val alley: String = "1"  // alejka ustawiona ręcznie podczas skanowania (numer lub nazwa)
-)
+    val raw: String,         // zawartość QR bez ID; zachowana także po zmianie ilości w RW
+    val alley: String = "1", // alejka ustawiona ręcznie podczas skanowania (numer lub nazwa)
+    val labelId: String = ""
+) {
+    val key: String
+        get() = "$product | $quantity ${Units.normalize(unit)} | $labelDate | $initials"
+
+    val sourceKey: String
+        get() = QrParser.parse(raw, scannedAt)?.key ?: raw
+}
 
 /** Sesja inwentaryzacji. */
 data class Session(
@@ -53,11 +60,11 @@ object Format {
     fun numberCsv(n: Double): String = number(n).replace('.', ',')
 
     /** Ilość z jednostką: "500 kg", "20 szt." */
-    fun quantity(item: ScanItem): String = "${number(item.quantity)} ${item.unit}"
+    fun quantity(item: ScanItem): String = "${number(item.quantity)} ${Units.normalize(item.unit)}"
 
     /** Sumy w rozbiciu na jednostki, np. "1500 kg  •  40 szt." (pusto → "0"). */
     fun totals(items: List<ScanItem>): String =
-        items.groupBy { it.unit }
+        items.groupBy { Units.normalize(it.unit) }
             .map { (unit, group) -> "${number(group.sumOf { it.quantity })} $unit" }
             .joinToString("  •  ")
             .ifEmpty { "0" }

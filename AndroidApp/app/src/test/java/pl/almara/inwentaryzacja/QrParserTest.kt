@@ -13,6 +13,32 @@ class QrParserTest {
 
     private val scannedAt = "2026-07-27 09:00:00"
 
+    @Test
+    fun labelIdIsSeparateFromTheDuplicateKey() {
+        for (initials in listOf("QC", "")) {
+            val base = "Materiał (1) | 12,5 kg | 2026-10-16 08:00"
+            val legacy = if (initials.isEmpty()) base else "$base | $initials"
+            val first = QrParser.parse("$base | $initials | aB3dE_fG", scannedAt)!!
+            val second = QrParser.parse("$base | $initials | 00000001", scannedAt)!!
+            val old = QrParser.parse(legacy, scannedAt)!!
+            assertEquals("aB3dE_fG", first.labelId)
+            assertEquals("00000001", second.labelId)
+            assertEquals("", old.labelId)
+            assertEquals(initials, first.initials)
+            assertEquals(old.raw, first.raw)
+            assertEquals(old.raw, second.raw)
+            assertEquals("2026-10-16 08:00:00", first.labelDate)
+        }
+    }
+
+    @Test
+    fun invalidIdsAndExtraFieldsAreRejected() {
+        val base = "Materiał | 10 kg | 2026-10-16 08:00 | QC"
+        for (suffix in listOf("", "short", "123456789", "1234567!", "abcdefgh | extra")) {
+            assertNull(QrParser.parse("$base | $suffix", scannedAt))
+        }
+    }
+
     /** Nazwa musi przejść przez parser bez zmian (poza przycięciem spacji). */
     private fun assertProduct(name: String) {
         val raw = "$name | 500kg | 2026-01-01 01:01:01 | XY"
@@ -113,5 +139,27 @@ class QrParserTest {
     @Test
     fun nonNumericQuantityRejected() {
         assertNull(QrParser.parse("Mat 1 | szt. | 2026-01-01 01:01:01 | XY", scannedAt))
+    }
+
+    @Test
+    fun generatorQuantitySpellingsKeepTheCorrectAmountAndUnit() {
+        val amounts = mapOf(".5" to 0.5, ",5" to 0.5, "12." to 12.0, "12," to 12.0,
+            "1e3" to 1000.0, "1E-3" to 0.001, "+12.5" to 12.5)
+        val units = mapOf("kg" to "kg", "KG" to "kg", "szt" to "szt.", "SZT." to "szt.", "" to "kg")
+        for ((amount, expectedAmount) in amounts) {
+            for ((unit, expectedUnit) in units) {
+                val item = QrParser.parse("Mat | $amount$unit | 2026-10-20 08:00", scannedAt)!!
+                assertEquals(expectedAmount, item.quantity, 0.0)
+                assertEquals(expectedUnit, item.unit)
+            }
+        }
+    }
+
+    @Test
+    fun invalidAmountsAndUnknownUnitsAreRejected() {
+        for (quantity in listOf("0 kg", "-1 kg", "1e999 kg", "NaN kg", "Infinity kg", "1 kgx",
+            "1 g", "1.2.3 kg", "1,2,3 szt.", "1e kg")) {
+            assertNull(quantity, QrParser.parse("Mat | $quantity | 2026-10-20 08:00", scannedAt))
+        }
     }
 }

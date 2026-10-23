@@ -56,6 +56,7 @@
     <string name="new_session">Nowa sesja</string>
     <string name="default_session_name">Inwentaryzacja %1$s</string>
     <string name="session_name_hint">Nazwa sesji</string>
+    <string name="session_name_exists">Sesja o tej nazwie już istnieje. Wybierz inną nazwę.</string>
     <string name="session_type">Rodzaj sesji</string>
     <string name="session_type_products">Produkty</string>
     <string name="session_type_raw">Surowce</string>
@@ -69,7 +70,10 @@
     <string name="status_ok_format">OK: %1$s (%2$s)</string>
     <string name="status_duplicate">Już zeskanowano!</string>
     <string name="status_updated_format">Zmieniono: %1$s (%2$s)</string>
-    <string name="pallet_count_prompt">Ile palet tego surowca?</string>
+    <string name="pallet_count_prompt">Dostawa: %1$s\nIlość na palecie: %2$s\nJuż zapisano: %3$d palet\n\nIle palet dodać (1–999)?</string>
+    <string name="pallet_count_preview">Po dodaniu: %1$d palet — %2$s</string>
+    <string name="add_pallets">Dodaj palety</string>
+    <string name="add_pallet_count">Dodaj: %1$d</string>
     <string name="status_pallets_added">Dodano palet: %2$d — %1$s</string>
     <string name="status_pallets_dup">%1$s — wszystkie palety już zeskanowane</string>
     <string name="status_invalid">Nieprawidłowy kod QR</string>
@@ -100,7 +104,9 @@
     <string name="csv_share_title">Udostępnij raport</string>
     <string name="delete_session">Usuń sesję</string>
     <string name="delete_confirm">Czy na pewno usunąć sesję „%1$s”? Tej operacji nie można cofnąć.</string>
-    <string name="delete_item">Usuń pozycję</string>
-    <string name="delete_item_confirm">Usunąć „%1$s” z listy?</string>
     <string name="delete">Usuń</string>
+    <string name="selected_count">Wybrano: %1$d</string>
+    <string name="delete_selected">Usuń zaznaczone</string>
+    <string name="delete_selected_confirm">Usunąć zaznaczone pozycje (%1$d)?</string>
+    <string name="select_item">Zaznacz pozycję</string>
 </resources>

@@ -90,32 +90,27 @@ class ScanActivity : BaseScanActivity() {
         }
     }
 
-    /** Surowce: pytamy o liczbę palet i rozbijamy skan na oddzielne wpisy (1)..(n). */
     private fun promptPallets(item: ScanItem) {
         pauseScanning()
         val base = PalletName.base(item.product)
+        val existing = SessionStore.getSession(this, sessionId)?.items.orEmpty()
         PalletPrompt.show(
             context = this,
-            base = base,
-            prefill = PalletName.number(item.product) ?: 1,
+            item = item,
+            existingCount = PalletExpansion.matching(item, existing).size,
             onOk = { count -> addPallets(item, base, count) },
             onCancel = { resumeScanning() }
         )
     }
 
     private fun addPallets(item: ScanItem, base: String, count: Int) {
-        var added = 0
-        for (entry in PalletExpansion.expand(item, count)) {
-            when (SessionStore.addItem(this, sessionId, entry)) {
-                SessionStore.AddResult.ADDED -> added++
-                SessionStore.AddResult.DUPLICATE -> {}
-                null -> {
-                    showStatus(getString(R.string.status_session_missing), R.color.status_error)
-                    feedback(error = true)
-                    resumeScanning()
-                    return
-                }
-            }
+        val existing = SessionStore.getSession(this, sessionId)?.items.orEmpty()
+        val added = SessionStore.addItems(this, sessionId, PalletExpansion.expand(item, count, existing))
+        if (added == null) {
+            showStatus(getString(R.string.status_session_missing), R.color.status_error)
+            feedback(error = true)
+            resumeScanning()
+            return
         }
         scannedCount += added
         updateCounter()

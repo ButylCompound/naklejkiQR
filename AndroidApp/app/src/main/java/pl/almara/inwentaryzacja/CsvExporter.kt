@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
 import java.io.File
+import java.util.UUID
 
 /**
  * Eksport sesji do pliku CSV zgodnego z polskim Excelem
@@ -22,20 +23,21 @@ object CsvExporter {
     fun buildCsv(session: Session): String {
         val sb = StringBuilder()
         sb.append('\uFEFF') // BOM — dzięki temu Excel poprawnie odczyta polskie znaki
-        sb.append("Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania\r\n")
+        sb.append("Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania;ID\r\n")
         session.items.forEachIndexed { i, item ->
             sb.append(i + 1).append(';')
                 .append(esc(item.alley)).append(';')
                 .append(esc(item.product)).append(';')
                 .append(Format.numberCsv(item.quantity)).append(';')
-                .append(esc(item.unit)).append(';')
+                .append(esc(Units.normalize(item.unit))).append(';')
                 .append(esc(item.initials)).append(';')
                 .append(esc(item.labelDate)).append(';')
-                .append(esc(item.scannedAt)).append("\r\n")
+                .append(esc(item.scannedAt)).append(';')
+                .append(esc(item.labelId)).append("\r\n")
         }
         sb.append("\r\n")
         sb.append("Liczba palet;").append(session.items.size).append("\r\n")
-        session.items.groupBy { it.unit }.forEach { (unit, group) ->
+        session.items.groupBy { Units.normalize(it.unit) }.forEach { (unit, group) ->
             sb.append("Łączna ilość (").append(esc(unit)).append(");")
                 .append(Format.numberCsv(group.sumOf { it.quantity })).append("\r\n")
         }
@@ -49,15 +51,19 @@ object CsvExporter {
             "\"" + v.replace("\"", "\"\"") + "\""
         else v
 
+    fun build(context: Context, session: Session): File {
+        val dir = File(context.cacheDir, "exports/${UUID.randomUUID()}").apply { mkdirs() }
+        val file = File(dir, fileName(session))
+        file.writeText(buildCsv(session), Charsets.UTF_8)
+        return file
+    }
+
     /**
      * Otwiera systemowe okno udostępniania — operator może wysłać CSV
      * e-mailem (Outlook/Gmail) lub wgrać na SharePoint (aplikacja OneDrive/Teams).
      */
     fun share(context: Context, session: Session) {
-        val dir = File(context.cacheDir, "exports").apply { mkdirs() }
-        val file = File(dir, fileName(session))
-        file.writeText(buildCsv(session), Charsets.UTF_8)
-
+        val file = build(context, session)
         val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"

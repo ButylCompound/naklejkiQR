@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.BaseExpandableListAdapter
+import androidx.core.content.ContextCompat
 import pl.almara.inwentaryzacja.databinding.ItemAlleyGroupBinding
 import pl.almara.inwentaryzacja.databinding.ItemPersonBinding
 import pl.almara.inwentaryzacja.databinding.ItemScanItemBinding
@@ -35,7 +36,7 @@ class SessionAdapter(context: Context, private val sessions: List<Session>) :
 }
 
 /** Wiersz listy zeskanowanych palet (karta z produktem, wagą i datami). */
-class ScanItemAdapter(context: Context, private val items: List<ScanItem>) :
+class ScanItemAdapter(context: Context, private val items: List<ScanItem>, private val selection: ItemSelection) :
     ArrayAdapter<ScanItem>(context, 0, items) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -45,6 +46,7 @@ class ScanItemAdapter(context: Context, private val items: List<ScanItem>) :
             ItemScanItemBinding.inflate(LayoutInflater.from(context), parent, false)
         }
         val item = items[position]
+        binding.bindSelection(item, selection)
         binding.itemProduct.text = "${position + 1}. ${item.product}"
         binding.itemWeight.text = Format.quantity(item)
         val who = if (item.initials.isBlank()) "" else "${item.initials}  •  "
@@ -79,7 +81,7 @@ class RwAdapter(context: Context, private val docs: List<RwDocument>) :
  * najpierw (rosnąco), potem niestandardowe (alfabetycznie); pozycje w grupie
  * zachowują kolejność skanowania.
  */
-class AlleyGroupAdapter(private val context: Context, items: List<ScanItem>) :
+class AlleyGroupAdapter(private val context: Context, items: List<ScanItem>, private val selection: ItemSelection) :
     BaseExpandableListAdapter() {
 
     private val byAlley = items.groupBy { it.alley }
@@ -96,7 +98,7 @@ class AlleyGroupAdapter(private val context: Context, items: List<ScanItem>) :
     override fun getGroupId(group: Int) = group.toLong()
     override fun getChildId(group: Int, child: Int) = child.toLong()
     override fun hasStableIds() = false
-    override fun isChildSelectable(group: Int, child: Int) = false
+    override fun isChildSelectable(group: Int, child: Int) = true
 
     override fun getGroupView(group: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup): View {
         val binding = if (convertView != null) ItemAlleyGroupBinding.bind(convertView)
@@ -116,6 +118,7 @@ class AlleyGroupAdapter(private val context: Context, items: List<ScanItem>) :
         val binding = if (convertView != null) ItemScanItemBinding.bind(convertView)
         else ItemScanItemBinding.inflate(LayoutInflater.from(context), parent, false)
         val item = childrenOf(group)[child]
+        binding.bindSelection(item, selection)
         binding.itemProduct.text = "${child + 1}. ${item.product}"
         binding.itemWeight.text = Format.quantity(item)
         val who = if (item.initials.isBlank()) "" else "${item.initials}  •  "
@@ -145,7 +148,7 @@ class PersonAdapter(
 }
 
 /** Wiersz pozycji w dokumencie RW (kod = data dostawy). */
-class RwItemAdapter(context: Context, private val items: List<ScanItem>) :
+class RwItemAdapter(context: Context, private val items: List<ScanItem>, private val selection: ItemSelection) :
     ArrayAdapter<ScanItem>(context, 0, items) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -155,9 +158,19 @@ class RwItemAdapter(context: Context, private val items: List<ScanItem>) :
             ItemScanItemBinding.inflate(LayoutInflater.from(context), parent, false)
         }
         val item = items[position]
+        binding.bindSelection(item, selection)
         binding.itemProduct.text = "${position + 1}. ${item.product}"
         binding.itemWeight.text = Format.quantity(item)
         binding.itemDates.text = context.getString(R.string.rw_item_code, item.labelDate)
         return binding.root
     }
+}
+
+private fun ItemScanItemBinding.bindSelection(item: ScanItem, selection: ItemSelection) {
+    val selected = selection.contains(item)
+    itemSelected.visibility = if (selection.active) View.VISIBLE else View.GONE
+    itemSelected.isChecked = selected
+    root.setCardBackgroundColor(ContextCompat.getColor(
+        root.context, if (selected) R.color.brand_blue_container else android.R.color.white
+    ))
 }

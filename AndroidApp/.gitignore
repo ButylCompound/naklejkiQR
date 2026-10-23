@@ -11,3 +11,4 @@ captures/
 # Klucz podpisujący i hasła — NIGDY nie commitować
 keystore/
 keystore.properties
+backups/
