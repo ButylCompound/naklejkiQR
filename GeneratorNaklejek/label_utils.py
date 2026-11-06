@@ -84,3 +84,35 @@ def numbered_pack_names(product_name, pack_count):
     if not isinstance(pack_count, int) or isinstance(pack_count, bool) or pack_count < 1:
         raise ValueError('Pack count must be a positive integer.')
     return [f'{product_name} ({number})' for number in range(1, pack_count + 1)]
+
+
+def validate_lot_number(value):
+    value = str(value).strip()
+    if not value:
+        raise ValueError('Numer partii jest wymagany.')
+    if any(character in value for character in '|\r\n\t'):
+        raise ValueError('Numer partii nie może zawierać znaku „|”, nowych wierszy ani tabulatorów.')
+    return value
+
+
+def validate_lot_allocations(rows, pack_count):
+    if not rows:
+        raise ValueError('Dodaj numery partii i liczbę opakowań dla każdej partii.')
+    lots = []
+    for row_number, (lot_number, count) in enumerate(rows, 1):
+        try:
+            lot_number = validate_lot_number(lot_number)
+            count = int(str(count).strip())
+            if count < 1:
+                raise ValueError()
+        except ValueError as error:
+            message = str(error) if str(error).startswith('Numer partii') else 'Liczba opakowań musi być dodatnią liczbą całkowitą.'
+            raise ValueError(f'Wiersz {row_number}: {message}') from error
+        lots.append((lot_number, count))
+    total = sum(count for _, count in lots)
+    if total != pack_count:
+        raise ValueError(
+            f'Suma opakowań przypisanych do partii wynosi {total}, '
+            f'a liczba opakowań w formularzu wynosi {pack_count}. Popraw liczbę opakowań w tabeli lub formularzu.'
+        )
+    return lots

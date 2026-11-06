@@ -16,10 +16,10 @@
         app:title="@string/home_settings"
         app:titleTextColor="@android:color/white" />
 
+    <androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
@@ -27,146 +27,45 @@
             style="@style/SettingsGroupHeader"
             android:text="@string/home_inventory" />
 
-        <LinearLayout
-            android:id="@+id/rowAlleys"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/settings_row_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_alley_count"
-                android:textColor="@color/brand_blue"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/alleysValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="end"
-                android:maxLines="1"
-                android:textColor="@color/text_secondary"
-                android:textSize="16sp" />
+        <LinearLayout android:id="@+id/rowAlleys" style="@style/SettingsRow">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/settings_alley_count" />
+            <TextView android:id="@+id/alleysValue" style="@style/SettingsRowValue" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/rowCustomAlleys"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/settings_row_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_custom_alleys"
-                android:textColor="@color/brand_blue"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/customAlleysValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="end"
-                android:maxLines="1"
-                android:textColor="@color/text_secondary"
-                android:textSize="16sp" />
+        <LinearLayout android:id="@+id/rowCustomAlleys" style="@style/SettingsRow" android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/settings_custom_alleys" />
+            <TextView android:id="@+id/customAlleysValue" style="@style/SettingsRowValue" />
         </LinearLayout>
 
-        <TextView
-            style="@style/SettingsGroupHeader"
-            android:layout_marginTop="24dp"
-            android:text="@string/home_rw" />
+        <TextView style="@style/SettingsGroupHeader" android:layout_marginTop="24dp" android:text="@string/home_rw" />
 
-        <LinearLayout
-            android:id="@+id/rowRequesters"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/settings_row_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_requesters"
-                android:textColor="@color/brand_blue"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/requestersValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="end"
-                android:maxLines="1"
-                android:textColor="@color/text_secondary"
-                android:textSize="16sp" />
+        <LinearLayout android:id="@+id/rowRequesters" style="@style/SettingsRow" android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/settings_requesters" />
+            <TextView android:id="@+id/requestersValue" style="@style/SettingsRowValue" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/rowManagers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/settings_row_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="16dp">
+        <LinearLayout android:id="@+id/rowManagers" style="@style/SettingsRow" android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/settings_managers" />
+            <TextView android:id="@+id/managersValue" style="@style/SettingsRowValue" />
+        </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_managers"
-                android:textColor="@color/brand_blue"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+        <TextView style="@style/SettingsGroupHeader" android:layout_marginTop="24dp" android:text="@string/home_pz" />
 
-            <TextView
-                android:id="@+id/managersValue"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:gravity="end"
-                android:maxLines="1"
-                android:textColor="@color/text_secondary"
-                android:textSize="16sp" />
+        <LinearLayout android:id="@+id/rowReceivers" style="@style/SettingsRow">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/settings_receivers" />
+            <TextView android:id="@+id/receiversValue" style="@style/SettingsRowValue" />
+        </LinearLayout>
+
+        <TextView style="@style/SettingsGroupHeader" android:layout_marginTop="24dp" android:text="@string/settings_general" />
+
+        <LinearLayout android:id="@+id/rowServer" style="@style/SettingsRow">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/server_settings" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/rowUpdates" style="@style/SettingsRow" android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowTitle" android:text="@string/update_check" />
         </LinearLayout>
     </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <Button
         android:id="@+id/resetButton"
@@ -174,7 +73,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="4dp"
         android:text="@string/settings_reset" />
+
+    <TextView
+        android:id="@+id/versionValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
 
 </LinearLayout>

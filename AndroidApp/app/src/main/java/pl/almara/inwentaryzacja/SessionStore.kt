@@ -79,7 +79,7 @@ object SessionStore {
     /** Usuwa zaznaczone pozycje jednym zapisem sesji. */
     fun deleteItems(context: Context, sessionId: String, selected: Set<String>) {
         val session = getSession(context, sessionId) ?: return
-        session.items.removeAll { it.raw in selected }
+        session.items.removeAll { it.sourceKey in selected }
         save(context, session)
     }
 

@@ -199,8 +199,8 @@ class SessionDetailActivity : AppCompatActivity() {
         session = s
 
         binding.toolbar.title = s.name
-        binding.statCount.text = s.items.size.toString()
-        binding.statWeight.text = Format.totals(s.items)
+        binding.totals.statCount.text = s.items.size.toString()
+        binding.totals.statWeight.text = Format.totals(s.items)
         binding.itemsList.adapter = ScanItemAdapter(this, s.items, selection)
         binding.itemsGrouped.setAdapter(AlleyGroupAdapter(this, s.items, selection))
         selection.retain(s.items)

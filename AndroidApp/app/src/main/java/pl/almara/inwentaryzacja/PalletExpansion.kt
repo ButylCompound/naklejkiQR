@@ -13,7 +13,7 @@ object PalletExpansion {
         val lastNumber = matching(item, existing).maxOfOrNull { PalletName.number(it.product) ?: 0 } ?: 0
         return (1..count).map { offset ->
             val name = PalletName.numbered(base, lastNumber + offset)
-            item.copy(product = name, unit = Units.normalize(item.unit), raw = key(name, item))
+            item.copy(product = name, unit = Units.normalize(item.unit), raw = key(name, item.copy(lot = "")))
         }
     }
 

@@ -1,0 +1,1675 @@
+{
+  "updatedAt": "2026-10-30T12:43:21.699Z",
+  "gs1": true,
+  "ocrWarningThreshold": 0.8,
+  "rules": [
+    {
+      "id": "braskem-pib-qr",
+      "source": "barcode",
+      "formats": [
+        "QR_CODE"
+      ],
+      "pattern": "^\\s*(PIB[0-9]+)\\s*/\\s*([A-Za-z0-9-]+)\\s*/\\s*([0-9]{8})\\s*/\\s*([0-9]+(?:[,.][0-9]+)?)\\s*$",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "Poliizobuten "
+        },
+        {
+          "field": "lot",
+          "group": 2
+        },
+        {
+          "field": "quantity",
+          "group": 4,
+          "numberFormat": "decimal-comma"
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "chambroad-legacy-qr",
+      "source": "barcode",
+      "formats": [
+        "QR_CODE"
+      ],
+      "pattern": "^http://58\\.59\\.122\\.5:9999\\?[0-9]+&ph:([0-9]+)&pc:([0-9]+)&zxsj:[^&]+&dw:[^&]+&bm:[0-9]+$",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL IIR-"
+        },
+        {
+          "field": "lot",
+          "group": 2
+        }
+      ]
+    },
+    {
+      "id": "standard-printed-batch",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?im)N?U(?:M|RM)ER?[ \\t]+SE(?:R(?:II?|NI|IK)|II|NI?)[ \\t:：]*(?:\\r?\\n[ \\t]*)?([A-Z0-9./_-]*[0-9][A-Z0-9./_-]*)[ \\t]*$",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "standard-prs-name",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)\\b(A[0-9]+)\\b",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "Żywica węglowodorowa PRS "
+        }
+      ],
+      "contextPattern": "(?i)[ZŻŽ]YWICA\\s+W(?:E|Ę)GLOWODOROWA\\s+PRS\\b"
+    },
+    {
+      "id": "standard-pib-name",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)POLIIZOBUTEN[ \\t]+(PIB[0-9]+)",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "Poliizobuten "
+        }
+      ]
+    },
+    {
+      "id": "standard-net",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)MASA[ \\t]+N?ET(?:TO|IO)[ \\t:：]*(?:[^\\r\\n]*\\r?\\n){0,2}?[^\\r\\n]*?([0-9]+(?:[,.][0-9]+)?)[ \\t]*KG\\b",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 1
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "chambroad-printed-grade",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?im)(?:^|[ \\t/])IIR[ \\t-]*(1953)\\b",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL IIR-"
+        }
+      ]
+    },
+    {
+      "id": "chambroad-printed-batch",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?im)LOT[ \\t]*NO[.,]?[ \\t:：]*(?:\\r?\\n[ \\t]*)?([0-9]{10}|[0-9]{6})[ \\t]*$",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "english-net-weight",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)\\bU?NET[ \\t/]*(?:WEIGHT[ \\t]*)?[:：]?[ \\t]*(?:\\r?\\n[ \\t]*)?([0-9]+(?:[,.][0-9]+)?)[ \\t]*KG\\b",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 1
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "braskem-printed-net",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)PESO[ \\t]+L[IÍ]QUIDO[ \\t]*\\([ \\t]*KG[ \\t]*\\)[ \\t:-]*([0-9]+(?:,[0-9]+)?)",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 1,
+          "numberFormat": "decimal-comma"
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "convent-printed-name",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)(BUTYL[ \\t]+[0-9]{3}[A-Z]?)[ \\t]+25[ \\t]+KG[ \\t]+BAL",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "convent-batch",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)\\bCHAR(?:[ \\t]+AR)?GE[ \\t:：]*(?:[^\\r\\n]*\\r?\\n[ \\t]*)?(T[0-9]{8}[A-Z])\\b",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "convent-net",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?im)NETTOGEWICHT[ \\t]*\\(KG\\)[^\\r\\n]*\\r?\\n[^\\r\\n]*?([0-9]{1,3}\\.[0-9]{3})[ \\t]+([0-9]{1,3}\\.[0-9]{3})[ \\t]*(?:\\r?\\n|$)",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 2,
+          "numberFormat": "thousands-dot"
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ],
+      "contextPattern": "(?i)CONVENT|BIESTERFELD|BUTYL[ \\t]+268S[ \\t]+25[ \\t]+KG[ \\t]+BAL"
+    },
+    {
+      "id": "exxon-encoded-fields",
+      "source": "barcode",
+      "formats": [
+        "CODE_39",
+        "CODE_128"
+      ],
+      "pattern": "^0BU([0-9]{3}[A-Z])0713(T[0-9]{8}[A-Z])([0-9]{10})([0-9]{4})$",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL "
+        },
+        {
+          "field": "lot",
+          "group": 2
+        },
+        {
+          "field": "quantity",
+          "group": 4
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "exxon-printed-encoded-fields",
+      "source": "text",
+      "formats": [],
+      "pattern": "\\b0BU([0-9]{3}[A-Z])0713(T[0-9]{8}[A-Z])([0-9]{10})([0-9]{4})\\b",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL "
+        },
+        {
+          "field": "lot",
+          "group": 2
+        },
+        {
+          "field": "quantity",
+          "group": 4
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "exxon-printed-batch",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)\\bLOT[ \\t:：]*(?:\\r?\\n[ \\t]*)?(T[0-9]{8}[A-Z])\\b",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "transmec-product",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?i)PRODUCT[ \\t]*:[ \\t]*(CALOFORT[^\\r\\n]*)",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "standard-net-before-heading",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?i)STANDARD|DYSTRYBUTOR",
+      "pattern": "(?i)\\b([0-9]+(?:[,.][0-9]+)?)[ \\t]*KG[ \\t]+MASA[ \\t]+N?ET(?:TO|IO)[.:：]?",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 1
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "standard-prs-batch-beside-expiry",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?is)(?:NUMER[ \\t]+SERII.*[ZŻŽ]YWICA\\s+W(?:E|Ę)GLOWODOROWA\\s+PRS\\b|[ZŻŽ]YWICA\\s+W(?:E|Ę)GLOWODOROWA\\s+PRS\\b.*NUMER[ \\t]+SERII)",
+      "pattern": "(?m)^[ \\t]*[0-9]{1,2}\\.[0-9]{3,4}[ \\t]+([0-9]{7})[ \\t]*$",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "chambroad-ocr-grade",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?i)CHAMBROAD",
+      "pattern": "(?i)\\bBUTYL\\s+RUBBER\\s+(1953)\\b",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL IIR-"
+        }
+      ]
+    },
+    {
+      "id": "chambroad-ocr-batch-heading",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?i)CHAMBROAD",
+      "pattern": "(?im)(?:^|[ \\t/])(?:OT|T)[ \\t]*NO[.,]?[ \\t:：]*(?:\\r?\\n[ \\t]*)?([0-9]{10}|[0-9]{6})[ \\t]*$",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "chambroad-ocr-net-prefix",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?i)CHAMBROAD",
+      "pattern": "(?im)^[ \\t]*[A4TIEUL]{1,4}NET[ \\t/]*(?:WEIGHT[ \\t]*)?[:：]?[ \\t]*(?:\\r?\\n[ \\t]*)?([0-9]+(?:[,.][0-9]+)?)[ \\t]*KG\\b",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 1
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    },
+    {
+      "id": "exxon-ocr-grade",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?i)\\b[BR]UTYL\\b",
+      "pattern": "(?im)(?:^|[ \\t])[0ØODB]BU([0-9A-ZØ|]{4})[0ØO5]?[7T][1IL|]3",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL ",
+          "fuzzy": {
+            "choices": [
+              "268S"
+            ],
+            "maxDistance": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "standard-short-series-heading",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?im)NUMER[ \\t]+SER[ \\t:：]*(?:\\r?\\n[ \\t]*)?([0-9]{7})[ \\t]*$",
+      "fields": [
+        {
+          "field": "lot",
+          "group": 1
+        }
+      ]
+    },
+    {
+      "id": "chambroad-fuzzy-grade",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?is)(?:CHAMBROAD.*BUTYL\\s+RUBBER|BUTYL\\s+RUBBER.*CHAMBROAD)",
+      "pattern": "(?im)(?:^|[ \\t/])([A-Z|]{1,4}[ \\t-]*[0-9IOØL|SZBG]{4})\\b",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "BUTYL ",
+          "fuzzy": {
+            "choices": [
+              "IIR-1953"
+            ],
+            "maxDistance": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "standard-prs-fuzzy-grade",
+      "source": "text",
+      "formats": [],
+      "contextPattern": "(?i)[ZŻŽ]YWICA\\s+W(?:E|Ę)GLOWODOROWA\\s+PRS\\b",
+      "pattern": "(?i)\\b(A[0-9OØIL|SZBG]{4})\\b",
+      "fields": [
+        {
+          "field": "materialName",
+          "group": 1,
+          "prefix": "Żywica węglowodorowa PRS ",
+          "fuzzy": {
+            "choices": [
+              "A1100"
+            ],
+            "maxDistance": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "ocr-prefixed-net-weight",
+      "source": "text",
+      "formats": [],
+      "pattern": "(?im)(?:^|[ \\t/])[^ \\t\\r\\n]{1,2}NET[ \\t/]*WEIGHT[ \\t]*[:：]?[ \\t]*(?:\\r?\\n[ \\t]*)?([0-9]+(?:[,.][0-9]+)?)[ \\t]*KG\\b",
+      "fields": [
+        {
+          "field": "quantity",
+          "group": 1
+        },
+        {
+          "field": "unit",
+          "value": "kg"
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "name": "Braskem QR comma is decimal",
+      "codes": [
+        {
+          "format": "QR_CODE",
+          "raw": "PIB32 / SPXFPG005E / 20260721 / 175,000"
+        }
+      ],
+      "text": "",
+      "expected": {
+        "materialName": "Poliizobuten PIB32",
+        "lot": "SPXFPG005E",
+        "quantity": "175",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Chambroad QR does not contain weight",
+      "codes": [
+        {
+          "format": "QR_CODE",
+          "raw": "http://58.59.122.5:9999?4240622319&ph:1953&pc:4240622319&zxsj:2145-2200&dw:京博橡胶&bm:100044938"
+        }
+      ],
+      "text": "",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "4240622319",
+        "quantity": null
+      }
+    },
+    {
+      "name": "Standard barcode is not manufacturer batch",
+      "codes": [
+        {
+          "format": "CODE_128",
+          "raw": "10260001773503"
+        }
+      ],
+      "text": "",
+      "expected": {
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "Standard printed fields",
+      "codes": [
+        {
+          "format": "CODE_128",
+          "raw": "10260001773503"
+        }
+      ],
+      "text": "ŻYWICA WĘGLOWODOROWA PRS\nA1100\nNumer serii: 2604075\nMasa netto:\n700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700"
+      }
+    },
+    {
+      "name": "Chambroad tracking URL is opaque",
+      "codes": [
+        {
+          "format": "QR_CODE",
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671"
+        }
+      ],
+      "text": "",
+      "expected": {
+        "lot": null,
+        "quantity": null,
+        "materialName": null
+      }
+    },
+    {
+      "name": "Chambroad tracking label printed fields",
+      "codes": [],
+      "text": "IIR-1953\nLOT NO. 260502\nNET:1200KG",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "260502",
+        "quantity": "1200"
+      }
+    },
+    {
+      "name": "German net weight not gross or bale weight",
+      "codes": [],
+      "text": "CONVENT\nBUTYL 268S 25 KG BAL\nCharge\nT26013025H\nBruttogewicht/Nettogewicht (KG)\n5621170000 1.225 1.200",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200"
+      }
+    },
+    {
+      "name": "Exxon encoded label fields",
+      "codes": [
+        {
+          "format": "CODE_128",
+          "raw": "0BU268S0713T26013025H26013020051200"
+        }
+      ],
+      "text": "",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200"
+      }
+    },
+    {
+      "name": "Transmec number order and PCS are not lot or net material amount",
+      "codes": [
+        {
+          "format": "CODE_39",
+          "raw": "267453          "
+        }
+      ],
+      "text": "TRANSMEC REF. 0365566\nPRODUCT: CALOFORT SV800 HTCP3\nORDER:\nE15741\nPCS 1",
+      "expected": {
+        "materialName": "CALOFORT SV800 HTCP3",
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "GS1 complete product batch and net weight",
+      "codes": [
+        {
+          "format": "CODE_128",
+          "raw": "]C10101234567890128310201234510LOT001"
+        }
+      ],
+      "text": "",
+      "expected": {
+        "lot": "LOT001",
+        "quantity": "123.45",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Standard points to manufacturer package instead of supplying a lot",
+      "codes": [],
+      "text": "POLIIZOBUTEN PIB32\nNumer serii: na opakowaniu\nNumer dostawy: Masa netto:\n26-023979\n175 kg",
+      "expected": {
+        "materialName": "Poliizobuten PIB32",
+        "lot": null,
+        "quantity": "175"
+      }
+    },
+    {
+      "name": "Chambroad compact OCR heading",
+      "codes": [],
+      "text": "CHAMBROAD SINOPOLY\n|IR-1953\nButyl Rubber\nLOTNO.241013\nNET:1200KG",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241013",
+        "quantity": "1200"
+      }
+    },
+    {
+      "name": "STANDARD phone read with reordered grade net and batch",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "DARD\n26-017735 Numer dostawy\nTAN\nNumer serii:\nŻYWICA WEGLOWODOROWA PRS\nData ważnosci: Data produkcii: 04.2025\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505 Przedsiębiorstwo Przemysłowo-Handlowe\n10.202 2604075\n700 kg Masa netto. e-mail: chemia@standard.pl, www.standard.pl „STANDARD\" Sp. z o.o.\nA1100 DYSTRYBUTOR",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "STANDARD delivery code and phone number cannot replace missing batch",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "DARD\n26-017735 Numer dostawy\nTAN\nNumer serii:\nŻYWICA WEGLOWODOROWA PRS\nData ważnosci: Data produkcii: 04.2025\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505 Przedsiębiorstwo Przemysłowo-Handlowe\n10.202\n700 kg Masa netto. e-mail: chemia@standard.pl, www.standard.pl „STANDARD\" Sp. z o.o.\nA1100 DYSTRYBUTOR\nKontakt: 1234567",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": null,
+        "quantity": "700"
+      }
+    },
+    {
+      "name": "Reverse gross weight is not net weight",
+      "codes": [],
+      "text": "STANDARD\nŻYWICA WEGLOWODOROWA PRS\nA1100\n700 kg Masa brutto.",
+      "expected": {
+        "quantity": null,
+        "lot": null
+      }
+    },
+    {
+      "name": "STANDARD phone read with netio and Sen OCR headings",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiebiorstwo Przemyslowo-Handlowe\n„STANDARD\" Sp. z o.0.\nTAN\nKarole Ołszewskiego 10, 20-481 Lublin, tel.48 81 71 00 500, fa448 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nSARDW\nŻYWICA WEGLOWODOROWA PRS\nA1100\nNumer Sen: 2604075\nData produkcji: 04 2026\nData waznosci: 10 2027\nNumer dostawy Masa netio\n26-017T36 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "STANDARD phone read with split resin name and Nurmer OCR heading",
+      "codes": [],
+      "text": "Przedsiębiorstwo Przemysiowo-Handlowe\nTAN STANDARD Sp. z o.o.\nul. Karola Olszewskiego 10, 20-481 Lublin, tei.+48 81 71 00 500, fa 49 81 71 00 S05\ne-mail: chemia@standard.pl, www.stariuard.pl\nDYSTRYBUTOR\nARD\nŻYWICA WĘGLOWODOROWA\nPRS A1100\nNurmer serii: 2604020\nData procukcjE D4.2025\nData waznosci: 10 2027\nNumer dostawy Masa netto:\n26-015167 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604020",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "STANDARD reverse netio OCR heading",
+      "codes": [],
+      "text": "STANDARD\nŻYWICA WEGLOWODOROWA PRS\nA1100\n700 kg Masa netio.",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "quantity": "700",
+        "unit": "kg",
+        "lot": null
+      }
+    },
+    {
+      "name": "STANDARD OCR lot heading does not turn delivery into a batch",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "STANDARD\nŻYWICA WEGLOWODOROWA PRS\nA1100\nNumer Sen:\nNumer dostawy Masa netio\n26-017T36 700 kg",
+      "expected": {
+        "lot": null,
+        "quantity": "700"
+      }
+    },
+    {
+      "name": "STANDARD OCR lot heading preserves alphanumeric batch",
+      "codes": [],
+      "text": "STANDARD\nNurmer serii: 00O1I5\nMasa brutto 725 kg",
+      "expected": {
+        "lot": "00O1I5",
+        "quantity": null
+      }
+    },
+    {
+      "name": "STANDARD resin name accepts mixed whitespace",
+      "codes": [],
+      "text": "STANDARD\nŻYWICA\tWĘGLOWODOROWA\r\nPRS\tA1100",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "Image stress 00_baseline.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiębiorstwo Przemysłowo-Handlowe\nTAN ,STANDARD\" Sp. z o.0.\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nZYWICA WĘGLOWODOROWA PRS\nA1100\nNumer seri: 2604075\nData produkcji: 04.2026\nData ważności: 10.2027\nNumer dostawy: Masa netto\n26-017735 700 kg\n03\nSHANDONG SHENXIAN R\nM RESINS CO",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 00_mixed_hard.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiębiorstwo Przemysłowo-Handlowe\nTAN „,STANDARD\" Sp. z o.o.\nul. Karola Olszewskiego 10, 20--481 Lublin, tel.+48 81 71 00 500, fax,+48 81 71 00 505\ne-mail: chemiastandard. pl, www.standard.pl\nDYSTRYBUTOR\nSARDI\nŻYWICA WEGLOWODOROWA PRS\nA1100\nNumer seii: 2604075\nData produkcji: 04.202€E\nData ważnosci: 10 2027\nNumer dostay Masa netto\n26-017735 700 kg\nSHANDONG SHENXIAN B\nnELIM RESINS C",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 01_rotate90.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001516701",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiębiorstwo Przemysiowo-Handlowe\nTAN „STANDARD\" Sp. z o.0.\nul. Karola Olszewskiego 10, 20--481 Lublin, tel.+48 81 71 00 500, fax +48 81 71 00 505\ne-mail: chemia@standard.pl, www.stanuard.pl\nDYSTRYBUTOR\nARD\nŽYWICA WĘGLOWODOROWA\nPRS A1100\nNume serii: 2604020\nData produkcji: 04.2025\nData ważności: 10.2027\nMasa netto:\nNumer dostawy:\n26-015167 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604020",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 03_rotate90.jpg",
+      "codes": [
+        {
+          "raw": "http://58.59.122.5:9999?4240622319&ph:1953&pc:4240622319&zxsj:1940-1959&dw:京博橡胶&bm:100044938",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nButyl Rubber 1953\nS/LOT NO.: 42406223 19\nT/OPERATIVE NORM: Q/371625 JBZ| 002 2021\nEAA/PRODUCTION DATE: 2024-6-22 1940-1959\nNET WEIGHT: 1200kg\nR/GRADE:\nAt/ORIGIN:FE/CHINA\nSHAN DONG HAMBROAD SINOPOLY NEW MATERIALS o.. LT.\n1A ABS:400-063-8603\n59j it : www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "4240622319",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 03_rotate180.jpg",
+      "codes": [],
+      "text": "CHAMBROAD SINOPOLY\nButyl Rubber 1953\ntS/LOT NO.: 4240622319\nh7/OPERATIVE NORM: Q/371625 JBZ| 002 2021\nEA/PRODUCTION DATE: 2024-6-22 1940-1959\nNET WEIGHT: 1200kg\nR/GRADE:\nAt/ORIGIN:#E/CHINA\nSHAN DONG CHAMBROAD SINOPOLY NEW MATERIALS O., LTD.\n1EA ABS:400-063-8603\n5)E: www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "4240622319",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 03_blur.jpg",
+      "codes": [
+        {
+          "raw": "http://58.59.122.5:9999?4240622319&ph:1953&pc:4240622319&zxsj:1940-1959&dw:京博橡胶&bm:100044938",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nButyl Rubber 1953\ntS/LOT NO.: 4240622319\nhTtR/OPERATIVE NORM: Q/371625 JBZI O02 2021\nt/PRODUCTION DATE: 2024-6-22 1940-1959\nANET WEIGHT: 1200kg\nR/GRADE:\nAt/ORIGIN:+/CHINA\nSHAN DONG CHAMBROAD SINOPOLY NEW MATERIALS o.. LTD.\nB\n1 ABS:400-063-8603\n534t: www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "4240622319",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 04_rotate90.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065700",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\n|IR-1953\nButyl Rubber\n/LOT NO.241013\n4 /LINE\n2\n/TIME 03:52\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\na A/DATE2024-10-13\n4NET:1200KG\n477Y/STANDARD: Q/371625 JBZJ 002\niS/TEL: 400-063-8603\nADD: B0XING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE, CHINA www.jbzhongju.con",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241013",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 04_rotate270.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065700",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nTRB |IR-1953\nButyl Rubber\nOTNO.241013\n4 /LINE 2\n|a/TIME 03:52\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nE /DATE2024-10-13\n/NET:1200KG\nT/STANDARD: Q/371625 JBZJ 002\nii/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241013",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 04_tilt.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065700",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nI|R-1953\nButyl Rubber\nt /LOT NO.241013\n£ /LINE 2\nja/TIME 03:52\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nA/DATE 2024-10-13\n/NET:1200KG\nT#/STANDARD: Q/371625 JBZJ 002\nii/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241013",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 04_mixed_mild.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065700",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nI|R-1953\nButyl Rubber\nTNO.241013\n4 /LINE 2\nİỀJ/TIME 03:52\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO., LTD\nA #/DATE2024-10-13\n4E/NET:1200KG\nT/STANDARD: Q/371625 JBZJ 002\nE/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE, CHINA www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241013",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 04_mixed_hard.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065700",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMOAD SIOPLLY\n|IR-1953\nButyl Rubber\nOTNO.241013\n4 /LINE 2\nja/TIME 03:52\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO., LTD\nA /DATE 2024-10-13\n4LINET:1200KG\n747/STANDARD: Q/371625 JBZJ 002\nFB /TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA www.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241013",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 05_noise.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065762",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\n|IR-1953\nButyl Rubber\nS/LOT NO. 241012\n/LINE 2\nat E/TIME 14:30\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nA A/DATE: 2024-10-12\nAEINET: 1200KG\nT#/STANDARD: Q/371625 JBZJ 002\nB/TEL: 400-063-8603",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241012",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 05_mixed_mild.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065762",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nR-1953\nButyl Rubber\nG/LOT NO. 241012\n4 /LINE 2\njaj/TIME 14:30\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO..LTD\nA/DATE: 2024-10-12\nAE/NET: 1200KG\n4T5#/STANDARD: Q/371625 JBZJ 002\nA/TEL: 400-063-8603\nROVANC ECONOASCDPA",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "241012",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 06_rotate90.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsięebiorstwo Przemysłowo-Handlowe\nTAN „STANDARD\" Sp. z o.o.\nul, Karola Olszewskiego 10, 20-481 Lublin, tel,+48 81 71 00 500, jax,+48 81 71 00 506\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nŻYWICA WEGLOWODOROWA PRS\nA1100\nNumer serii: 2604075\nData produkci: 04.2025\nData ważnosci: 10.2027\nNumer d ostawy Masa etto:\n26-017735 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 07_rotate90.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiębiorstwo Pr\nKarola Olszewskiego 10, 20-481 LuA e\ne-mail: chemia@standas\nDYSTRYButUR\nGARCH\nŻYWICA WĘGLOWODOROWA PRS\nA1100\nNurmer serni: 2604075\nData peodukcj: 04.2025\nDawanosci 10.202\nMasa netto:\nNue stawy\n26.017735 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 07_rotate270.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiębiorstwo Pr\nKarola Olszewskiego 10, 20-481 L „,STANDARD Sea\ne-mail: chemia@standag w\nDYSTRYButUR\nGARC\nŻYWICA WEGLOWODOROWA PRS\nA1100\nNumer serik: 2604075\nDaa podukcji: 04.2025\nDa wanosci 10.202\"\nMasa netto:\nweostawy\n26-017735 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 07_noise.jpg",
+      "codes": [
+        {
+          "raw": "]C110260001773503",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "Przedsiębiorstwo Pr\nSTANDARD S\nKarola Olszewskiego 10, 20-481 L\ne-mail: chemia@sta\nGARCH\nŻYWICA WEGLOWODOROWA PRS\nA1100\numer serni: 2604075\nData podukcji: 04.2025\nDaaNanosci: 10.202\"\nMasa netto:\nueostay\n26-017735 700 kg",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100",
+        "lot": "2604075",
+        "quantity": "700",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 08_baseline.jpg",
+      "codes": [
+        {
+          "raw": "]C1000000000000741102",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "conveNT\nLagerkunde Convent\nBIERÖM00\nBiesterfeld Performance Rubber GmbH\nFerdirandstr. 41\nDE-20095 Hamburg\nNVE\n000000000000741102\nArtikelbezeichnung\nBUTYL 268S 25 KG BAL\nLagerklasse WGK Menge/Palette\n48\nCharge Produktionsdatum\nT26013025H 30.01.26\nArtikel-Nr. Bruttogevwicht/Nettogewicht (KG)\n5621170000 1.225 1.200\n(00)0000o00000741102\nABURG\n-ZAP CODE 20095\nSTERFELD PERFORMANCE RUB",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 08_rotate270.jpg",
+      "codes": [
+        {
+          "raw": "]C1000000000000741102",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "cONveNT\nLagerkunde Convent\nBIERÖM00\nBiesterfeld Performance RubberGmbH\nFerdinandstr. 41\nDE-20095 Hamburg\nNVE\n000000000000741102\nArtikelbezeichnung\nBUTYL 268S 25 KG BAL\nLagerklasse WGK Menge/Palette\n48\nCharge Produktionsdatum\nT26013025H 30.01.26\nArtikel-Nr. Bruttogewich t/Nettogewicht (KG)\n5621170000 1.225 1.200\n(00)0000000000741102\nABURG\n-ZAP CODE 20095\nSTERFELD PERFORANCE RUB",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 08_tilt.jpg",
+      "codes": [
+        {
+          "raw": "]C1000000000000741102",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "conveT\nLagerkunde Convent\nBIERÖM00\nBiesterfeld Performance RubberGmbH\nFerdirandstr. 41\nDE-20095 Hamburg\nNVE\n000000000000741102\nArtikelbezeichnung\nBUTYL 268S 25 KG BAL\nLagerklasse WGK Menge/Palette\n48\nChar arge Produktionsdatum\nT26013025H 30.01.26\nArtikel-Nr. Bruttogewicht/Nettogewicht (KG)\n5621170000 1.225 1.200\n(00)000o000000741102\nBURG\nP CODE 20095\nSTERFELDPERFORMANCE RUB",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 08_blur.jpg",
+      "codes": [
+        {
+          "raw": "]C1000000000000741102",
+          "format": "CODE_128"
+        }
+      ],
+      "text": "CoNveNT\nLagerkunde Convent\nBIERÖMO0\nBiesterfeld Performance Rubber GmbH\nFerdinandstr. 41\nDE-20095 Hamburg\nNVE\n000000000000741102\nArtikelbezeichnung\nBUTYL 268S 25 KG BAL\nLagerklasse WGK Menge/Palette\n48\nCharge Produktionsdatum\nT26013025H 30.01.26\nArtikel-Nr. BruttogewichUNettogewicht (KG)\n5621170000 1.225 1.200\n(00)0000o00000741102\nABURG\n-ZNP CODE 20095\nSTERFELD PEREORMANCE RUB",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 09_rotate180.jpg",
+      "codes": [],
+      "text": "2601352005\n26613E255\nBUTYL\nIscbutylene Iscprene Copolyer\nNET WEIGHT 1200 KG CAS W1-65S9\nBBU268SØ713T26813525H265130255512B6\nLOT T26013025H Made in USA",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 09_blur.jpg",
+      "codes": [],
+      "text": "2601302005\n2681352005\nBUTYL\nIccbut yl ene Isoprene Capol y\nNET WEIGHT 1200 KG CAS 9W1-59\nØBU268S713T26013025H2601302O051200\nLOT T26013025H Made lin USA",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": "T26013025H",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 11_baseline.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nIR-1953\nButyl Rubber\nt S/LOT NO, 250607\n#/LINE 1\nİa/TIME 21:25\nB. CZ.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nA/DATE: 2025-06-07\nANET: 1200KG\nTT/STANDARD: Q/371625 JBZJ 002\n/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE, BINZHO CITY,SHANDONG PROVINCE,CHINA\nwww.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "250607",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 11_rotate90.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nIIR-1953\nButyl Rubber\nS/LOT NO, 250607\n/LINE 1\na/TIME 21:25\nB. C2.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\na/DATE: 2025-06-07\nAUNET: 1200KG\nhT/STANDARD: Q/371625 JBZJ 002\nA/TEL: 400-063-8603\nI\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBiNZHOU C\nCITY,SHANDONG PROVINCE,CHINA\nwww.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "250607",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 11_rotate180.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nIIR-1953\nButyl Rubber\nS/LOT NO, 250607\n/LINE 1\nal/TIME 21:25\nB. C2.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO., LTD\nE/DATE: 2025-06-07\n4ENET: 1200KG\n7/STANDARD: Q/371625 JBZJ 002\nE/TEL: 400-063-8603\nI\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBiNZHOUC\nJCITY,SHANDONG PROVINCE,CHINA\nWww.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "250607",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 11_blur.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "AD SINOPLY\nIR-1953\nButyl Rubber\n/LOT NO, 250607\n#/LINE 1\n21:25\nlal/TIME\nB. C.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\na/DATE: 2025-06-07\nINET: 1200KG\n4T/STANDARD: Q/371625 JBZJ 002\n/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA\nwww.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "250607",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 11_noise.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nIIR-1953\nButyl Rubber\nS/LOT NO, 250607\n#LINE 1\n21:25\njal/TIME\nB. C.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nA/DATE: 2025-06-07\nAINET: 1200KG\n4T5/STANDARD: Q/371625 JBZJ 002\n/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA\nwww.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "250607",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 11_mixed_mild.jpg",
+      "codes": [
+        {
+          "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+          "format": "QR_CODE"
+        }
+      ],
+      "text": "CHAMBROAD SINOPOLY\nIIR-1953\nButyl Rubber\ntS/LOT NO, 250607\n± /LINE 1\n21:25\nR /TIME\n3. CZ.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nAA/DATE: 2025-06-07\nATNET: 1200KG\n75/STANDARD: Q/371625 JBZJ 002\nBA/TEL; 400-063-8603\nRINZHOU CITY SHANDONG PROVINCE,CHINA BOXING ECONOMIC DEVELOPMENT ZONE,\nwww.jbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "250607",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Image stress 17_baseline.jpg",
+      "codes": [],
+      "text": "Przedsiebiorstwo Przemysłowo-Handlowe\nTAN STANDARD\" Sp. z o.o.\nul. Karola Olszewskiego 10, 20 481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nPOLIIZOBUTEN PIB32\nNumer CAS: 9003-27-4\nNumer WE: 38-360-8\nNumer serii: na opaKowaniu\nData produkcC#: na opaKowaniu\nData waznosci: na opaKoaniu\nNumer dostawY: Masa etto:\n26-023979 175 kg",
+      "expected": {
+        "materialName": "Poliizobuten PIB32",
+        "lot": null,
+        "quantity": "175",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Split eight and two digits are not a shortened Chambroad lot",
+      "codes": [],
+      "text": "CHAMBROAD\nButyl Rubber 1953\nLOT NO.: 42406223 19",
+      "expected": {
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "Split six and four digits are not a shortened Chambroad lot",
+      "codes": [],
+      "text": "CHAMBROAD\nButyl Rubber 1953\nLOT NO.: 424062 2319",
+      "expected": {
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "Chambroad order and PLANET are not batch and net headings",
+      "codes": [],
+      "text": "CHAMBROAD\nORDER NO.241013\nPLANET:1200KG",
+      "expected": {
+        "lot": null,
+        "quantity": null,
+        "materialName": null
+      }
+    },
+    {
+      "name": "Chambroad OCR fallback requires manufacturer context",
+      "codes": [],
+      "text": "OTHER\nOTNO.241013\nANET:1200KG\nBUTYL RUBBER 1953",
+      "expected": {
+        "lot": null,
+        "quantity": null,
+        "materialName": null
+      }
+    },
+    {
+      "name": "Convent gross-only heading cannot supply a net weight",
+      "codes": [],
+      "text": "CONVENT\nBruttogewicht (KG)\n5621170000 1.225 1.200",
+      "expected": {
+        "quantity": null
+      }
+    },
+    {
+      "name": "Convent incomplete weight columns cannot supply net weight",
+      "codes": [],
+      "text": "CONVENT\nNettogewicht (KG)\n5621170000 1.225",
+      "expected": {
+        "quantity": null
+      }
+    },
+    {
+      "name": "Exxon grade fallback cannot repair a corrupted batch",
+      "codes": [],
+      "text": "BUTYL\nØBU268SØ713T26O13025H26013020051200",
+      "expected": {
+        "materialName": "BUTYL 268S",
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "Exxon OCR fallback does not assume another grade is 268S",
+      "codes": [],
+      "text": "BUTYL\nØBU123SØ713T26013025H26013020051200",
+      "expected": {
+        "materialName": null,
+        "lot": null,
+        "quantity": null
+      }
+    },
+    {
+      "name": "Short STANDARD series heading on one line",
+      "codes": [],
+      "text": "STANDARD\nNumer ser 2604075",
+      "expected": {
+        "lot": "2604075"
+      }
+    },
+    {
+      "name": "Short STANDARD series heading before next-line value",
+      "codes": [],
+      "text": "STANDARD\nNumer ser:\n2604075",
+      "expected": {
+        "lot": "2604075"
+      }
+    },
+    {
+      "name": "Short STANDARD series heading preserves a different lot",
+      "codes": [],
+      "text": "STANDARD\nNumer ser 2504075",
+      "expected": {
+        "lot": "2504075"
+      }
+    },
+    {
+      "name": "Short STANDARD series heading cannot use a delivery row",
+      "codes": [],
+      "text": "STANDARD\nNumer ser\nNumer dostawy: 26-017735",
+      "expected": {
+        "lot": null
+      }
+    },
+    {
+      "name": "Short STANDARD series heading cannot use truncated digits",
+      "codes": [],
+      "text": "STANDARD\nNumer ser 24075",
+      "expected": {
+        "lot": null
+      }
+    },
+    {
+      "name": "Short STANDARD series heading cannot match serwis",
+      "codes": [],
+      "text": "STANDARD\nNumer serwis2604075",
+      "expected": {
+        "lot": null
+      }
+    },
+    {
+      "name": "UNET heading works without readable manufacturer",
+      "codes": [],
+      "text": "UNET: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "UNET heading works with damaged manufacturer text",
+      "codes": [],
+      "text": "CHAMOAD SINOPLY\nButyl Rubber\nUNET: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Chinese prefix and NET heading retain the net weight",
+      "codes": [],
+      "text": "净重/NET: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET suffix inside unrelated words is not a weight heading",
+      "codes": [],
+      "text": "PLANET: 1200KG\nCABINET: 700KG\nBRUNET: 175KG",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    },
+    {
+      "name": "Chambroad phone read with DR grade and hash UNET heading",
+      "codes": [],
+      "text": "DR-1953\nButyl Rubber\nS/LOT NO.260502\n4/LINE 2\nE/TIME 11:45\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS cO.,LTD\nBA/DATE:2026-05-02\n#UNET: 1200KG\n0T/STANDARD: Q/371625 JBZJ 002\nLTEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOUCITY,SHANDONG PROVINCE,CHINA wwwjbzhongju.com",
+      "expected": {
+        "materialName": "BUTYL IIR-1953",
+        "lot": "260502",
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "DR grade OCR fallback requires Chambroad manufacturer",
+      "codes": [],
+      "text": "DR-1953\nButyl Rubber",
+      "expected": {
+        "materialName": null
+      }
+    },
+    {
+      "name": "DR grade OCR fallback requires Butyl Rubber text",
+      "codes": [],
+      "text": "DR-1953\nCHAMBROAD",
+      "expected": {
+        "materialName": null
+      }
+    },
+    {
+      "name": "DR grade OCR fallback does not invent a different grade",
+      "codes": [],
+      "text": "DR-1954\nButyl Rubber\nCHAMBROAD",
+      "expected": {
+        "materialName": null
+      }
+    },
+    {
+      "name": "Fuzzy Chambroad grade preserves explicit digits",
+      "codes": [],
+      "text": "CHAMBROAD\nButyl Rubber\nIIR-1954",
+      "expected": {
+        "materialName": null
+      }
+    },
+    {
+      "name": "Fuzzy Chambroad grade accepts a letter mistaken for one",
+      "codes": [],
+      "text": "CHAMBROAD\nButyl Rubber\nIIR-I953",
+      "expected": {
+        "materialName": "BUTYL IIR-1953"
+      }
+    },
+    {
+      "name": "Fuzzy PRS grade accepts letter O as zero",
+      "codes": [],
+      "text": "ŻYWICA WĘGLOWODOROWA PRS\nA11OO",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1100"
+      }
+    },
+    {
+      "name": "Fuzzy PRS grade does not replace another numeric grade",
+      "codes": [],
+      "text": "ŻYWICA WĘGLOWODOROWA PRS\nA1101",
+      "expected": {
+        "materialName": "Żywica węglowodorowa PRS A1101"
+      }
+    },
+    {
+      "name": "Fuzzy Exxon printed grade accepts Z instead of two",
+      "codes": [],
+      "text": "BUTYL\nØBUZ68S0713T26O13025H26013020051200",
+      "expected": {
+        "materialName": "BUTYL 268S"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix B",
+      "codes": [],
+      "text": "BNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix X",
+      "codes": [],
+      "text": "XNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix S",
+      "codes": [],
+      "text": "SNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix Z",
+      "codes": [],
+      "text": "ZNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix 3",
+      "codes": [],
+      "text": "3NET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix 7",
+      "codes": [],
+      "text": "7NET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix Q",
+      "codes": [],
+      "text": "QNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix N",
+      "codes": [],
+      "text": "NNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix R",
+      "codes": [],
+      "text": "RNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix V",
+      "codes": [],
+      "text": "VNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix Y",
+      "codes": [],
+      "text": "YNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix Ø",
+      "codes": [],
+      "text": "ØNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix Ж",
+      "codes": [],
+      "text": "ЖNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix 净",
+      "codes": [],
+      "text": "净NET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix α",
+      "codes": [],
+      "text": "αNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix #X",
+      "codes": [],
+      "text": "#XNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix 7Q",
+      "codes": [],
+      "text": "7QNET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix ?",
+      "codes": [],
+      "text": "?NET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix ??",
+      "codes": [],
+      "text": "??NET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT tolerates OCR prefix 🈚",
+      "codes": [],
+      "text": "🈚NET WEIGHT: 1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Prefixed net weight may be on the next line",
+      "codes": [],
+      "text": "XNET WEIGHT:\n1200 kg",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Prefixed net weight works when words run together",
+      "codes": [],
+      "text": "XNETWEIGHT:1200KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "Prefixed net weight is distinct from gross weight",
+      "codes": [],
+      "text": "XNET WEIGHT: 1200KG\nGROSS WEIGHT: 1225KG",
+      "expected": {
+        "quantity": "1200",
+        "unit": "kg"
+      }
+    },
+    {
+      "name": "NET WEIGHT inside PLANET is not a heading",
+      "codes": [],
+      "text": "CHAMBROAD\nPLANET WEIGHT:1200KG",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    },
+    {
+      "name": "NET WEIGHT inside CABINET is not a heading",
+      "codes": [],
+      "text": "CABINET WEIGHT:1200KG",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    },
+    {
+      "name": "NET WEIGHT inside BRUNET is not a heading",
+      "codes": [],
+      "text": "BRUNET WEIGHT:1200KG",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    },
+    {
+      "name": "Prefixed gross weight is not a net weight",
+      "codes": [],
+      "text": "XGROSS WEIGHT:1225KG",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    },
+    {
+      "name": "Prefixed net weight cannot assume pieces are kilograms",
+      "codes": [],
+      "text": "XNET WEIGHT:1200PCS",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    },
+    {
+      "name": "Unknown prefix without WEIGHT needs its own context rule",
+      "codes": [],
+      "text": "XNET:1200KG",
+      "expected": {
+        "quantity": null,
+        "unit": null
+      }
+    }
+  ]
+}

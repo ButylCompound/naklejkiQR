@@ -1,0 +1,48 @@
+\documentclass{article}
+\usepackage[paperwidth=10cm, paperheight=6cm, left=2mm, right=6mm, top=3mm, bottom=3mm]{geometry}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
+\newlength{\lotwidth}
+
+\begin{document}
+\pagestyle{empty}
+
+\noindent
+\begin{minipage}[c][4.7cm][t]{0.49\textwidth}
+    {\raggedleft \includegraphics[width=\textwidth, height=1.5cm, keepaspectratio]{logo.jpg}\par}
+    \vspace{0.05cm}
+    \raggedright
+    {\small Nazwa:\par}
+    \vspace{0.02cm}
+<BLOCK> if product_name_length <= 20 </BLOCK>
+    {\Large \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> elif product_name_length <= 35 </BLOCK>
+    {\large \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> else </BLOCK>
+    {\normalsize \linespread{0.75}\selectfont \textbf{<< product_name >>}\par}
+<BLOCK> endif </BLOCK>
+    \vspace{0.04cm}
+    {\small Nr partii:\par}
+    \vspace{0.02cm}
+    \settowidth{\lotwidth}{\large\textbf{<< lot_number >>}}
+    \ifdim\lotwidth>\linewidth
+        {\linespread{0.75}\selectfont \resizebox{\linewidth}{!}{\large\textbf{<< lot_number >>}}\par}
+    \else
+        {\large \linespread{0.75}\selectfont \textbf{<< lot_number >>}\par}
+    \fi
+    \vspace{0.04cm}
+    {\small Ilość netto:\par}
+    \vspace{0.02cm}
+    {\LARGE \linespread{0.75}\selectfont \textbf{<< weight >> << unit >>}\par}
+\end{minipage}\hfill
+\begin{minipage}[c][4.7cm][t]{0.47\textwidth}
+    {\raggedleft \includegraphics[width=4.2cm, height=4.2cm, keepaspectratio]{<< qr_path >>}\par}
+\end{minipage}
+\vspace{0.15cm}
+
+\noindent
+{\huge \textbf{\hspace*{0.75cm}<< datetime[:10] >>\hfill << datetime[11:] >> << operator >>\hspace*{0.75cm}}\par}
+\end{document}

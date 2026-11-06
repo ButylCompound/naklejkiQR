@@ -16,7 +16,7 @@
     <string name="settings_managers">Kierownicy zmiany</string>
     <string name="settings_people_empty">Brak — dotknij, aby dodać</string>
     <string name="settings_reset">Przywróć ustawienia domyślne</string>
-    <string name="settings_reset_confirm">Ustawić liczbę alejek na 32, przywrócić domyślne alejki niestandardowe i wyczyścić listy osób? Tej operacji nie można cofnąć.</string>
+    <string name="settings_reset_confirm">Ustawić liczbę alejek na 32, przywrócić domyślne alejki niestandardowe i wyczyścić listy osób (także przyjmujących PZ)? Tej operacji nie można cofnąć.</string>
     <string name="settings_reset_yes">Przywróć</string>
     <string name="people_add">Dodaj</string>
     <string name="people_name_hint">Imię i nazwisko</string>
@@ -109,4 +109,5 @@
     <string name="delete_selected">Usuń zaznaczone</string>
     <string name="delete_selected_confirm">Usunąć zaznaczone pozycje (%1$d)?</string>
     <string name="select_item">Zaznacz pozycję</string>
+    <string name="settings_version">Wersja %1$s</string>
 </resources>

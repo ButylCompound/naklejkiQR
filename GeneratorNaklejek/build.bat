@@ -47,6 +47,7 @@ echo Kompilowanie wersji CLI (GeneratorNaklejek_CLI.exe)...
 echo.
 echo Kopiowanie wymaganych plikow pobocznych do folderu 'dist'...
 copy /Y sticker_template.tex dist\
+copy /Y sticker_template_lots.tex dist\
 copy /Y logo.jpg dist\
 copy /Y SumatraPDF-3.6.1-64.exe dist\
 

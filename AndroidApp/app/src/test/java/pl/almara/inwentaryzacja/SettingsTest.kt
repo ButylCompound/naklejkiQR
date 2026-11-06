@@ -26,15 +26,15 @@ class SettingsTest {
     }
 
     @Test
-    fun rwNumberPadsToTwoDigits() {
-        assertEquals("RW/2026/01", Settings.formatRwNumber(2026, 1))
-        assertEquals("RW/2026/07", Settings.formatRwNumber(2026, 7))
-        assertEquals("RW/2026/99", Settings.formatRwNumber(2026, 99))
+    fun documentNumberIncludesPhoneAndIndependentModulePrefix() {
+        assertEquals("RW/2026/03/0001", DocumentNumbering.format("RW", 2026, 3, 1))
+        assertEquals("RW/2026/03/0007", DocumentNumbering.format("RW", 2026, 3, 7))
+        assertEquals("PZ/2026/03/0099", DocumentNumbering.format("PZ", 2026, 3, 99))
     }
 
     @Test
-    fun rwNumberGrowsBeyondTwoDigits() {
-        assertEquals("RW/2026/100", Settings.formatRwNumber(2026, 100))
-        assertEquals("RW/2026/1234", Settings.formatRwNumber(2026, 1234))
+    fun documentNumberGrowsBeyondDisplayPadding() {
+        assertEquals("RW/2026/103/0100", DocumentNumbering.format("RW", 2026, 103, 100))
+        assertEquals("PZ/2027/03/12345", DocumentNumbering.format("PZ", 2027, 3, 12345))
     }
 }

@@ -61,4 +61,20 @@ class MaterialScanningBehaviorTest {
         assertTrue(kg.sourceKey != scan("20 szt.").sourceKey)
     }
 
+    @Test fun lotsKeepProductScansAndPalletGroupsSeparateWhileIdsDoNot() {
+        val first = QrParser.parse("Materiał (1) | 500 kg | 2026-11-02 08:00 | QC | aB3dE_fG | 0001", "now")!!
+        val second = first.copy(lot = "0002")
+        assertTrue(first.key != second.key)
+        assertTrue(first.sourceKey != second.sourceKey)
+        assertEquals(first.key, first.copy(labelId = "00000001").key)
+        val existing = PalletExpansion.expand(first, 2) + PalletExpansion.expand(second, 3)
+        assertEquals(2, PalletExpansion.matching(first, existing).size)
+        assertEquals(3, PalletExpansion.matching(second, existing).size)
+        val more = PalletExpansion.expand(first.copy(product = "Materiał (20)"), 1, existing).single()
+        assertEquals("Materiał (3)", more.product)
+        assertEquals("0001", more.lot)
+        assertEquals(first.sourceKey, first.copy(quantity = 10.0).sourceKey)
+        assertTrue(first.sourceKey != second.copy(quantity = 10.0).sourceKey)
+        assertEquals(5, existing.map { it.sourceKey }.toSet().size)
+    }
 }

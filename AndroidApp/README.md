@@ -2,6 +2,8 @@
 
 Android app for warehouse operators: scan pallet QR stickers (printed by `GeneratorNaklejek`) hands-free, collect them into a session, and deliver the results as a CSV file via e-mail or SharePoint — fully **offline**, no network needed during scanning.
 
+For new apps and UI work, use the [shared app style guide](../STYLE_GUIDE.md) for colors, components, screen patterns, and Android examples.
+
 ## How it works (operator's view, UI is in Polish)
 
 1. **Nowa sesja** — start a new inventory session (name defaults to `Inwentaryzacja <date>`). Names must be unique across product and raw-material sessions; letter case and extra spaces do not distinguish names. A duplicate name leaves the dialog open with an error.
@@ -25,11 +27,27 @@ To delete scan entries, long-press a row to select it, tap other rows to select 
 
 RW PDFs show the full label date and time on separate lines and wrap product names without shortening them. Rows continue onto another A4 page when needed; the document and table headers repeat, and signatures appear on the last page. A product name that spans pages continues under the same row number, marked `cd.`, without repeating the issued quantity.
 
+### PZ — receiving deliveries
+
+Create a PZ, choose a supplier from the dropdown, select a receiving operator, and optionally enter an invoice number. Choose **Inny dostawca…** to enter a supplier in a popup; cancelling preserves the current choice. Configure the receiving-operator list in Settings. Add one entry per physical pallet or package, choosing a catalogue material or typing a manual material, lot, quantity/unit, and condition. Saving resolves a unique catalogue name, ignoring case and extra whitespace; entries without a catalogue match show a manual-material warning. An explicit catalogue selection keeps its identity when its name is edited and restored. Damage requires a comment. An explicitly unknown lot requires its own comment and always stays separate in the grouped summary. Use the highlighted Yes/No bar to confirm whether the whole delivery matches its shipping document; No requires a separate explanation. PZ uses the same totals card as inventory, with separate quantities for each unit.
+
+Draft fields and confirmed entries are saved locally. Approval assigns the number and locks the PZ, including its entries and header. Approved PZs can be printed or opened in the phone's email app with the PDF attached. Approved PZs and finalized RWs are queued for server backup; drafts and inventory sessions remain local. The app retains local documents after upload. Approved documents cannot be deleted through the app.
+
+PZ and RW creation and approval work offline from the start, using device number `00` until registration succeeds. Save the private server base URL in **Settings → Serwer i kopie zapasowe**; the app automatically registers the phone, downloads the catalogue, and uploads pending approved-PZ and finalized-RW backups in the background, retrying failed connections. New numbers use `PZ/YYYY/PP/NNNN` and `RW/YYYY/PP/NNNN`, with independent yearly counters for each module and assigned device number PP. After registration, only future documents use the assigned number; counters continue and approved documents/PDFs keep their original numbers. Existing RW numbers remain unchanged and the current-year RW sequence continues. Unregistered phones may have matching visible numbers; document UUIDs keep their server backups separate.
+
+Configure a primary local-network address and an optional Tailscale fallback address for the same server. Enter only the server root, for example `http://192.168.10.20:8080`; the app adds `/materials` for all API requests, followed by `/catalogue` for catalogue sync and connection testing. Existing addresses ending in `/materials` normalize to the root. See the [server handoff](docs/server-implementation.md#routes-and-client-behavior) for all routes. Sync tries the primary first, switches on network failures or temporary server errors, and reuses the working route for that batch. The connection-test button checks both entered addresses separately. Either address can be used alone. Both routes must share the registry and backup store so phone numbers and document backups remain consistent.
+
+The server has not been deployed by this change. Start with the [server implementation handoff](docs/server-implementation.md) and implement the [JSON API contract](docs/server-api.md), using the [JSON Schema](docs/server-api.schema.json) and [examples](docs/examples). Microsoft 365 credentials belong on that server. The app uses cached catalogue data and manual input when the server is unavailable; only a successful complete catalogue download replaces the cache.
+
+New PZ entries open a label scanner with an explicit capture button and a manual-entry option. It reads barcodes and printed text offline, suggests material, manufacturer lot, and net quantity where supported, and opens the same review form. The final label photo is retained with its OCR/barcode read and operator-confirmed entry, then uploaded when the PZ is approved. See [photo storage and API](docs/label-photos.md). Every suggested field can be edited. Rescans preserve existing values and offer replacements explicitly. The operator must still confirm condition and save each physical entry; identical codes on different packages are allowed. The existing inventory and RW scanner flows are unchanged.
+
+Label rules refresh from `GET /materials/label-rules` alongside the catalogue, with `/materials` added automatically before the `/label-rules` suffix. The last validated bundle stays available offline, with bundled defaults on first use. Patterns, material mappings, and quantity formats can change on the server without an APK update. See [sample-label findings](docs/label-analysis.md) and [rule authoring/server contract](docs/label-rules.md). Recorded raw codes, OCR text, and suggestions accompany scanned entries in server backups; manual corrections remain authoritative.
+
 ### QR payload contract
 
-New labels use `ALBU T4D | 500 kg | 2026-07-07 10:00 | XX | aB3dE_fG` (name | quantity and unit | date | operator initials | ID). The ID has 8 URL-safe characters (`A–Z`, `a–z`, `0–9`, `_`, `-`); the initials field may be empty. Older labels with three or four fields and no ID are also accepted. Dates must be valid `yyyy-MM-dd HH:mm:ss` or `yyyy-MM-dd HH:mm` timestamps and are stored/reported with seconds. Quantities must be finite and greater than zero. They accept `,` or `.` decimals, including `.5`, `12.`, and scientific notation such as `1e3`. Units accept any letter case of `kg`, `szt`, or `szt.` and normalize to `kg` or `szt.`; a missing unit means `kg`. Unknown units are rejected.
+New labels use `ALBU T4D | 500 kg | 2026-07-07 10:00 | XX | aB3dE_fG | 0001A` (name | quantity and unit | date | operator initials | ID | optional lot). Five-field labels without a lot are also accepted. The ID has 8 URL-safe characters (`A–Z`, `a–z`, `0–9`, `_`, `-`); the initials field may be empty. Older labels with three or four fields and no ID are also accepted. Dates must be valid `yyyy-MM-dd HH:mm:ss` or `yyyy-MM-dd HH:mm` timestamps and are stored/reported with seconds. Quantities must be finite and greater than zero. They accept `,` or `.` decimals, including `.5`, `12.`, and scientific notation such as `1e3`. Units accept any letter case of `kg`, `szt`, or `szt.` and normalize to `kg` or `szt.`; a missing unit means `kg`. Unknown units are rejected.
 
-IDs persist with scans and appear in CSV reports. They are display-only: duplicate checks, RW item updates, raw-material pallet expansion keys, and desktop Excel comparisons ignore them. Older scans have a blank ID. The desktop inventory app shows IDs in both tabs and includes them in exported tables; grouped raw materials list their distinct scanned IDs together.
+IDs persist with scans and appear in CSV reports. They are display-only: duplicate checks, RW item updates, raw-material pallet expansion keys, and desktop Excel comparisons ignore them. Older scans have a blank ID. Lot numbers retain their case and leading zeros; different lots stay separate in inventory duplicate checks, RW item updates, selection/deletion, and raw-material pallet grouping. Lots persist through local storage and RW backup/recovery, appear on scan lists and RW PDFs, and occupy the final `Nr partii` column in CSV exports. Labels without a lot keep a blank lot. The desktop inventory app shows IDs in both tabs and includes them in exported tables; grouped raw materials list their distinct scanned IDs together.
 
 The desktop raw-material comparison keeps scanned quantities separate by unit. If one material has several units, it shows the amounts with their units, leaves the difference blank, and marks the row **Do sprawdzenia** rather than adding kilograms to pieces. This review state has its own count and filter. The Excel source does not supply a unit conversion, so these rows require review against Excel.
 
@@ -38,8 +56,8 @@ The desktop raw-material comparison keeps scanned quantities separate by unit. I
 Semicolon-separated, UTF-8 with BOM, decimal comma — opens correctly in Polish Excel:
 
 ```
-Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania;ID
-1;1;ALBU T4D;500;kg;XX;2026-07-07 10:00:00;2026-07-07 12:31:05;aB3dE_fG
+Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania;ID;Nr partii
+1;1;ALBU T4D;500;kg;XX;2026-07-07 10:00:00;2026-07-07 12:31:05;aB3dE_fG;0001A
 ...
 Liczba palet;12
 Łączna ilość (kg);6250
@@ -93,6 +111,8 @@ Alternative without the virtual scene: run the app on a real phone and scan a QR
 3. Send that file to each phone (e-mail, Teams, USB, SharePoint). Opening it on the phone prompts to install — allow "install from unknown sources" for the app you opened it with.
 
 ### Production build (signed release — what to actually hand out to operators)
+
+Phones with the updater installed can fetch later signed builds through **Ustawienia → Sprawdź aktualizacje**. See [server publishing and update behavior](docs/app-updates.md). Keep the same signing key/application ID and increase `versionCode` for every release.
 
 The project is wired up for a **signed release build**, using a real keystore instead of the debug signature. This matters because Android checks the signature on every install: as long as every release is signed with the *same* key, operators can update the app by simply installing the new APK over the old one — their sessions stay intact. Switch signing keys later and every phone would need a manual uninstall first, wiping any unsent sessions.
 
@@ -187,11 +207,15 @@ You can also print real stickers with `GeneratorNaklejek` — that's the true en
 | App installs but camera permission dialog never appears | Uninstall + reinstall, or grant Camera manually in phone Settings → Apps |
 | Share sheet has no SharePoint option | Install the OneDrive or Teams app on the phone and sign in with the company account |
 
+## Debug and reinstall recovery
+
+Debug installs beside Release as **(debug) Skaner Inwentaryzacji** with application ID `pl.almara.inwentaryzacja.debug`. Each build has separate registration and history. After reinstall, save the server address to recover that build’s phone number, server counters, approved PZs (including original PDFs) and finalized RWs. Existing installations must sync the updated app once before uninstalling to bind their device identity. Unsynced data, drafts and inventory sessions cannot be recovered. See [device recovery](docs/device-recovery.md).
+
 ## 16 KB page size compatibility (Android 15+/16 devices)
 
 The app bundles native libraries (ML Kit's QR decoder, CameraX JNI), so 16 KB alignment matters:
 
-- **CameraX must stay ≥ 1.4.0** (1.3.x was 4 KB-aligned and crashes on 16 KB devices) — currently pinned to 1.4.2.
+- **CameraX must stay ≥ 1.4.0** (1.3.x was 4 KB-aligned and crashes on 16 KB devices) — currently pinned to 1.5.3. This also includes the Android 17 dynamic-range profile fix required by the updated emulator; see [CameraX release notes](https://developer.android.com/jetpack/androidx/releases/camera#1.5.2).
 - **ML Kit barcode-scanning ≥ 17.3.0** — 16 KB-ready per Google's release notes; don't downgrade.
 - AGP ≥ 8.5.1 (we use 8.7.3) handles the required zip alignment automatically.
 

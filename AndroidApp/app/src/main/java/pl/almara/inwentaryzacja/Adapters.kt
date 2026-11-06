@@ -51,7 +51,8 @@ class ScanItemAdapter(context: Context, private val items: List<ScanItem>, priva
         binding.itemWeight.text = Format.quantity(item)
         val who = if (item.initials.isBlank()) "" else "${item.initials}  •  "
         binding.itemDates.text = context.getString(R.string.alley_label, item.alley) +
-            "  •  $who" + context.getString(R.string.item_dates_format, item.labelDate, item.scannedAt)
+            "  •  $who" + context.getString(R.string.item_dates_format, item.labelDate, item.scannedAt) +
+            if (item.lot.isEmpty()) "" else "\n" + context.getString(R.string.pz_lot) + ": " + item.lot
         return binding.root
     }
 }
@@ -123,7 +124,8 @@ class AlleyGroupAdapter(private val context: Context, items: List<ScanItem>, pri
         binding.itemWeight.text = Format.quantity(item)
         val who = if (item.initials.isBlank()) "" else "${item.initials}  •  "
         binding.itemDates.text =
-            who + context.getString(R.string.item_dates_format, item.labelDate, item.scannedAt)
+            who + context.getString(R.string.item_dates_format, item.labelDate, item.scannedAt) +
+            if (item.lot.isEmpty()) "" else "\n" + context.getString(R.string.pz_lot) + ": " + item.lot
         return binding.root
     }
 }
@@ -161,7 +163,8 @@ class RwItemAdapter(context: Context, private val items: List<ScanItem>, private
         binding.bindSelection(item, selection)
         binding.itemProduct.text = "${position + 1}. ${item.product}"
         binding.itemWeight.text = Format.quantity(item)
-        binding.itemDates.text = context.getString(R.string.rw_item_code, item.labelDate)
+        binding.itemDates.text = context.getString(R.string.rw_item_code, item.labelDate) +
+            if (item.lot.isEmpty()) "" else "\n" + context.getString(R.string.pz_lot) + ": " + item.lot
         return binding.root
     }
 }

@@ -33,7 +33,9 @@ class RwScanActivity : BaseScanActivity() {
         }
         rwId = id
         returnOnly = intent.getBooleanExtra(EXTRA_RETURN_ONLY, false)
-        scannedCount = RwStore.get(this, rwId)?.items?.size ?: 0
+        val document = RwStore.get(this, rwId)
+        if (document == null || document.number.isNotEmpty()) { finish(); return }
+        scannedCount = document.items.size
         updateCounter()
 
         binding.finishButton.setOnClickListener { finishScanning() }
@@ -60,26 +62,28 @@ class RwScanActivity : BaseScanActivity() {
     }
 
     private fun addItem(item: ScanItem) {
-        when (RwStore.putItem(this, rwId, item)) {
-            RwStore.PutResult.ADDED -> {
-                scannedCount++
-                updateCounter()
-                showStatus(
-                    getString(R.string.status_ok_format, item.product, Format.quantity(item)),
-                    R.color.status_ok
-                )
-                feedback(error = false)
-            }
-            RwStore.PutResult.UPDATED -> {
-                showStatus(
-                    getString(R.string.status_updated_format, item.product, Format.quantity(item)),
-                    R.color.status_warn
-                )
-                feedback(error = false)
-            }
-            null -> {
-                showStatus(getString(R.string.status_session_missing), R.color.status_error)
-                feedback(error = true)
+        PzUi.guard(this) {
+            when (RwStore.putItem(this, rwId, item)) {
+                RwStore.PutResult.ADDED -> {
+                    scannedCount++
+                    updateCounter()
+                    showStatus(
+                        getString(R.string.status_ok_format, item.product, Format.quantity(item)),
+                        R.color.status_ok
+                    )
+                    feedback(error = false)
+                }
+                RwStore.PutResult.UPDATED -> {
+                    showStatus(
+                        getString(R.string.status_updated_format, item.product, Format.quantity(item)),
+                        R.color.status_warn
+                    )
+                    feedback(error = false)
+                }
+                null -> {
+                    showStatus(getString(R.string.status_session_missing), R.color.status_error)
+                    feedback(error = true)
+                }
             }
         }
         resumeScanning()

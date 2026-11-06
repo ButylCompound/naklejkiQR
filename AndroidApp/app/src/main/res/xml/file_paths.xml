@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="exports" path="exports/" />
+    <files-path name="pz_documents" path="pz_pdf/" />
+    <cache-path name="app_updates" path="updates/" />
 </paths>

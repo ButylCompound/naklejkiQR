@@ -60,7 +60,8 @@ object RwPdf {
         var y = drawHeader(page.canvas, doc)
 
         for ((i, item) in doc.items.withIndex()) {
-            val name = StaticLayout.Builder.obtain(item.product, 0, item.product.length, text,
+            val label = item.product + if (item.lot.isEmpty()) "" else "\n" + context.getString(R.string.pz_lot) + ": " + item.lot
+            val name = StaticLayout.Builder.obtain(label, 0, label.length, text,
                 (X_QTY_END - 40f - X_NAME - 6f).toInt())
                 .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                 .setIncludePad(false)

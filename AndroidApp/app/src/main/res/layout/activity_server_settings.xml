@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <com.google.android.material.appbar.MaterialToolbar android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize" android:background="@color/brand_blue" android:elevation="4dp" app:title="@string/server_settings" app:titleTextColor="@android:color/white" app:navigationIcon="?attr/homeAsUpIndicator" app:navigationIconTint="@android:color/white"/>
+    <androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+            <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" android:hint="@string/server_url" android:id="@+id/serverUrlInputLayout" style="@style/Widget.Skaner.TextInput" app:placeholderText="@string/server_url_example">
+                <com.google.android.material.textfield.TextInputEditText android:id="@+id/serverUrlInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri" android:minHeight="56dp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/fallbackServerUrlInputLayout"
+                style="@style/Widget.Skaner.TextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:hint="@string/server_fallback_url"
+                app:placeholderText="@string/server_url_example"
+                app:helperText="@string/server_fallback_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fallbackServerUrlInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:minHeight="56dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+            <Button
+                android:id="@+id/testConnectionButton"
+                style="@style/Widget.Skaner.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:minHeight="52dp"
+                android:text="@string/server_test_connection" />
+            <TextView
+                android:id="@+id/testResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:accessibilityLiveRegion="polite"
+                android:textColor="@color/brand_blue"
+                android:textSize="15sp"
+                android:visibility="gone" />
+            <TextView android:id="@+id/phoneValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:text="@string/server_phone" android:textSize="15sp" android:textColor="@color/brand_blue"/>
+            <TextView android:id="@+id/catalogValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:text="@string/pz_catalog_empty" android:textSize="15sp" android:textColor="@color/brand_blue"/>
+            <TextView android:id="@+id/syncValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:text="@string/server_no_address" android:textSize="15sp" android:textColor="@color/brand_blue"/>
+            <TextView android:id="@+id/rulesValue" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:textSize="15sp" android:textColor="@color/brand_blue"/>
+            <ProgressBar android:id="@+id/syncProgress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:visibility="gone"/>
+            <Button android:id="@+id/connectButton" style="@style/Widget.Skaner.Button.Primary" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:text="@string/server_connect"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

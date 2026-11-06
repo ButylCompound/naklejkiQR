@@ -1,0 +1,1346 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Warehouse app server messages",
+  "$defs": {
+    "registrationRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installationId",
+        "deviceName"
+      ],
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "deviceName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deviceKey": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "counters": {
+          "$ref": "#/$defs/counters"
+        }
+      },
+      "dependentRequired": {
+        "counters": [
+          "deviceKey"
+        ]
+      }
+    },
+    "registrationResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installationId",
+        "phoneNumber"
+      ],
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "counters": {
+          "$ref": "#/$defs/counters"
+        },
+        "recoveryRequired": {
+          "type": "boolean"
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "type",
+        "group",
+        "suppliers"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "suppliers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "catalogue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "updatedAt",
+        "materials"
+      ],
+      "properties": {
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/material"
+          }
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "materialId",
+        "materialName",
+        "lot",
+        "unknownLotComment",
+        "quantity",
+        "unit",
+        "condition",
+        "damageComment",
+        "scannedAt",
+        "sourceCode",
+        "barcodeFormat"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "materialId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "materialName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lot": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unknownLotComment": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+          "not": {
+            "pattern": "^0(?:\\.0+)?$"
+          }
+        },
+        "unit": {
+          "enum": [
+            "kg",
+            "szt."
+          ]
+        },
+        "condition": {
+          "enum": [
+            "OK",
+            "DAMAGED"
+          ]
+        },
+        "damageComment": {
+          "type": "string"
+        },
+        "scannedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sourceCode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "barcodeFormat": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "$ref": "#/$defs/labelRead"
+        },
+        "approximateMaterial": {
+          "type": "boolean"
+        },
+        "lowConfidenceFields": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "materialName",
+              "lot",
+              "quantity",
+              "unit"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "lot": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "unknownLotComment": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "condition": {
+                "const": "DAMAGED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "damageComment": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "approvedDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "createdAt",
+        "supplier",
+        "receiver",
+        "invoiceNumber",
+        "deliveryMatches",
+        "deliveryComment",
+        "items",
+        "number",
+        "phoneNumber",
+        "installationId",
+        "approvedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "supplier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receiver": {
+          "type": "string",
+          "minLength": 1
+        },
+        "invoiceNumber": {
+          "type": "string"
+        },
+        "deliveryMatches": {
+          "type": "boolean"
+        },
+        "deliveryComment": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        },
+        "number": {
+          "type": "string",
+          "pattern": "^PZ/[0-9]{4}/[0-9]{2,}/[0-9]{4,}$"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Approving device number; 0 means approved before automatic registration."
+        },
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "deliveryMatches": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "deliveryComment": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "backupRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installationId",
+        "phoneNumber",
+        "document",
+        "pdf"
+      ],
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "document": {
+          "$ref": "#/$defs/approvedDocument"
+        },
+        "pdf": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fileName",
+            "sha256",
+            "contentBase64"
+          ],
+          "properties": {
+            "fileName": {
+              "type": "string",
+              "pattern": "^PZ_[0-9]{4}_[0-9]{2,}_[0-9]{4,}\\.pdf$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contentBase64": {
+              "type": "string",
+              "contentEncoding": "base64",
+              "contentMediaType": "application/pdf"
+            }
+          }
+        }
+      }
+    },
+    "backupResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "sha256",
+        "storedAt"
+      ],
+      "properties": {
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "storedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "labelCode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw",
+        "format"
+      ],
+      "properties": {
+        "raw": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        }
+      }
+    },
+    "labelValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "value",
+        "unit",
+        "materialId"
+      ],
+      "properties": {
+        "field": {
+          "enum": [
+            "materialName",
+            "lot",
+            "quantity",
+            "unit"
+          ]
+        },
+        "value": {
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "kg",
+            "szt.",
+            null
+          ]
+        },
+        "materialId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "approximate": {
+          "type": "boolean"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lowConfidence": {
+          "type": "boolean"
+        }
+      }
+    },
+    "labelRead": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capturedAt",
+        "codes",
+        "text",
+        "rulesUpdatedAt",
+        "ruleIds",
+        "values"
+      ],
+      "properties": {
+        "capturedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "codes": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/labelCode"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "rulesUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ruleIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "values": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/labelValue"
+          }
+        },
+        "ocrWords": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {
+            "$ref": "#/$defs/labelConfidence"
+          }
+        },
+        "ocrLines": {
+          "type": "array",
+          "maxItems": 65536,
+          "items": {
+            "$ref": "#/$defs/labelConfidence"
+          }
+        },
+        "photo": {
+          "$ref": "#/$defs/labelPhoto"
+        }
+      }
+    },
+    "labelConfidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end",
+        "confidence"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "appUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versionCode",
+        "versionName",
+        "sizeBytes",
+        "sha256"
+      ],
+      "properties": {
+        "versionCode": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "versionName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "appUpdateResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "update"
+      ],
+      "properties": {
+        "update": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/appUpdate"
+            }
+          ]
+        }
+      }
+    },
+    "qcUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "qcpass": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "qccomment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "deliveryLot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supplier",
+        "receiver",
+        "invoiceNumber",
+        "createdAt",
+        "approvedAt",
+        "deliveryMatches",
+        "deliveryComment",
+        "phoneNumber",
+        "installationId",
+        "id",
+        "documentId",
+        "documentNumber",
+        "storedAt",
+        "materialId",
+        "materialName",
+        "lot",
+        "packageCount",
+        "damagedPackageCount",
+        "quantities",
+        "qcpass",
+        "qccomment"
+      ],
+      "properties": {
+        "supplier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receiver": {
+          "type": "string",
+          "minLength": 1
+        },
+        "invoiceNumber": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deliveryMatches": {
+          "type": "boolean"
+        },
+        "deliveryComment": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Approving device number; 0 means approved before automatic registration."
+        },
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "documentNumber": {
+          "type": "string",
+          "pattern": "^PZ/[0-9]{4}/[0-9]{2,}/[0-9]{4,}$"
+        },
+        "storedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "materialId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "materialName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lot": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "packageCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "damagedPackageCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "quantities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "quantity",
+              "unit"
+            ],
+            "properties": {
+              "quantity": {
+                "type": "string",
+                "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+                "not": {
+                  "pattern": "^0(?:\\.0+)?$"
+                }
+              },
+              "unit": {
+                "enum": [
+                  "kg",
+                  "szt."
+                ]
+              }
+            }
+          }
+        },
+        "qcpass": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "qccomment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "deliveryLotEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "materialId",
+        "materialName",
+        "lot",
+        "unknownLotComment",
+        "quantity",
+        "unit",
+        "condition",
+        "damageComment",
+        "scannedAt",
+        "sourceCode",
+        "barcodeFormat",
+        "position"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "materialId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "materialName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lot": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unknownLotComment": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+          "not": {
+            "pattern": "^0(?:\\.0+)?$"
+          }
+        },
+        "unit": {
+          "enum": [
+            "kg",
+            "szt."
+          ]
+        },
+        "condition": {
+          "enum": [
+            "OK",
+            "DAMAGED"
+          ]
+        },
+        "damageComment": {
+          "type": "string"
+        },
+        "scannedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sourceCode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "barcodeFormat": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "$ref": "#/$defs/labelRead"
+        },
+        "approximateMaterial": {
+          "type": "boolean"
+        },
+        "lowConfidenceFields": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "materialName",
+              "lot",
+              "quantity",
+              "unit"
+            ]
+          }
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "lot": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "unknownLotComment": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "condition": {
+                "const": "DAMAGED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "damageComment": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "deliveryLotDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supplier",
+        "receiver",
+        "invoiceNumber",
+        "createdAt",
+        "approvedAt",
+        "deliveryMatches",
+        "deliveryComment",
+        "phoneNumber",
+        "installationId",
+        "id",
+        "documentId",
+        "documentNumber",
+        "storedAt",
+        "materialId",
+        "materialName",
+        "lot",
+        "packageCount",
+        "damagedPackageCount",
+        "quantities",
+        "qcpass",
+        "qccomment",
+        "entries"
+      ],
+      "properties": {
+        "supplier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receiver": {
+          "type": "string",
+          "minLength": 1
+        },
+        "invoiceNumber": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deliveryMatches": {
+          "type": "boolean"
+        },
+        "deliveryComment": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Approving device number; 0 means approved before automatic registration."
+        },
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "documentId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "documentNumber": {
+          "type": "string",
+          "pattern": "^PZ/[0-9]{4}/[0-9]{2,}/[0-9]{4,}$"
+        },
+        "storedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "materialId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "materialName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lot": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "packageCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "damagedPackageCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "quantities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "quantity",
+              "unit"
+            ],
+            "properties": {
+              "quantity": {
+                "type": "string",
+                "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+                "not": {
+                  "pattern": "^0(?:\\.0+)?$"
+                }
+              },
+              "unit": {
+                "enum": [
+                  "kg",
+                  "szt."
+                ]
+              }
+            }
+          }
+        },
+        "qcpass": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "qccomment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/deliveryLotEntry"
+          }
+        }
+      }
+    },
+    "deliveryLotPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lots",
+        "nextAfterId"
+      ],
+      "properties": {
+        "lots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveryLot"
+          }
+        },
+        "nextAfterId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "counters": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(PZ|RW)/[0-9]{4}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(0|[1-9][0-9]*)$",
+        "maxLength": 19
+      }
+    },
+    "rwItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product",
+        "quantity",
+        "unit",
+        "labelDate",
+        "scannedAt",
+        "initials",
+        "raw",
+        "alley"
+      ],
+      "properties": {
+        "product": {
+          "type": "string"
+        },
+        "labelDate": {
+          "type": "string"
+        },
+        "scannedAt": {
+          "type": "string"
+        },
+        "initials": {
+          "type": "string"
+        },
+        "raw": {
+          "type": "string"
+        },
+        "alley": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "enum": [
+            "kg",
+            "szt."
+          ]
+        },
+        "labelId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lot": {
+          "type": "string"
+        }
+      }
+    },
+    "rwDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "createdAt",
+        "requester",
+        "manager",
+        "id",
+        "number",
+        "items"
+      ],
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "manager": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "number": {
+          "type": "string",
+          "pattern": "^RW/[0-9]{4}/(?:[0-9]+/)?[0-9]+$"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/rwItem"
+          }
+        }
+      }
+    },
+    "rwBackupRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installationId",
+        "phoneNumber",
+        "document"
+      ],
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "document": {
+          "$ref": "#/$defs/rwDocument"
+        }
+      }
+    },
+    "labelPhoto": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "photoUpload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "installationId",
+        "phoneNumber",
+        "photo"
+      ],
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phoneNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "photo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "sha256",
+            "contentBase64"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "contentBase64": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 22369624
+            }
+          }
+        }
+      }
+    },
+    "photoReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "photoId",
+        "sha256",
+        "storedAt"
+      ],
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "storedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "photoDownload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "photoId",
+        "sha256",
+        "storedAt",
+        "contentBase64"
+      ],
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "storedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "contentBase64": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 22369624
+        }
+      }
+    }
+  }
+}

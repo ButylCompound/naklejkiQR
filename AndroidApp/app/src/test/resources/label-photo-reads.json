@@ -1,0 +1,307 @@
+[
+  {
+    "file": "1.jpeg",
+    "codes": [
+      {
+        "raw": "]C110260001773503",
+        "format": "CODE_128"
+      }
+    ],
+    "text": "Przedsiębiorstwo Przemysłowo-Handlowe\nTAN ,STANDARD\" Sp. z o.0.\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nZYWICA WĘGLOWODOROWA PRS\nA1100\nNumer serii: 2604075\nData produkcji: 04.2026\nData ważności: 10.2027\nMasa netto:\nNumer dostawy:\n26-017735 700 kg\n03\nSHANDONG SHENXIAN R\nIM RESINS CO",
+    "expected": {
+      "materialName": "Żywica węglowodorowa PRS A1100",
+      "lot": "2604075",
+      "quantity": "700"
+    }
+  },
+  {
+    "file": "2.jpeg",
+    "codes": [],
+    "text": "Przedsiębiorstwo Przemysiowo-Handlowe\nTAN ,STANDARD\" Sp. z o.0.\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fay +48 81 71 00 505\ne-mail: chemia@standard.pl, www.stanuard.pl\nDYSTRYBUTOR\nARD\nŻYWICA WĘGLOWODOROWA\nPRS A1100\nNumer serii: 2604020\nData produkcji: 04.2023\nData ważności: 10.2027\nMasa netto:\nNumer dostawy:\n26-015167 700 kg",
+    "expected": {
+      "materialName": "Żywica węglowodorowa PRS A1100",
+      "lot": "2604020",
+      "quantity": "700"
+    }
+  },
+  {
+    "file": "20261027_105303.jpg",
+    "codes": [
+      {
+        "raw": "http://58.59.122.5:9999?4240622319&ph:1953&pc:4240622319&zxsj:2145-2200&dw:京博橡胶&bm:100044938",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMBROAD SINOPOLY\nButyl Rubber\n1953\nS/LOT NO.: 4240622319\n47t/OPERATIVE NORM: Q/371625 JBZ] 002 2021\nE/PRODUCTION DATE: 2024-6-22 2145-2200\nNET WEIGHT: 1200kg\nR/GRADE:\nAt/ORIGIN:/CHINA\nLWRRIORAUINSRRZa\nSHAN DON CHAMBROAD SINOPOLY NEW MATERIALS CO.. LTD.\n$EEABGSE:400-063-8603\nB3HL: www.jbzhongju.com",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "4240622319",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105313.jpg",
+    "codes": [
+      {
+        "raw": "http://58.59.122.5:9999?4240622319&ph:1953&pc:4240622319&zxsj:1940-1959&dw:京博橡胶&bm:100044938",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMBROAD SINOPOLY\nButyl Rubber 1953\nHtS/LOT NO.: 4240622319\nhT/OPERATIVE NORM: Q/371625 JBZI 002 2021\nEA/PRODUCTION DATE: 2024-6-22 1940-1959\nA/NET WEIGHT: 1200kg\n/GRADE:\nA/ORIGIN:H/CHINA\nSHAN DONG CHAMBROA 5INOPOLY NEW MATERIALS CO.. LTI.\n$EABESE:400-063-8603\nBJtE: www.jbzhongju.com",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "4240622319",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105331.jpg",
+    "codes": [
+      {
+        "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065700",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMBROAD SINOPOLY\n|IR-1953\nButyl Rubber\nLOTNO.241013\n4 t/LINE 2\njEJ/TIME 03:52\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nB /DATE 2024-10-13\n4/NET:1200KG\n#T#/STANDARD: Q/371625 JBZJ 002\nii/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA www.jbzhongju.com",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "241013",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105348.jpg",
+    "codes": [
+      {
+        "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=A0120000065762",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMBROAD SINOPOLY\n|IR-1953\nButyl Rubber\n/LOT NO. 241012\n/LINE 2\nRt a/TIME 14:30\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO..LTD\nA /DATE: 2024-10-12\nA/NET: 1200KG\nT/STANDARD: Q/371625 JBZJ 002\nA/TEL: 400-063-8603",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "241012",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105457.jpg",
+    "codes": [
+      {
+        "raw": "]C110260001773503",
+        "format": "CODE_128"
+      }
+    ],
+    "text": "Przedsiębiorstwo Przemysłowo-Handlowe\nTAN „STANDARD\" Sp. z o.0.\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nŻYWICA WEGLOWODOROWA PRS\nA1100\nNumer serii: 2604075\nData produkcii: 04.2025\nData ważnosci: 10.202\nNumer dostawy Masa netto:\n26-017735 700 kg",
+    "expected": {
+      "materialName": "Żywica węglowodorowa PRS A1100",
+      "lot": "2604075",
+      "quantity": "700"
+    }
+  },
+  {
+    "file": "20261027_105506.jpg",
+    "codes": [
+      {
+        "raw": "]C110260001773503",
+        "format": "CODE_128"
+      }
+    ],
+    "text": "Przedsiębiorstwo Pry\nAN\n.Karola Olszewskiego 10, 20-481 Li, STANDARD S\nDARCH e-mail: chemia@standas w\nDYSTRYBtR\nŻYWICA WĘGLOWODOROWA PRS\nA1100\nNumer serii: 2604075\nDala produkcji: 04.2025\nDawatnosci 10.2027\nueeostawy Masa netto:\n26-017735 700 kg",
+    "expected": {
+      "materialName": "Żywica węglowodorowa PRS A1100",
+      "lot": "2604075",
+      "quantity": "700"
+    }
+  },
+  {
+    "file": "20261027_105629.jpg",
+    "codes": [
+      {
+        "raw": "]C1000000000000741102",
+        "format": "CODE_128"
+      }
+    ],
+    "text": "cONvENT\nLagerkunde Convent\nBIERÖM00\nBiesterfeld Performance Rubber GmbH\nFerdirandstr. 41\nDE-20095 Hamburg\nNVE\n000000000000741102\nArtikelbezeichnung\nBUTYL 268S 25 KG BAL\nLagerklasse WGK Menge/Palette\n48\nCharge Produktion sdatunm\nT26013025H 30.01.26\nArtikel-Nr. Bruttogewicht/Nettogewicht (KG)\n5621170000 1.225 1.200\n(00)000o000000741102\nABURG\n-ZP CODE 20095\nSTERFELO PERFORA ANCE RUB",
+    "expected": {
+      "materialName": "BUTYL 268S",
+      "lot": "T26013025H",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105634.jpg",
+    "codes": [
+      {
+        "raw": "0BU268S0713T26013025H26013020051200",
+        "format": "CODE_39"
+      }
+    ],
+    "text": "2601302005 26313325ES\nBUTYL\nIscbut yl ene Isoprere Copolyer\nNET WEIGHT 1200 KG\nCAS 981-85-9\nØBU2685Ø713T26Ø13525H260i3D20051200\nLOT T26013025H Made in USA",
+    "expected": {
+      "materialName": "BUTYL 268S",
+      "lot": "T26013025H",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105643.jpg",
+    "codes": [
+      {
+        "raw": "0BU268S0713T26013025H26013020031200",
+        "format": "CODE_39"
+      }
+    ],
+    "text": "2631302003 257137273\nBLJTYL\nIscbutyl ene Isoprene Copolymer\nNET WEJGHT 1209 KG\nCAS 981-859\na\nØBU2685Ø713T26513025H26513Ø200312O0\noT T26013025H Made in USA",
+    "expected": {
+      "materialName": "BUTYL 268S",
+      "lot": "T26013025H",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105704.jpg",
+    "codes": [
+      {
+        "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMEROAD SINOPOLY\nIIR-1953\nButyl Rubber\n/LOT NO, 250607\n# /LINE 1\nİal/TIME 21:25\nB. CZ.\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nA/DATE: 2025-06-07\nA/NET: 1200KG\nG5/STANDARD: Q/371625 JBZJ 002\n/TEL: 400-063-8603\nBINZHOU CITY,SHANDONG PROVINCE,CHINA ADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nwww.jbzhongju.com",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "250607",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "20261027_105725.jpg",
+    "codes": [
+      {
+        "raw": "267453          ",
+        "format": "CODE_39"
+      }
+    ],
+    "text": "TRANSMEC REF. 0365566\nSPECIALITY MINERALS ** MAIN*** KINGS NORTON\nB30 3JW ILFORD BIRMINGHAM\nTRANSMEC UK LTD (WORCS)\nWR4 9FA WORCESTER\n267453\nPRODUCT: CALOFORT SV800 HTCP3\nCALOFORT SV - 800 - HT–CP3\nORDER:\nE15741\nPCS 1",
+    "expected": {
+      "materialName": "CALOFORT SV800 HTCP3",
+      "lot": null,
+      "quantity": null
+    }
+  },
+  {
+    "file": "20261027_105738.jpg",
+    "codes": [
+      {
+        "raw": "267459          ",
+        "format": "CODE_39"
+      }
+    ],
+    "text": "TRANSMEC REF. 0365566\nSPECIALITY MINERALS ** MAIN***\nKINGS NORTON\nB30 3JW ILFORD BIRMINGHAM\nTRANSMEC UK LTD (WORCS)\nWR4 9FA WORCESTER\n267459\nPRODUCT: CALOFORT SV800 HTCP3\nCALOFORT SV -800-HT–CP3\nORDER:\nE15741\nPCS 1",
+    "expected": {
+      "materialName": "CALOFORT SV800 HTCP3",
+      "lot": null,
+      "quantity": null
+    }
+  },
+  {
+    "file": "20261027_105753.jpg",
+    "codes": [
+      {
+        "raw": "]C110260001773503",
+        "format": "CODE_128"
+      }
+    ],
+    "text": "Przedsiębiorstwo Przemysłowo-Handlowe\nTAN „STANDARD\" Sp. z o.0.\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nŽYWICA WEGLOWODOROWA PRS\nA1100\nNumer serii: 2604075\nData produkcji: 04.2026\nData ważności: 10.2027\nNumer dostawy: Masa netto:\n26-017735 700 kg",
+    "expected": {
+      "materialName": "Żywica węglowodorowa PRS A1100",
+      "lot": "2604075",
+      "quantity": "700"
+    }
+  },
+  {
+    "file": "20261027_105831.jpg",
+    "codes": [
+      {
+        "raw": "PIB32 / SPXFPG005E / 20260721 / 175,000",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "PRODUCT GRADE\nBraskem\nPIB32-POLIISOBUTILENO\nLOT N PRODUCTION DATE - DATA DE PRODUÇÃO\nSPXFPGO05E 07/21/2026 21/0712026\nNET WENGHT{Kg) GROSS WEIGHT(Kg)\nPESO LIQUIDOKg)-175,000 PESO BRUTO{Kg)-191,200\nUN NUMBER: NOT CLASSIFIED STORAGE VALIDITY-VALIDADE\nNÜMERO-ONU: NÃO CLASSIFICADO 36 MONTHS FROM THE PRODUCTION DATE\n36 MESES DA DAA DE PRODUÇÃO\nMADE IN BRAZL\nFOR INDUSTRIAL USE ONLY 2\nf2RISW 1\nTRANSPORTE CONTEHNER ARNAZENAGEM\nTRANSAORT CONTANER STORAGE\nOne tevel two levets three lewes\nEMPUHAMENYO MGANO\n.hHAXIMAM STACKNG",
+    "expected": {
+      "materialName": "Poliizobuten PIB32",
+      "lot": "SPXFPG005E",
+      "quantity": "175"
+    }
+  },
+  {
+    "file": "20261027_105836.jpg",
+    "codes": [
+      {
+        "raw": "]C110260002397901",
+        "format": "CODE_128"
+      }
+    ],
+    "text": "shPrzedsiębiorstwo Przemysłowo-Handlowe\n„STANDARD\" Sp. z 0.0.\nTAN ul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nPOLIIZOBUTEN PIB32\nNumer CAS: 9003-27-4\nNumer WE: 88-360-8\nNumer serii: na ObaKowaniu\nData orodukcii: na vpakowaniu\nData waznosci: na ɔpakowaniu\nNumer dostawy.\nMasa netto:\n26-023979\n175 kg",
+    "expected": {
+      "materialName": "Poliizobuten PIB32",
+      "lot": null,
+      "quantity": "175"
+    }
+  },
+  {
+    "file": "20261027_105843.jpg",
+    "codes": [],
+    "text": "Przedsiebiorstwo Przemysłowo-Handlowe\nTAN\nSTANDARD\" Sp. z o.o.\nul. Karola Olszewskiego 10, 20-481 Lublin, tel.+48 81 71 00 500, fax.+48 81 71 00 505\ne-mail: chemia@standard.pl, www.standard.pl\nDYSTRYBUTOR\nDARD\nPOLIIZOBUTEN PIB32\nNumer CAS: 9003-27-4\nNumer WE: 313-360-3\nNumer serii: na opaKowaniu\nData produkcH: na opakowaniu\nData waznosci: na opaKovwaniu\nNumer dostawy: Masa netto:\n26-023979\n175 kg",
+    "expected": {
+      "materialName": "Poliizobuten PIB32",
+      "lot": null,
+      "quantity": "175"
+    }
+  },
+  {
+    "file": "20261027_105850.jpg",
+    "codes": [
+      {
+        "raw": "PIB32 / SPXFPG005E / 20260721 / 175,000",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "PRODUCT GRADE\nBraskem PIB32-POLIISOBUTILENO\nLOT N° PRODUCTION DATE - DATA DE PRODUÇÃO\nSPXFPGO005E 07/21/2026 21/07/2026\nNET WEIGHT(Kg) GROSS WEIGHT(Kg)\nPESO LIQUIDOIKg)-175,000 PESO BRUTO{Kg) -191,200\nUN NUMBER: NOT CUASSIFIED STORAGE VALIDITY-VALIDADE\nNÜMERO-ONU: NÃO CLASSIFCADO 36 MONTHS FROM THE PRODUCTION DATE\n36 MESES DA DATA DE PRODUÇAO\nMADE N BRAZL\nFOR INDUSTRIAL USE ONLY 2\nRBRINL 1\nTRANSPORTE CONTSNER ARAZENAGEM\nSIORAGE\nTRANSPORT CONTANER\nshree ieyes\nane ievel wo lvs\nENNPILAENTO NCMO\ntANILM STACKING",
+    "expected": {
+      "materialName": "Poliizobuten PIB32",
+      "lot": "SPXFPG005E",
+      "quantity": "175"
+    }
+  },
+  {
+    "file": "3.jpeg",
+    "codes": [
+      {
+        "raw": "https://kgwms.chambroad.com:12000/gemreport/a378fb790034440cb76502bf6b031aab.rpt?traceid=027821671",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMBROAD SINOPOLY\nT IIR-1953\nButyl Rubber\nt LOT NO.260502\n4 /LINE 2\nja/TIME 11:45\nSHANDONG CHAMBROAD SINOPOLY NEW MATERIALS CO.,LTD\nA/DATE:2026-05-02\nİ/NET: 1200KG\n#1T/STANDARD: Q/371625 JBZJ 002\n/TEL: 400-063-8603\nADD: BOXING ECONOMIC DEVELOPMENT ZONE,\nBINZHOU CITY,SHANDONG PROVINCE,CHINA www.jbzhongju. com",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "260502",
+      "quantity": "1200"
+    }
+  },
+  {
+    "file": "4.jpeg",
+    "codes": [
+      {
+        "raw": "http://58.59.122.5:9999?3240622319&ph:1953&pc:3240622319&zxsj:0215-0230&dw:京博橡胶&bm:100044938",
+        "format": "QR_CODE"
+      }
+    ],
+    "text": "CHAMBROAD SINOPOLY\nButyl Rubber 1953\ntS/LOT NO.: 3240622319\n4Tt/OPERATIVE NORM: Q/371625 JRZJ 002-2021\n4AA/ PRODUCTION DATE: 2024-6-23 0215-0230\nA/NET WEIGHT: 1200kg\nF/GRADE:\nA/ORIGIN:FE/CHINA\nSHAN DONG CHAMBROAD SINOPOLY NEW MATERIALS CO., LTD.\nZ RS:400-063-8603\nB53 41: www.jbzhongju.com",
+    "expected": {
+      "materialName": "BUTYL IIR-1953",
+      "lot": "3240622319",
+      "quantity": "1200"
+    }
+  }
+]

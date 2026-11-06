@@ -15,6 +15,7 @@ object ItemJson {
         put("raw", item.raw)
         put("alley", item.alley)
         put("labelId", item.labelId)
+        if (item.lot.isNotEmpty()) put("lot", item.lot)
     }
 
     fun fromJson(o: JSONObject): ScanItem = ScanItem(
@@ -26,6 +27,7 @@ object ItemJson {
         initials = o.optString("initials"),
         raw = o.optString("raw"),
         alley = o.optString("alley", "1"),
-        labelId = o.optString("labelId")
+        labelId = o.optString("labelId"),
+        lot = o.optString("lot")
     )
 }

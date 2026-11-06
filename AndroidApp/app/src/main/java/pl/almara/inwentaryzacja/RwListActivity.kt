@@ -27,7 +27,7 @@ class RwListActivity : AppCompatActivity() {
             docs.getOrNull(position)?.let { openDetail(it.id) }
         }
         binding.rwList.setOnItemLongClickListener { _, _, position, _ ->
-            docs.getOrNull(position)?.let { confirmDelete(it) }
+            docs.getOrNull(position)?.takeIf { it.number.isEmpty() }?.let { confirmDelete(it) }
             true
         }
     }
@@ -52,12 +52,12 @@ class RwListActivity : AppCompatActivity() {
     }
 
     private fun confirmDelete(doc: RwDocument) {
+        if (doc.number.isNotEmpty()) return
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.rw_delete)
             .setMessage(getString(R.string.rw_delete_confirm, doc.number.ifEmpty { getString(R.string.rw_draft) }))
             .setPositiveButton(R.string.delete) { _, _ ->
-                RwStore.delete(this, doc.id)
-                onResume()
+                PzUi.guard(this) { RwStore.delete(this, doc.id); onResume() }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()

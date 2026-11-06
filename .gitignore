@@ -18,3 +18,11 @@ state.json
 Inwentaryzacja/input/
 Inwentaryzacja/output/
 .venv_path.txt
+
+
+STYLE_GUIDE.md
+PZ_PLAN.md
+temp_samplelabels/*
+*.pdf
+*.docx
+*.png

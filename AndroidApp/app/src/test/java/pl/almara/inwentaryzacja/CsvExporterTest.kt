@@ -12,10 +12,15 @@ class CsvExporterTest {
         val legacy = QrParser.parse(base, scannedAt)!!
         val session = Session("session", "Test", scannedAt, items = mutableListOf(recent, legacy))
         val lines = CsvExporter.buildCsv(session).removePrefix("\uFEFF").split("\r\n")
-        assertEquals("Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania;ID", lines[0])
-        assertEquals("1;1;\"Materiał; Łódź\";12,5;kg;QC;2026-10-16 08:00:00;$scannedAt;00000001", lines[1])
-        assertEquals("2;1;\"Materiał; Łódź\";12,5;kg;;2026-10-16 08:00:00;$scannedAt;", lines[2])
+        assertEquals("Lp;Alejka;Produkt;Ilość;Jednostka;Inicjały;Data naklejki;Data skanowania;ID;Nr partii", lines[0])
+        assertEquals("1;1;\"Materiał; Łódź\";12,5;kg;QC;2026-10-16 08:00:00;$scannedAt;00000001;", lines[1])
+        assertEquals("2;1;\"Materiał; Łódź\";12,5;kg;;2026-10-16 08:00:00;$scannedAt;;", lines[2])
         assertEquals("Liczba palet;2", lines[4])
         assertEquals("Łączna ilość (kg);25", lines[5])
+    }
+    @Test fun lotIsExportedAndEscapedWithoutChangingLegacyColumnPositions() {
+        val item = QrParser.parse("Materiał | 25 kg | 2026-11-02 08:00 | QC | aB3dE_fG | LOT;001", "2026-11-02 09:00:00")!!
+        val csv = CsvExporter.buildCsv(Session("id", "Lots", item.scannedAt, items = mutableListOf(item)))
+        assertEquals("1;1;Materiał;25;kg;QC;2026-11-02 08:00:00;2026-11-02 09:00:00;aB3dE_fG;\"LOT;001\"", csv.split("\r\n")[1])
     }
 }

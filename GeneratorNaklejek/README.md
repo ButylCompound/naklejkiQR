@@ -41,6 +41,10 @@ python gui_packs.py
 
 On Windows, double-click `run_packs.bat`. This version adds a pack-count field and creates labels named `Product (1)` through `Product (n)`. The selected label size applies to every pack, both when printing and when saving PDFs. The copies value applies to every pack, so 12 packs and 6 copies produce 72 stickers. The build script creates this version as `GeneratorNaklejek_Paczki.exe`.
 
+Check **Dodaj numery partii** and click **Numery partii…** to enter a lot number and pack count for each lot. The sum must match **Liczba opakowań**; otherwise the app asks you to correct it. **Zatwierdź i drukuj** saves the table and prints, while **Zapisz** saves it for later printing or PDF generation. Pack numbering continues across lots. For example, lots with 3 and 9 packs, with 6 copies each, still produce 72 stickers.
+
+With lots enabled, `sticker_template_lots.tex` adds **Nr partii** between the product name and quantity. Smaller product and quantity text and tighter spacing make room for the new row; the logo retains its original size and position. Both label sizes work. The QR payload gains a sixth field: `name | quantity unit | date | initials | ID | lot`. Labels without lots retain the five-field format. The Android reader must be updated separately to accept the sixth field. Lot entries are kept only while the window is open.
+
 ### Command Line Interface (CLI)
 Run the CLI application using Python:
 

@@ -14,6 +14,7 @@ class PeopleEditActivity : AppCompatActivity() {
         const val LIST_REQUESTERS = "requesters"
         const val LIST_MANAGERS = "managers"
         const val LIST_CUSTOM_ALLEYS = "custom_alleys"
+        const val LIST_RECEIVERS = "receivers"
     }
 
     private lateinit var binding: ActivityPeopleEditBinding
@@ -31,6 +32,7 @@ class PeopleEditActivity : AppCompatActivity() {
             when (which) {
                 LIST_MANAGERS -> R.string.settings_managers
                 LIST_CUSTOM_ALLEYS -> R.string.settings_custom_alleys
+                LIST_RECEIVERS -> R.string.settings_receivers
                 else -> R.string.settings_requesters
             }
         )
@@ -73,6 +75,7 @@ class PeopleEditActivity : AppCompatActivity() {
         when (which) {
             LIST_MANAGERS -> Settings.setManagers(this, names)
             LIST_CUSTOM_ALLEYS -> Settings.setCustomAlleys(this, names)
+            LIST_RECEIVERS -> Settings.setReceivers(this, names)
             else -> Settings.setRequesters(this, names)
         }
         adapter.notifyDataSetChanged()
@@ -82,6 +85,7 @@ class PeopleEditActivity : AppCompatActivity() {
     private fun load(): List<String> = when (which) {
         LIST_MANAGERS -> Settings.managers(this)
         LIST_CUSTOM_ALLEYS -> Settings.customAlleys(this)
+        LIST_RECEIVERS -> Settings.receivers(this)
         else -> Settings.requesters(this)
     }
 

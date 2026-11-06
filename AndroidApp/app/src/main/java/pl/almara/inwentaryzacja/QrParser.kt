@@ -7,8 +7,8 @@ import java.time.format.ResolverStyle
 
 /**
  * Parser zawartości kodu QR z naklejki.
- * Format: "Nazwa produktu | 500 kg | 2026-07-07 10:00:00 | XX | aB3dE_fG".
- * Starsze naklejki mają 3 lub 4 pola. ID służy tylko do wyświetlania;
+ * Format: "Nazwa produktu | 500 kg | 2026-07-07 10:00:00 | XX | aB3dE_fG | LOT-01".
+ * Partia jest opcjonalna. Starsze naklejki mają 3, 4 lub 5 pól. ID służy tylko do wyświetlania;
  * pole raw zachowuje dotychczasowy klucz deduplikacji bez ID.
  * Jednostka ("kg" lub "szt.") jest częścią segmentu ilości; brak jednostki
  *   (starsze naklejki "500kg") traktujemy jako "kg".
@@ -26,14 +26,16 @@ object QrParser {
 
     fun parse(raw: String, scannedAt: String): ScanItem? {
         val parts = raw.split("|").map { it.trim() }
-        if (parts.size !in 3..5) return null
+        if (parts.size !in 3..6) return null
 
         val product = parts[0]
         val quantityPart = parts[1]
         val labelDateRaw = parts[2]
         val initials = parts.getOrElse(3) { "" }
         val labelId = parts.getOrElse(4) { "" }
-        if (parts.size == 5 && !Regex("[A-Za-z0-9_-]{8}").matches(labelId)) return null
+        if (parts.size >= 5 && !Regex("[A-Za-z0-9_-]{8}").matches(labelId)) return null
+        val lot = parts.getOrElse(5) { "" }
+        if (parts.size == 6 && (lot.isBlank() || lot.any { it in "\r\n\t" })) return null
         if (product.isEmpty()) return null
 
         // "20 szt." / "500 kg" / "500kg" -> liczba + jednostka (brak jednostki = "kg")
@@ -51,11 +53,13 @@ object QrParser {
             labelDate = labelDate,
             scannedAt = scannedAt,
             initials = initials,
-            raw = if (parts.size == 5) {
-                val withoutId = raw.substringBeforeLast('|').trimEnd()
+            raw = if (parts.size >= 5) {
+                val withId = if (parts.size == 6) raw.substringBeforeLast('|').trimEnd() else raw
+                val withoutId = withId.substringBeforeLast('|').trimEnd()
                 if (initials.isEmpty()) withoutId.substringBeforeLast('|').trimEnd() else withoutId
             } else raw,
-            labelId = labelId
+            labelId = labelId,
+            lot = lot
         )
     }
 

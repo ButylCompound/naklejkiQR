@@ -7,7 +7,7 @@ from pathlib import Path
 import jinja2
 import qrcode
 
-from label_utils import escape_latex, normalize_label_date, validate_label_input
+from label_utils import escape_latex, normalize_label_date, validate_label_input, validate_lot_number
 
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
@@ -58,6 +58,7 @@ def generate_pdf(
     output_stem='output',
     template_file='sticker_template.tex',
     label_size=LABEL_SIZES[0],
+    lot_number=None,
 ):
     product_name, weight, unit, operator = validate_label_input(
         product_name,
@@ -66,8 +67,12 @@ def generate_pdf(
         operator,
     )
     label_date = normalize_label_date(date_override)
+    if lot_number is not None:
+        lot_number = validate_lot_number(lot_number)
     label_id = secrets.token_urlsafe(6)
     qr_data = f'{product_name} | {weight} {unit} | {label_date} | {operator} | {label_id}'
+    if lot_number is not None:
+        qr_data += f' | {lot_number}'
 
     qr_path = Path(f'{output_stem}_qr.png')
     qr = qrcode.QRCode(version=1, box_size=10, border=0)
@@ -90,6 +95,7 @@ def generate_pdf(
         tex_content = template.render(
             product_name=escape_latex(product_name),
             product_name_length=len(product_name),
+            lot_number=escape_latex(lot_number) if lot_number is not None else '',
             weight=escape_latex(weight),
             unit=escape_latex(unit),
             datetime=label_date,

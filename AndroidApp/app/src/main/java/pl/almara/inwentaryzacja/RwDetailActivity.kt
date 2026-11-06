@@ -36,22 +36,19 @@ class RwDetailActivity : AppCompatActivity() {
             this, savedInstanceState?.getStringArrayList("selected_items").orEmpty(),
             onChanged = ::updateSelection,
             onDelete = { keys ->
-                RwStore.deleteItems(this, rwId, keys)
-                refresh()
+                PzUi.guard(this) { RwStore.deleteItems(this, rwId, keys); refresh() }
             }
         )
 
         binding.toolbar.setNavigationOnClickListener { finish() }
         binding.requesterButton.setOnClickListener {
             pickPerson(Settings.requesters(this), doc.requester) { chosen ->
-                RwStore.setPeople(this, rwId, chosen, doc.manager)
-                refresh()
+                PzUi.guard(this) { RwStore.setPeople(this, rwId, chosen, doc.manager); refresh() }
             }
         }
         binding.managerButton.setOnClickListener {
             pickPerson(Settings.managers(this), doc.manager) { chosen ->
-                RwStore.setPeople(this, rwId, doc.requester, chosen)
-                refresh()
+                PzUi.guard(this) { RwStore.setPeople(this, rwId, doc.requester, chosen); refresh() }
             }
         }
         binding.itemsList.setOnItemClickListener { _, _, position, _ ->
@@ -96,6 +93,7 @@ class RwDetailActivity : AppCompatActivity() {
         binding.requesterButton.isEnabled = !locked
         binding.managerButton.isEnabled = !locked
         binding.resumeButton.visibility = if (locked) View.GONE else View.VISIBLE
+        binding.deleteButton.visibility = if (locked) View.GONE else View.VISIBLE
         binding.itemsList.adapter = RwItemAdapter(this, d.items, selection)
         if (locked) selection.clear() else selection.retain(d.items)
     }
@@ -125,8 +123,7 @@ class RwDetailActivity : AppCompatActivity() {
             unit = item.unit,
             prefill = item.quantity,
             onOk = { amount ->
-                RwStore.setItemQuantity(this, rwId, item.raw, amount)
-                refresh()
+                PzUi.guard(this) { RwStore.setItemQuantity(this, rwId, item.sourceKey, amount); refresh() }
             }
         )
     }
@@ -165,21 +162,24 @@ class RwDetailActivity : AppCompatActivity() {
             .setTitle(R.string.rw_confirm_title)
             .setMessage(R.string.rw_confirm_message)
             .setPositiveButton(R.string.rw_confirm_yes) { _, _ ->
-                RwStore.finalize(this, rwId)
-                refresh()
-                action()
+                PzUi.guard(this) {
+                    RwStore.finalize(this, rwId)
+                    SyncScheduler.request(this)
+                    refresh()
+                    action()
+                }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun confirmDeleteDoc() {
+        if (locked()) return
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.rw_delete)
             .setMessage(getString(R.string.rw_delete_confirm, doc.number.ifEmpty { getString(R.string.rw_draft) }))
             .setPositiveButton(R.string.delete) { _, _ ->
-                RwStore.delete(this, rwId)
-                finish()
+                PzUi.guard(this) { RwStore.delete(this, rwId); finish() }
             }
             .setNegativeButton(R.string.cancel, null)
             .show()

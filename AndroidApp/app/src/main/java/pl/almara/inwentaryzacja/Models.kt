@@ -8,15 +8,16 @@ data class ScanItem(
     val labelDate: String,   // data z naklejki (kiedy wydrukowano)
     val scannedAt: String,   // kiedy zeskanowano telefonem
     val initials: String,    // inicjały operatora z naklejki
-    val raw: String,         // zawartość QR bez ID; zachowana także po zmianie ilości w RW
+    val raw: String,         // bazowa treść QR; ID i partia są w oddzielnych polach
     val alley: String = "1", // alejka ustawiona ręcznie podczas skanowania (numer lub nazwa)
-    val labelId: String = ""
+    val labelId: String = "",
+    val lot: String = ""
 ) {
     val key: String
-        get() = "$product | $quantity ${Units.normalize(unit)} | $labelDate | $initials"
+        get() = "$product | $quantity ${Units.normalize(unit)} | $labelDate | $initials" + if (lot.isEmpty()) "" else " | $lot"
 
     val sourceKey: String
-        get() = QrParser.parse(raw, scannedAt)?.key ?: raw
+        get() = QrParser.parse(raw, scannedAt)?.copy(lot = lot)?.key ?: (raw + if (lot.isEmpty()) "" else " | $lot")
 }
 
 /** Sesja inwentaryzacji. */

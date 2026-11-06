@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pz_form_title">Formularz przyjęcia dostawy</string>
+    <string name="pz_form_details">A. Dane dostawy</string>
+    <string name="pz_form_items">B. Pozycje dostawy (wg skanu i wydruku z aplikacji)</string>
+    <string name="pz_form_check">C. Kontrola zgodności</string>
+    <string name="pz_form_signatures">D. Podpisy</string>
+    <string name="pz_form_field">Pole</string>
+    <string name="pz_form_value">Wpis</string>
+    <string name="pz_form_date">Data</string>
+    <string name="pz_form_material">Surowiec</string>
+    <string name="pz_form_material_reference">Surowiec %1$d: %2$s</string>
+    <string name="pz_form_material_total">Razem dla surowca · Opakowań: %1$d · Łącznie: %2$s</string>
+    <string name="pz_form_delivery_total">Cała dostawa · Opakowań: %1$d · Łącznie: %2$s</string>
+    <string name="pz_form_invoice">Nr faktury</string>
+    <string name="pz_form_position">Lp</string>
+    <string name="pz_form_lot">Nr partii\n(lot)</string>
+    <string name="pz_form_quantity">Ilość\nprzyjęta</string>
+    <string name="pz_form_unit">J.m.</string>
+    <string name="pz_form_packages">Palety /\nopakowania</string>
+    <string name="pz_form_condition">Stan opakowań</string>
+    <string name="pz_form_notes">Uwagi</string>
+    <string name="pz_form_notes_below">Opis w części C</string>
+    <string name="pz_form_verification">Sprawdzenie</string>
+    <string name="pz_form_result">Wynik</string>
+    <string name="pz_form_matches">Ilość zgodna z dokumentacją</string>
+    <string name="pz_form_description">Opis rozbieżności lub uszkodzeń jeśli występują:</string>
+    <string name="pz_form_delivery_issue">Zgodność z dokumentacją: %1$s</string>
+    <string name="pz_form_entry_issue">Lp %1$d, skan %2$d — %3$s</string>
+    <string name="pz_form_unknown_lot">Brak numeru partii: %1$s</string>
+    <string name="pz_form_damage">Uszkodzenie: %1$s</string>
+    <string name="pz_form_role">Rola</string>
+    <string name="pz_form_full_name">Imię i nazwisko</string>
+    <string name="pz_form_signature">Podpis</string>
+    <string name="pz_form_received_by">Magazyn (przyjął)</string>
+    <string name="pz_form_ok">OK</string>
+    <string name="pz_form_damaged">uszkodz.</string>
+    <string name="pz_form_yes">tak</string>
+    <string name="pz_form_no">nie</string>
+    <string name="pz_form_continued">%1$s (cd.)</string>
+    <string name="pz_form_page">Strona %1$d</string>
+</resources>

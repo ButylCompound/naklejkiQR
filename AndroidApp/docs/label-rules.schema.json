@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PZ label parsing rules",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "updatedAt",
+    "gs1",
+    "rules",
+    "tests"
+  ],
+  "properties": {
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gs1": {
+      "type": "boolean"
+    },
+    "rules": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    },
+    "tests": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/test"
+      }
+    },
+    "ocrWarningThreshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.8
+    }
+  },
+  "$defs": {
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field"
+      ],
+      "properties": {
+        "field": {
+          "enum": [
+            "materialName",
+            "materialId",
+            "lot",
+            "quantity",
+            "unit"
+          ]
+        },
+        "group": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "prefix": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "suffix": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "numberFormat": {
+          "enum": [
+            "decimal",
+            "decimal-dot",
+            "decimal-comma",
+            "thousands-dot"
+          ]
+        },
+        "factor": {
+          "type": "string",
+          "pattern": "^[0-9]{1,12}(?:\\.[0-9]{1,12})?$",
+          "not": {
+            "pattern": "^0+(?:\\.0+)?$"
+          }
+        },
+        "fuzzy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "choices",
+            "maxDistance"
+          ],
+          "properties": {
+            "choices": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 100,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 512
+              }
+            },
+            "maxDistance": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "group"
+          ],
+          "not": {
+            "required": [
+              "value"
+            ]
+          }
+        },
+        {
+          "required": [
+            "value"
+          ],
+          "not": {
+            "required": [
+              "group"
+            ]
+          }
+        }
+      ]
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "formats",
+        "pattern",
+        "fields"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "not": {
+            "const": "gs1"
+          }
+        },
+        "source": {
+          "enum": [
+            "barcode",
+            "text"
+          ]
+        },
+        "formats": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "QR_CODE",
+              "CODE_128",
+              "CODE_39",
+              "CODE_93",
+              "DATA_MATRIX",
+              "PDF417",
+              "AZTEC",
+              "EAN_13",
+              "EAN_8",
+              "UPC_A",
+              "UPC_E",
+              "ITF",
+              "CODABAR"
+            ]
+          }
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "contextPattern": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "const": "text"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "formats": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "codes",
+        "text",
+        "expected"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "codes": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "raw",
+              "format"
+            ],
+            "properties": {
+              "raw": {
+                "type": "string",
+                "maxLength": 8192
+              },
+              "format": {
+                "enum": [
+                  "QR_CODE",
+                  "CODE_128",
+                  "CODE_39",
+                  "CODE_93",
+                  "DATA_MATRIX",
+                  "PDF417",
+                  "AZTEC",
+                  "EAN_13",
+                  "EAN_8",
+                  "UPC_A",
+                  "UPC_E",
+                  "ITF",
+                  "CODABAR"
+                ]
+              }
+            }
+          }
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "expected": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "materialName": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "materialId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "lot": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "quantity": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "unit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

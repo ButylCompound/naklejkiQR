@@ -1,9 +1,6 @@
 package pl.almara.inwentaryzacja
 
 import android.content.Context
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /** Ustawienia aplikacji zapisane w SharedPreferences. */
 object Settings {
@@ -57,6 +54,22 @@ object Settings {
 
     fun setManagers(context: Context, value: List<String>) = setNames(context, KEY_MANAGERS, value)
 
+    fun receivers(context: Context): List<String> = names(context, "pz_receivers")
+    fun setReceivers(context: Context, value: List<String>) = setNames(context, "pz_receivers", value)
+    fun serverUrl(context: Context): String = prefs(context).getString("server_url", "").orEmpty()
+    fun fallbackServerUrl(context: Context): String = prefs(context).getString("fallback_server_url", "").orEmpty()
+    fun serverUrls(context: Context): List<String> = prefs(context).all.let { saved ->
+        listOf("server_url", "fallback_server_url").map { saved[it] as? String ?: "" }.filter { it.isNotEmpty() }.distinct()
+    }
+    fun setServerUrls(context: Context, primary: String, fallback: String = "") {
+        prefs(context).edit().putString("server_url", primary).putString("fallback_server_url", fallback).apply()
+    }
+    fun lastSyncAt(context: Context): String = prefs(context).getString("last_sync_at", "").orEmpty()
+    fun lastSyncError(context: Context): String = prefs(context).getString("last_sync_error", "").orEmpty()
+    fun setSyncResult(context: Context, at: String, error: String) {
+        prefs(context).edit().putString("last_sync_at", at).putString("last_sync_error", error).apply()
+    }
+
     private fun names(context: Context, key: String): List<String> =
         prefs(context).getString(key, "").orEmpty()
             .split('\n').map { it.trim() }.filter { it.isNotEmpty() }
@@ -80,17 +93,7 @@ object Settings {
         setCustomAlleys(context, DEFAULT_CUSTOM_ALLEYS)
         setRequesters(context, emptyList())
         setManagers(context, emptyList())
+        setReceivers(context, emptyList())
     }
 
-    /** Kolejny numer RW w formacie "RW/RRRR/NN"; licznik zeruje się co rok. */
-    fun nextRwNumber(context: Context): String {
-        val year = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date()).toInt()
-        val p = prefs(context)
-        val seq = if (p.getInt(KEY_RW_YEAR, 0) == year) p.getInt(KEY_RW_SEQ, 0) + 1 else 1
-        p.edit().putInt(KEY_RW_YEAR, year).putInt(KEY_RW_SEQ, seq).apply()
-        return formatRwNumber(year, seq)
-    }
-
-    /** "RW/RRRR/NN" — numer dopełniany do 2 cyfr, powyżej 99 rośnie do 3+. */
-    fun formatRwNumber(year: Int, seq: Int): String = "RW/%d/%02d".format(year, seq)
 }

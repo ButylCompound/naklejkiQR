@@ -34,7 +34,7 @@ class QrParserTest {
     @Test
     fun invalidIdsAndExtraFieldsAreRejected() {
         val base = "Materiał | 10 kg | 2026-10-16 08:00 | QC"
-        for (suffix in listOf("", "short", "123456789", "1234567!", "abcdefgh | extra")) {
+        for (suffix in listOf("", "short", "123456789", "1234567!", "abcdefgh | LOT | extra", "abcdefgh | ", "abcdefgh | A\nB", "abcdefgh | A\tB")) {
             assertNull(QrParser.parse("$base | $suffix", scannedAt))
         }
     }

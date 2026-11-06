@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_check">Sprawdź aktualizacje</string>
+    <string name="update_checking">Sprawdzanie dostępności aktualizacji…</string>
+    <string name="update_current">Masz najnowszą dostępną wersję aplikacji.</string>
+    <string name="update_available">Dostępna jest wersja %1$s.</string>
+    <string name="update_download">Pobierz i zainstaluj</string>
+    <string name="update_downloading">Pobieranie aktualizacji…</string>
+    <string name="update_download_progress">Pobieranie aktualizacji: %1$d%%</string>
+    <string name="update_ready">Wersja %1$s jest gotowa do instalacji. Potwierdź aktualizację w instalatorze Androida.</string>
+    <string name="update_install">Zainstaluj aktualizację</string>
+    <string name="update_retry">Spróbuj ponownie</string>
+    <string name="update_no_server">Najpierw ustaw adres w „Serwer i kopie zapasowe”.</string>
+    <string name="update_invalid_apk">Nie można zainstalować tego pliku. Sprawdź na serwerze wersję APK, sumę kontrolną i klucz podpisujący.</string>
+    <string name="update_http_error">Serwer aktualizacji zwrócił błąd HTTP %1$d.</string>
+    <string name="update_cancelled">Sprawdzanie lub pobieranie zostało przerwane.</string>
+    <string name="update_permission_needed">Zezwól tej aplikacji na instalowanie aktualizacji. Na następnym ekranie włącz „Zezwalaj z tego źródła”, a następnie wróć do aplikacji.</string>
+    <string name="update_open_permission">Otwórz ustawienia</string>
+    <string name="update_installer_missing">Nie można otworzyć instalatora Androida na tym urządzeniu.</string>
+</resources>

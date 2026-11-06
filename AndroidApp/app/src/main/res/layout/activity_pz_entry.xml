@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/brand_blue"
+        android:elevation="4dp"
+        app:title="@string/pz_entry_new"
+        app:titleTextColor="@android:color/white"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:navigationIconTint="@android:color/white" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/formScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <Button
+                android:id="@+id/scanLabelButton"
+                style="@style/Widget.Skaner.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:minHeight="52dp"
+                android:text="@string/label_scan"
+                app:icon="@drawable/ic_qr"
+                app:iconGravity="textStart"
+                app:iconTint="@color/brand_blue" />
+
+            <TextView
+                android:id="@+id/labelInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/labelValuesButton"
+                style="@style/Widget.Skaner.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:minHeight="48dp"
+                android:text="@string/label_review_choices"
+                android:visibility="gone" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/materialInputLayout"
+            style="@style/Widget.Skaner.TextInput.Dropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/pz_material">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/materialInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="text"
+                android:background="@null"
+                android:paddingHorizontal="16dp"
+                android:completionThreshold="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:id="@+id/catalogHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/lotInputLayout"
+            style="@style/Widget.Skaner.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:hint="@string/pz_lot">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/lotInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+            <CheckBox
+                android:id="@+id/unknownLot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:minHeight="48dp"
+                android:text="@string/pz_unknown_lot"
+                android:textColor="@color/brand_blue" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/unknownLotCommentInputLayout"
+            style="@style/Widget.Skaner.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/pz_unknown_lot_comment"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/unknownLotCommentInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="textMultiLine|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/quantityInputLayout"
+            style="@style/Widget.Skaner.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/pz_quantity">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/quantityInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="numberDecimal" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/unitInputLayout"
+            style="@style/Widget.Skaner.TextInput.Dropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/pz_unit">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/unitInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="none"
+                android:background="@null"
+                android:paddingHorizontal="16dp"
+                android:completionThreshold="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/SettingsGroupHeader"
+                android:labelFor="@id/conditionGroup"
+                android:text="@string/pz_condition" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/conditionGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/conditionOk"
+                style="@style/Widget.Skaner.Button.Segment"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/pz_ok" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/conditionDamaged"
+                style="@style/Widget.Skaner.Button.Segment"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/pz_damaged" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/damageCommentInputLayout"
+            style="@style/Widget.Skaner.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/pz_damage_comment"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/damageCommentInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="textMultiLine|textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <Button
+        android:id="@+id/saveButton"
+        style="@style/Widget.Skaner.Button.Primary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:minHeight="56dp"
+        android:text="@string/pz_save" />
+</LinearLayout>

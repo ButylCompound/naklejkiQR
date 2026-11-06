@@ -19,12 +19,17 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.versionValue.text = getString(R.string.settings_version,
+            packageManager.getPackageInfo(packageName, 0).versionName)
 
         binding.toolbar.setNavigationOnClickListener { finish() }
         binding.rowAlleys.setOnClickListener { editAlleys() }
         binding.rowCustomAlleys.setOnClickListener { editList(PeopleEditActivity.LIST_CUSTOM_ALLEYS) }
         binding.rowRequesters.setOnClickListener { editList(PeopleEditActivity.LIST_REQUESTERS) }
         binding.rowManagers.setOnClickListener { editList(PeopleEditActivity.LIST_MANAGERS) }
+        binding.rowReceivers.setOnClickListener { editList(PeopleEditActivity.LIST_RECEIVERS) }
+        binding.rowServer.setOnClickListener { startActivity(Intent(this, ServerSettingsActivity::class.java)) }
+        binding.rowUpdates.setOnClickListener { startActivity(Intent(this, AppUpdateActivity::class.java)) }
         binding.resetButton.setOnClickListener { confirmReset() }
     }
 
@@ -57,6 +62,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.customAlleysValue.text = listSummary(Settings.customAlleys(this))
         binding.requestersValue.text = listSummary(Settings.requesters(this))
         binding.managersValue.text = listSummary(Settings.managers(this))
+        binding.receiversValue.text = listSummary(Settings.receivers(this))
     }
 
     private fun listSummary(items: List<String>): String =

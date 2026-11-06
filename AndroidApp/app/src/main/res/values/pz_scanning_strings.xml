@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="label_approximate">Dopasowanie przybliżone — sprawdź nazwę na etykiecie</string>
+    <string name="label_low_confidence">Niska pewność odczytu OCR — sprawdź wartość na etykiecie</string>
+    <string name="label_approximate_low_confidence">Dopasowanie przybliżone i niska pewność OCR — sprawdź etykietę</string>
+    <string name="label_scan">Zeskanuj etykietę</string>
+    <string name="label_capture">Odczytaj etykietę</string>
+    <string name="label_manual">Wpisz ręcznie</string>
+    <string name="label_scan_prompt">Umieść całą etykietę w kadrze i zatwierdź.</string>
+    <string name="label_reading">Odczytywanie…</string>
+    <string name="label_scan_failed">Nie udało się odczytać etykiety. Spróbuj ponownie lub wpisz dane ręcznie.</string>
+    <string name="label_review">Sprawdź odczytane dane. Każde pole możesz poprawić ręcznie.</string>
+    <string name="label_review_choices">Wybierz odczytaną wartość</string>
+    <string name="label_no_fields">Brak rozpoznanych danych. Uzupełnij pola ręcznie.</string>
+    <string name="label_raw">Treść etykiety</string>
+    <string name="label_rules_updated">Reguły etykiet: %1$s</string>
+    <string name="server_rules_failed">Nie udało się pobrać reguł etykiet</string>
+</resources>

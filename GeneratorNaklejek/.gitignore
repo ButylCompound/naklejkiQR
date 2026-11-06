@@ -26,3 +26,9 @@ extract.py
 do_wydruku.csv
 ~$*.xlsx
 *.xlsx
+
+STYLE_GUIDE.md
+PZ_PLAN.md
+temp_samplelabels/*
+*.pdf
+*.docx

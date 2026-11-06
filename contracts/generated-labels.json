@@ -1,0 +1,119 @@
+[
+  {
+    "name": "legacy-three",
+    "payload": "Materiał (1) | 500kg | 2026-11-02 08:00",
+    "product": "Materiał (1)",
+    "quantity": 500,
+    "unit": "kg",
+    "labelDate": "2026-11-02 08:00:00",
+    "initials": "",
+    "labelId": "",
+    "lot": ""
+  },
+  {
+    "name": "legacy-four",
+    "payload": "Produkt | 20 szt | 2026-11-02 08:00:15 | QC",
+    "product": "Produkt",
+    "quantity": 20,
+    "unit": "szt.",
+    "labelDate": "2026-11-02 08:00:15",
+    "initials": "QC",
+    "labelId": "",
+    "lot": ""
+  },
+  {
+    "name": "five-fields",
+    "payload": "Materiał (1) | 25 kg | 2026-11-02 08:00 | QC | aB3dE_fG",
+    "product": "Materiał (1)",
+    "quantity": 25.0,
+    "unit": "kg",
+    "labelDate": "2026-11-02 08:00:00",
+    "initials": "QC",
+    "labelId": "aB3dE_fG",
+    "lot": "",
+    "generator": {
+      "product_name": "Materiał (1)",
+      "weight": "25",
+      "unit": "kg",
+      "operator": "QC",
+      "date_override": "2026-11-02 08:00",
+      "lot_number": null
+    }
+  },
+  {
+    "name": "five-fields-no-operator",
+    "payload": "Materiał (2) | 12,5 kg | 2026-11-02 08:00 |  | aB3dE_fG",
+    "product": "Materiał (2)",
+    "quantity": 12.5,
+    "unit": "kg",
+    "labelDate": "2026-11-02 08:00:00",
+    "initials": "",
+    "labelId": "aB3dE_fG",
+    "lot": "",
+    "generator": {
+      "product_name": "Materiał (2)",
+      "weight": "12,5",
+      "unit": "kg",
+      "operator": "",
+      "date_override": "2026-11-02 08:00:15",
+      "lot_number": null
+    }
+  },
+  {
+    "name": "lot-weight",
+    "payload": "Materiał (1) | 25 kg | 2026-11-02 08:00 | QC | aB3dE_fG | 0001A",
+    "product": "Materiał (1)",
+    "quantity": 25.0,
+    "unit": "kg",
+    "labelDate": "2026-11-02 08:00:00",
+    "initials": "QC",
+    "labelId": "aB3dE_fG",
+    "lot": "0001A",
+    "generator": {
+      "product_name": "Materiał (1)",
+      "weight": "25",
+      "unit": "kg",
+      "operator": "QC",
+      "date_override": "2026-11-02 08:00",
+      "lot_number": "0001A"
+    }
+  },
+  {
+    "name": "lot-pieces-no-operator",
+    "payload": "Żywica (12) | 20 szt. | 2026-11-02 08:00 |  | aB3dE_fG | LOT_01&A#5",
+    "product": "Żywica (12)",
+    "quantity": 20.0,
+    "unit": "szt.",
+    "labelDate": "2026-11-02 08:00:00",
+    "initials": "",
+    "labelId": "aB3dE_fG",
+    "lot": "LOT_01&A#5",
+    "generator": {
+      "product_name": "Żywica (12)",
+      "weight": "20",
+      "unit": "szt.",
+      "operator": "",
+      "date_override": "2026-11-02 08:00:15",
+      "lot_number": "LOT_01&A#5"
+    }
+  },
+  {
+    "name": "lot-unicode",
+    "payload": "Żywica (12) | 0.5 kg | 2026-11-02 08:00 |  | aB3dE_fG | Łódź / 002",
+    "product": "Żywica (12)",
+    "quantity": 0.5,
+    "unit": "kg",
+    "labelDate": "2026-11-02 08:00:00",
+    "initials": "",
+    "labelId": "aB3dE_fG",
+    "lot": "Łódź / 002",
+    "generator": {
+      "product_name": "Żywica (12)",
+      "weight": "0.5",
+      "unit": "kg",
+      "operator": "",
+      "date_override": "2026-11-02 08:00",
+      "lot_number": "Łódź / 002"
+    }
+  }
+]

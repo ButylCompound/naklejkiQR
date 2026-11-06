@@ -14,10 +14,10 @@
         app:title="@string/app_name"
         app:titleTextColor="@android:color/white" />
 
+    <androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="32dp">
@@ -55,6 +55,8 @@
             android:layout_marginTop="12dp"
             android:text="@string/home_rw" />
 
+        <Button android:id="@+id/pzButton" style="@style/Widget.Skaner.Button.Outlined" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="12dp" android:text="@string/home_pz" />
+
         <Button
             android:id="@+id/settingsButton"
             style="@style/Widget.Skaner.Button.Outlined"
@@ -63,5 +65,5 @@
             android:layout_marginTop="12dp"
             android:text="@string/home_settings" />
     </LinearLayout>
-
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>

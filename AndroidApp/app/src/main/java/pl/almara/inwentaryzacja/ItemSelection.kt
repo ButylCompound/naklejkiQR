@@ -15,16 +15,25 @@ class ItemSelection(
     private val selected = restored.toMutableSet()
     private var mode: ActionMode? = null
     val active: Boolean get() = selected.isNotEmpty()
-    fun contains(item: ScanItem): Boolean = item.raw in selected
+    fun contains(item: ScanItem): Boolean = item.sourceKey in selected
+    fun contains(key: String): Boolean = key in selected
     fun saved(): ArrayList<String> = ArrayList(selected)
 
     fun toggle(item: ScanItem) {
-        if (!selected.add(item.raw)) selected.remove(item.raw)
+        toggle(item.sourceKey)
+    }
+
+    fun toggle(key: String) {
+        if (!selected.add(key)) selected.remove(key)
         update()
     }
 
     fun retain(items: List<ScanItem>) {
-        selected.retainAll(items.map { it.raw }.toSet())
+        retainKeys(items.map { it.sourceKey }.toSet())
+    }
+
+    fun retainKeys(keys: Set<String>) {
+        selected.retainAll(keys)
         update()
     }
 

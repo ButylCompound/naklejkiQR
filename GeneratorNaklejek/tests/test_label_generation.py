@@ -1,4 +1,5 @@
 import contextlib
+import json
 import os
 import shutil
 import subprocess
@@ -25,6 +26,8 @@ from label_utils import (
     numbered_pack_names,
     validate_label_input,
     validate_qr_fields,
+    validate_lot_allocations,
+    validate_lot_number,
 )
 
 
@@ -49,6 +52,7 @@ class GeneratorTestCase(unittest.TestCase):
             root = Path(temp_dir)
             if production_template:
                 shutil.copy2(PROJECT_DIR / 'sticker_template.tex', root)
+                shutil.copy2(PROJECT_DIR / 'sticker_template_lots.tex', root)
                 shutil.copy2(PROJECT_DIR / 'logo.jpg', root)
             elif template is not None:
                 (root / 'sticker_template.tex').write_text(template, encoding='utf-8')
@@ -66,6 +70,20 @@ class GeneratorTestCase(unittest.TestCase):
 
 
 class LabelInputTests(GeneratorTestCase):
+    def test_lot_allocations_must_match_the_pack_count(self):
+        self.assertEqual(validate_lot_allocations([(' A-01 ', ' 3 '), ('B/02', '9')], 12), [('A-01', 3), ('B/02', 9)])
+        for rows in ([('A', 11)], [('A', 13)], []):
+            with self.subTest(rows=rows), self.assertRaises(ValueError):
+                validate_lot_allocations(rows, 12)
+
+    def test_lot_rows_reject_missing_numbers_bad_counts_and_qr_separators(self):
+        for lot in ('', ' ', 'A|B', 'A\nB', 'A\tB'):
+            with self.subTest(lot=lot), self.assertRaisesRegex(ValueError, 'Numer partii'):
+                validate_lot_number(lot)
+        for count in ('', '0', '-1', '1.5', 'abc'):
+            with self.subTest(count=count), self.assertRaisesRegex(ValueError, 'Wiersz 1: Liczba opakowań'):
+                validate_lot_allocations([('A', count)], 12)
+
     def test_all_latex_special_characters_are_escaped(self):
         value = '50%_A&B#1${x}~^\\'
 
@@ -135,6 +153,43 @@ class LabelInputTests(GeneratorTestCase):
 
 
 class PdfGenerationTests(GeneratorTestCase):
+    def test_shared_android_reader_fixtures_match_generated_payloads(self):
+        fixtures = json.loads((PROJECT_DIR.parent / 'contracts' / 'generated-labels.json').read_text(encoding='utf-8'))
+        for row in fixtures:
+            if 'generator' not in row:
+                continue
+            with self.subTest(row=row['name']), self.project_directory(production_template=True):
+                with (
+                    patch.object(label_generator.qrcode, 'QRCode') as qr,
+                    patch.object(label_generator, 'compile_pdf', return_value='label.pdf'),
+                    patch.object(label_generator.secrets, 'token_urlsafe', return_value=row['labelId']),
+                ):
+                    generate_pdf(**row['generator'])
+                self.assertEqual(row['payload'], qr.return_value.add_data.call_args.args[0])
+
+    def test_lot_is_escaped_on_the_label_and_appended_as_sixth_qr_field(self):
+        with self.project_directory(production_template=True):
+            with (
+                patch.object(label_generator.qrcode, 'QRCode') as qr,
+                patch.object(label_generator, 'compile_pdf', return_value='label.pdf') as compile_pdf,
+                patch.object(label_generator.secrets, 'token_urlsafe', return_value='aB3dE_fG'),
+            ):
+                generate_pdf('Material (1)', '25', operator='QC', date_override='2026-11-02 08:00',
+                             lot_number='LOT_01&A#5', template_file='sticker_template_lots.tex')
+
+            self.assertEqual(qr.return_value.add_data.call_args.args[0],
+                             'Material (1) | 25 kg | 2026-11-02 08:00 | QC | aB3dE_fG | LOT_01&A#5')
+            tex = compile_pdf.call_args.args[0]
+            self.assertIn(r'LOT\_01\&A\#5', tex)
+            self.assertLess(tex.index('Nazwa:'), tex.index('Nr partii:'))
+            self.assertLess(tex.index('Nr partii:'), tex.index('Ilość netto:'))
+
+    def test_invalid_lot_cannot_reach_qr_or_pdf_generation(self):
+        with patch.object(label_generator.qrcode, 'QRCode') as qr:
+            with self.assertRaisesRegex(ValueError, 'Numer partii'):
+                generate_pdf('Material', '25', lot_number='A|B')
+        qr.assert_not_called()
+
     def test_qr_contains_a_fresh_short_id_without_printing_it_as_text(self):
         for operator in ('QC', ''):
             with self.subTest(operator=operator), self.project_directory(production_template=True):
@@ -260,6 +315,18 @@ class PdfGenerationTests(GeneratorTestCase):
                     self.assertGreater(pdf.stat().st_size, 1000)
                     self.assertEqual(pdf.read_bytes()[:4], b'%PDF')
 
+    @unittest.skipUnless(PDFLATEX, 'pdflatex.exe or pdflatex is not available')
+    def test_real_pdflatex_compiles_lot_template_at_both_sizes(self):
+        with self.project_directory(production_template=True):
+            for label_size in label_generator.LABEL_SIZES:
+                with self.subTest(label_size=label_size):
+                    result = generate_pdf(
+                        'MIESZANKA XYZ-123 CZARNA (12)', '1234,5', operator='QC',
+                        lot_number='LOT_2026/11&A#5', template_file='sticker_template_lots.tex',
+                        date_override='2026-11-02 08:00', label_size=label_size,
+                    )
+                    self.assertGreater(Path(result).stat().st_size, 1000)
+
 
 class PdflatexCommandTests(GeneratorTestCase):
     def test_windows_name_is_tried_first(self):
@@ -375,6 +442,8 @@ class PackModeTests(GeneratorTestCase):
             date_var=FakeVar(''),
             copies_var=FakeVar('6'),
             pack_count_var=FakeVar('12'),
+            add_lots_var=FakeVar(False),
+            lots=[],
             label_size_var=FakeVar(label_size),
             printer_var=FakeVar('Zebra'),
             status_var=FakeVar('Gotowy.'),
@@ -407,6 +476,76 @@ class PackModeTests(GeneratorTestCase):
         self.assertTrue(print_label.call_args.kwargs['match_pdf_size'])
         self.assertIn('Łącznie naklejek: 72', confirm.call_args.args[1])
         self.assertIn('Wydrukowano 72 naklejek', fake_app.status_var.get())
+        show_error.assert_not_called()
+
+    def test_lot_packs_keep_numbering_and_multiply_copies_at_both_sizes(self):
+        for label_size in label_generator.LABEL_SIZES:
+            fake_app = self.app(label_size)
+            fake_app.add_lots_var.set(True)
+            fake_app.lots = [('A-01', 3), ('B-02', 9)]
+            with (
+                patch.object(generator_gui.messagebox, 'askyesno', return_value=True),
+                patch.object(generator_gui.messagebox, 'showerror') as show_error,
+                patch.object(generator_gui, 'generate_pdf', return_value='label.pdf') as generate,
+                patch.object(generator_gui, 'print_pdf') as print_label,
+                patch.object(generator_gui, 'save_state'),
+            ):
+                generator_gui.App._process(fake_app, do_print=True)
+
+            self.assertEqual(generate.call_count, 12)
+            self.assertEqual(print_label.call_count, 72)
+            self.assertEqual([call.kwargs['lot_number'] for call in generate.call_args_list], ['A-01'] * 3 + ['B-02'] * 9)
+            self.assertEqual([call.args[0] for call in generate.call_args_list], [f'Raw Material ({i})' for i in range(1, 13)])
+            self.assertTrue(all(call.kwargs['template_file'] == 'sticker_template_lots.tex' for call in generate.call_args_list))
+            self.assertTrue(all(call.kwargs['label_size'] == label_size for call in generate.call_args_list))
+            show_error.assert_not_called()
+
+    def test_mismatched_lot_totals_stop_printing_and_pdf_generation(self):
+        for do_print in (True, False):
+            for lots in ([('A', 11)], [('A', 13)], []):
+                with self.subTest(do_print=do_print, lots=lots):
+                    fake_app = self.app()
+                    fake_app.add_lots_var.set(True)
+                    fake_app.lots = lots
+                    with (
+                        patch.object(generator_gui.messagebox, 'showerror') as show_error,
+                        patch.object(generator_gui, 'generate_pdf') as generate,
+                        patch.object(generator_gui, 'print_pdf') as print_label,
+                    ):
+                        generator_gui.App._process(fake_app, do_print=do_print)
+                    show_error.assert_called_once()
+                    generate.assert_not_called()
+                    print_label.assert_not_called()
+
+    def test_unchecked_lots_use_the_original_template(self):
+        fake_app = self.app()
+        fake_app.lots = [('old lot', 1)]
+        with (
+            patch.object(generator_gui.messagebox, 'showinfo'),
+            patch.object(generator_gui.messagebox, 'showerror') as show_error,
+            patch.object(generator_gui, 'generate_pdf', return_value='label.pdf') as generate,
+            patch.object(generator_gui, 'save_state'),
+        ):
+            generator_gui.App._process(fake_app, do_print=False)
+        self.assertEqual(generate.call_count, 12)
+        self.assertNotIn('lot_number', generate.call_args.kwargs)
+        self.assertNotIn('template_file', generate.call_args.kwargs)
+        show_error.assert_not_called()
+
+    def test_lot_dialog_confirmation_prints_without_a_second_prompt(self):
+        fake_app = self.app()
+        fake_app.add_lots_var.set(True)
+        fake_app.lots = [('A', 12)]
+        with (
+            patch.object(generator_gui.messagebox, 'askyesno') as confirm,
+            patch.object(generator_gui.messagebox, 'showerror') as show_error,
+            patch.object(generator_gui, 'generate_pdf', return_value='label.pdf'),
+            patch.object(generator_gui, 'print_pdf') as print_label,
+            patch.object(generator_gui, 'save_state'),
+        ):
+            generator_gui.App._process(fake_app, do_print=True, print_confirmed=True)
+        confirm.assert_not_called()
+        print_label.assert_called()
         show_error.assert_not_called()
 
     def test_both_sizes_apply_to_every_pack_when_printing_or_saving(self):

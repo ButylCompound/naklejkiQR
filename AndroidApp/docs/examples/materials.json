@@ -1,0 +1,21 @@
+{
+  "updatedAt": "2026-10-27T08:00:00Z",
+  "materials": [
+    {
+      "id": "1",
+      "name": "Materiał PA 6",
+      "type": "PA",
+      "group": "Polimery",
+      "suppliers": [
+        "Dostawca A"
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Materiał PA 66",
+      "type": "PA",
+      "group": "Polimery",
+      "suppliers": []
+    }
+  ]
+}

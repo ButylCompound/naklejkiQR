@@ -6,7 +6,7 @@ import os
 import subprocess
 
 from label_generator import LABEL_SIZES, generate_pdf
-from label_utils import normalize_label_date, numbered_pack_names, validate_label_input
+from label_utils import normalize_label_date, numbered_pack_names, validate_label_input, validate_lot_allocations
 
 CREATE_NO_WINDOW = 0x08000000 if os.name == 'nt' else 0
 
@@ -149,7 +149,7 @@ class ScrollableForm(ttk.Frame):
             self.scrollbar.grid_remove()
             self.canvas.yview_moveto(0)
 
-    def bind_contents(self):
+    def bind_contents(self, widget=None):
         def bind(widget):
             widget.bind('<MouseWheel>', self._wheel, add='+')
             widget.bind('<Button-4>', self._wheel, add='+')
@@ -157,7 +157,7 @@ class ScrollableForm(ttk.Frame):
             widget.bind('<FocusIn>', self._show_focus, add='+')
             for child in widget.winfo_children():
                 bind(child)
-        bind(self)
+        bind(widget or self)
 
     def _wheel(self, event):
         if self.body.winfo_reqheight() <= self.canvas.winfo_height():
@@ -179,6 +179,81 @@ class ScrollableForm(ttk.Frame):
             self.canvas.yview_moveto(top / self.body.winfo_reqheight())
         elif bottom > visible_top + visible_height:
             self.canvas.yview_moveto((bottom - visible_height) / self.body.winfo_reqheight())
+
+
+class LotDialog(tk.Toplevel):
+    def __init__(self, parent, lots, pack_count, on_confirm):
+        super().__init__(parent)
+        self.title("Numery partii")
+        self.transient(parent)
+        self.geometry(f"600x{min(480, parent.maxsize()[1])}")
+        self.pack_count = pack_count
+        self.on_confirm = on_confirm
+        self.rows = []
+
+        footer = ttk.Frame(self, padding=15)
+        footer.pack(side="bottom", fill="x")
+        self.total_var = tk.StringVar()
+        ttk.Label(footer, textvariable=self.total_var).pack(anchor="w", pady=(0, 10))
+        buttons = ttk.Frame(footer)
+        buttons.pack(fill="x")
+        ttk.Button(buttons, text="Anuluj", command=self.destroy).pack(side="left")
+        ttk.Button(buttons, text="Zatwierdź i drukuj", command=lambda: self.confirm(True)).pack(side="right")
+        ttk.Button(buttons, text="Zapisz", command=lambda: self.confirm(False)).pack(side="right", padx=10)
+
+        self.form = ScrollableForm(self)
+        self.form.pack(fill="both", expand=True)
+        body = self.form.body
+        ttk.Label(body, text="Przypisz wszystkie opakowania do partii.").pack(anchor="w", pady=(0, 15))
+        header = ttk.Frame(body)
+        header.pack(fill="x", pady=(0, 5))
+        ttk.Label(header, text="Nr partii").pack(side="left", expand=True, fill="x")
+        ttk.Label(header, text="Liczba opakowań", width=23).pack(side="right")
+        self.table = ttk.Frame(body)
+        self.table.pack(fill="x")
+        ttk.Button(body, text="Dodaj wiersz", command=self.add_row).pack(anchor="w", pady=(10, 0))
+        self.form.bind_contents()
+        for lot, count in lots or [('', '')]:
+            self.add_row(lot, count)
+        self.bind('<Escape>', lambda event: self.destroy())
+        self.grab_set()
+
+    def add_row(self, lot='', count=''):
+        frame = ttk.Frame(self.table)
+        frame.pack(fill="x", pady=3)
+        lot_var = tk.StringVar(value=lot)
+        count_var = tk.StringVar(value=str(count))
+        row = (frame, lot_var, count_var)
+        ttk.Entry(frame, textvariable=lot_var, font=('Segoe UI', 11)).pack(side="left", fill="x", expand=True)
+        ttk.Entry(frame, textvariable=count_var, width=12, font=('Segoe UI', 11)).pack(side="left", padx=8)
+        ttk.Button(frame, text="Usuń", width=6, command=lambda: self.remove_row(row)).pack(side="right")
+        self.rows.append(row)
+        count_var.trace_add('write', lambda *_: self.update_total())
+        self.update_total()
+        self.form.bind_contents(frame)
+
+    def remove_row(self, row):
+        self.rows.remove(row)
+        row[0].destroy()
+        self.update_total()
+
+    def update_total(self):
+        try:
+            total = sum(int(count.get()) for _, _, count in self.rows)
+        except ValueError:
+            total = '—'
+        self.total_var.set(f'Suma opakowań: {total} / {self.pack_count}')
+
+    def confirm(self, do_print):
+        try:
+            lots = validate_lot_allocations(
+                [(lot.get(), count.get()) for _, lot, count in self.rows], self.pack_count,
+            )
+        except ValueError as error:
+            messagebox.showerror('Błąd', str(error), parent=self)
+            return
+        self.destroy()
+        self.on_confirm(lots, do_print)
 
 
 class App:
@@ -269,6 +344,19 @@ class App:
                 font=('Segoe UI', 12),
             )
             self.pack_count_spinbox.pack(fill="x", pady=(0, 15))
+
+            self.lots = []
+            self.add_lots_var = tk.BooleanVar(value=False)
+            lot_controls = ttk.Frame(root)
+            lot_controls.pack(fill="x", pady=(0, 15))
+            ttk.Checkbutton(
+                lot_controls,
+                text="Dodaj numery partii",
+                variable=self.add_lots_var,
+                command=lambda: self.lots_btn.configure(state="normal" if self.add_lots_var.get() else "disabled"),
+            ).pack(side="left")
+            self.lots_btn = ttk.Button(lot_controls, text="Numery partii…", command=self.edit_lots, state="disabled")
+            self.lots_btn.pack(side="right")
         
         ttk.Label(root, text="Liczba kopii:").pack(anchor="w", pady=(0, 5))
         self.copies_var = tk.StringVar(value="1")
@@ -321,7 +409,22 @@ class App:
         # Bind Enter key to Print
         self.root.bind('<Return>', lambda e: self.on_print())
 
-    def _process(self, do_print):
+    def edit_lots(self):
+        try:
+            pack_count = int(self.pack_count_var.get().strip())
+            if pack_count < 1:
+                raise ValueError()
+        except ValueError:
+            messagebox.showerror("Błąd", "Liczba opakowań musi być dodatnią liczbą całkowitą!")
+            return
+        LotDialog(self.root, self.lots, pack_count, self.apply_lots)
+
+    def apply_lots(self, lots, do_print):
+        self.lots = lots
+        if do_print:
+            self._process(do_print=True, print_confirmed=True)
+
+    def _process(self, do_print, print_confirmed=False):
         prod_name = self.name_var.get().strip()
         weight = self.weight_var.get().strip()
         unit = self.unit_var.get()
@@ -375,9 +478,17 @@ class App:
                 return
 
         label_names = numbered_pack_names(prod_name, pack_count) if self.pack_mode else [prod_name]
+        pack_lots = [None] * pack_count
+        if self.pack_mode and self.add_lots_var.get():
+            try:
+                lots = validate_lot_allocations(self.lots, pack_count)
+            except ValueError as error:
+                messagebox.showerror("Błąd", str(error))
+                return
+            pack_lots = [lot for lot, count in lots for _ in range(count)]
         total_labels = len(label_names) * copies
 
-        if do_print and self.pack_mode:
+        if do_print and self.pack_mode and not print_confirmed:
             confirmed = messagebox.askyesno(
                 "Potwierdzenie wydruku",
                 f"Liczba opakowań: {pack_count}\n"
@@ -410,6 +521,8 @@ class App:
                     unit=unit,
                     output_stem=output_stem,
                     label_size=self.label_size_var.get(),
+                    **({"lot_number": pack_lots[pack_number - 1], "template_file": "sticker_template_lots.tex"}
+                       if pack_lots[pack_number - 1] is not None else {}),
                 )
                 pdf_paths.append(pdf_path)
 

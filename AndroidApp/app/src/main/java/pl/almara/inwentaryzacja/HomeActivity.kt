@@ -21,8 +21,12 @@ class HomeActivity : AppCompatActivity() {
         binding.rwButton.setOnClickListener {
             startActivity(Intent(this, RwListActivity::class.java))
         }
+        binding.pzButton.setOnClickListener {
+            startActivity(Intent(this, PzListActivity::class.java))
+        }
         binding.settingsButton.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+        SyncScheduler.start(this)
     }
 }
