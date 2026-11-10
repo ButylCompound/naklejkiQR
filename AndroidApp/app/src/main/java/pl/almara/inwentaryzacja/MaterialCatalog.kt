@@ -36,6 +36,18 @@ data class MaterialCatalog(val updatedAt: String, val materials: List<CatalogMat
         return matches.find { it.id == selectedId } ?: matches.singleOrNull()
     }
 
+    fun matchScanned(name: String, id: String? = null): CatalogMaterial? {
+        materials.find { it.id == id }?.let { return it }
+        val names = materials.map { it to FuzzyText.normalize(it.name) }
+        val exact = names.filter { it.second == FuzzyText.normalize(name) }
+        if (exact.isNotEmpty()) return exact.singleOrNull()?.first
+        val words = Regex("[\\p{L}\\p{N}]+").findAll(name).map { FuzzyText.normalize(it.value) }.toList()
+        val fragments = words.indices.flatMap { start ->
+            (start + 1..words.size).map { end -> words.subList(start, end).joinToString("") }
+        }.toSet()
+        return names.filter { it.second in fragments }.singleOrNull()?.first
+    }
+
     fun json(): JSONObject = JSONObject().put("updatedAt", updatedAt).put("materials", JSONArray().apply {
         materials.forEach { row -> put(JSONObject().put("id", row.id).put("name", row.name)
             .put("type", row.type).put("group", row.group).put("suppliers", JSONArray(row.suppliers))) }

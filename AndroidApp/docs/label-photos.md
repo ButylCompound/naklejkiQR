@@ -10,6 +10,8 @@ CameraX saves a JPEG at its captured resolution, quality 90, with orientation me
 {"id":"917235c4-1c49-435b-80a5-f4a6ddbf130b","sha256":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}
 ```
 
+When an operator adds several packages from one scan, only the first entry retains the photo. Additional entries have distinct physical-entry UUIDs and keep the same raw scan text, barcode contents, confidence and parser suggestions with no photo reference. This keeps the captured image tied to the scanned package and avoids treating copies as separate captures.
+
 The photo belongs to the existing `label` snapshot: capture time, raw barcode contents/formats, OCR text/confidence, parsing-rule timestamp/IDs and suggested values. The enclosing PZ entry holds the final values confirmed or corrected by the operator. Manual edits do not rewrite the original read. Use document and entry UUIDs to link the photo/read/confirmed-value pair, rather than material names or lot numbers.
 
 ## Upload

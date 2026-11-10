@@ -24,6 +24,9 @@ class FuzzyMaterialUiTest {
         assumeTrue(Build.HARDWARE.contains("ranchu") || Build.HARDWARE.contains("goldfish"))
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
+        val previousCatalog = CatalogStore.get(context)
+        CatalogStore.replace(context, MaterialCatalog(PzSummary.now(), listOf(
+            CatalogMaterial("butyl-test", "BUTYL IIR-1953", "", "", emptyList()))))
         val document = PzStore.create(context)
         val rules = LabelRules.parse(JSONObject(context.assets.open("label-rules.json").bufferedReader().use { it.readText() }))
         val read = rules.apply(LabelRead(PzSummary.now(), emptyList(), "CHAMBROAD\nButyl Rubber\nDR-1953\nLOT NO.260502\n#UNET:1200KG"))
@@ -69,6 +72,10 @@ class FuzzyMaterialUiTest {
                 }
             }
             assertFalse(PzStore.get(context, document.id)!!.items.single().approximateMaterial)
-        } finally { PzStore.delete(context, document.id) }
+        } finally {
+            PzStore.delete(context, document.id)
+            if (previousCatalog == null) JsonFiles.delete(File(context.filesDir, "material-catalog.json"))
+            else CatalogStore.replace(context, previousCatalog)
+        }
     }
 }

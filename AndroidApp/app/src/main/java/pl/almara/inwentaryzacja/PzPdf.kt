@@ -16,7 +16,6 @@ import android.util.AtomicFile
 import androidx.core.content.FileProvider
 import androidx.core.graphics.withClip
 import androidx.core.graphics.withTranslation
-import androidx.core.net.toUri
 import androidx.core.util.tryWrite
 import java.io.File
 
@@ -51,7 +50,6 @@ object PzPdf {
         val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
         return Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
-            selector = Intent(Intent.ACTION_SENDTO, "mailto:".toUri())
             putExtra(Intent.EXTRA_SUBJECT, doc.number + " — " + doc.supplier)
             putExtra(Intent.EXTRA_STREAM, uri)
             clipData = ClipData.newRawUri("PDF", uri)

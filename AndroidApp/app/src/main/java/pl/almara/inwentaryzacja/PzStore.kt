@@ -37,11 +37,16 @@ object PzStore {
         return changed
     }
 
-    fun putEntry(context: Context, id: String, entry: PzEntry) = edit(context, id) { doc ->
+    fun putEntry(context: Context, id: String, entry: PzEntry, count: Int = 1) = edit(context, id) { doc ->
+        require(count in 1..999)
         UUID.fromString(entry.id)
         entry.problem()?.let { throw PzValidationException(it) }
+        require(count == 1 || doc.items.none { it.id == entry.id })
+        val entries = listOf(entry) + List(count - 1) {
+            entry.copy(id = UUID.randomUUID().toString(), label = entry.label?.copy(photo = null))
+        }
         doc.copy(items = if (doc.items.any { it.id == entry.id }) doc.items.map { if (it.id == entry.id) entry else it }
-            else doc.items + entry)
+            else doc.items + entries)
     }
 
     fun deleteEntries(context: Context, id: String, selected: Set<String>) = edit(context, id) { doc ->

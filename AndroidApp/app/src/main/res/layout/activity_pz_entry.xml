@@ -163,6 +163,26 @@
                 android:completionThreshold="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/packageCountInputLayout"
+            style="@style/Widget.Skaner.TextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/pz_package_count"
+            app:helperText="@string/pz_package_count_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/packageCountInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:inputType="number"
+                android:maxLength="3"
+                android:selectAllOnFocus="true"
+                android:text="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
             <TextView
                 style="@style/SettingsGroupHeader"
                 android:labelFor="@id/conditionGroup"

@@ -235,8 +235,9 @@ class PzStorageTest {
         pdf.copyTo(File(artifacts, "pz-long-notes.pdf"), overwrite = true)
         PzJson.document(approved).toString().let { File(artifacts, "pz-long-notes.json").writeText(it) }
         val intent = PzPdf.emailIntent(base, approved)
-        assertEquals(Intent.ACTION_SENDTO, intent.selector!!.action)
-        assertEquals("mailto", intent.selector!!.data!!.scheme)
+        assertEquals(Intent.ACTION_SEND, intent.action)
+        assertEquals("application/pdf", intent.type)
+        assertNull(intent.selector)
         val uri = intent.clipData!!.getItemAt(0).uri
         base.contentResolver.openInputStream(uri)!!.use { assertEquals('%'.code, it.read()) }
         assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
@@ -609,6 +610,84 @@ class PzStorageTest {
             assertTrue(ServerSync.perform(context))
             assertEquals(approved, RwStore.get(context, rw.id))
             assertEquals("0002", RwStore.get(context, rw.id)!!.items.single().lot)
+        }
+    }
+
+    @Test fun packageCountCreatesPhysicalEntriesAndKeepsOnlyTheScannedPackagesPhoto() {
+        val draft = PzStore.create(context)
+        val photo = photograph().first
+        val read = LabelRead(PzSummary.now(), listOf(LabelCode("barcode", "CODE_128")), "NET 25 KG", photo = photo)
+        val scanned = entry(damaged = true).copy(quantity = "25".toBigDecimal(), label = read)
+        PzStore.putEntry(context, draft.id, scanned, 4)
+        val saved = PzStore.get(context, draft.id)!!
+        assertEquals(4, saved.items.size)
+        assertEquals(4, saved.items.map { it.id }.toSet().size)
+        assertEquals(scanned, saved.items.first())
+        assertTrue(saved.items.drop(1).all { it == scanned.copy(id = it.id, label = read.copy(photo = null)) })
+        assertEquals("100 kg", PzSummary.totals(saved.items))
+        assertEquals(4, PzSummary.groups(saved.items).single().damagedCount)
+        assertEquals(1, File(context.filesDir, "label_photos").listFiles()!!.size)
+        PzStore.deleteEntries(context, draft.id, setOf(scanned.id))
+        assertFalse(LabelPhotos.file(context, photo.id).exists())
+        assertEquals(3, PzStore.get(context, draft.id)!!.items.size)
+        assertTrue(PzStore.get(context, draft.id)!!.items.all { it.label == read.copy(photo = null) })
+    }
+
+    @Test fun packageCountsKeepLotsUnitsAndUnknownPhysicalPackagesSeparate() {
+        val draft = PzStore.create(context)
+        PzStore.putEntry(context, draft.id, entry().copy(quantity = "25".toBigDecimal()), 2)
+        PzStore.putEntry(context, draft.id, entry(lot = "0002").copy(quantity = "25".toBigDecimal()), 3)
+        PzStore.putEntry(context, draft.id, entry().copy(quantity = "20".toBigDecimal(), unit = "szt."), 2)
+        PzStore.putEntry(context, draft.id, entry(lot = null).copy(quantity = "10".toBigDecimal()), 2)
+        val saved = PzStore.get(context, draft.id)!!
+        assertEquals(9, saved.items.size)
+        assertEquals(listOf(2, 3, 2, 1, 1), PzSummary.groups(saved.items).map { it.entries.size })
+        assertEquals("145 kg  •  40 szt.", PzSummary.totals(saved.items))
+    }
+
+    @Test fun packageCountValidationAndLocksRejectChangesWithoutPartialWrites() {
+        val draft = complete()
+        val path = File(context.filesDir, "pz/" + draft.id + ".json")
+        val bytes = path.readBytes()
+        for (count in listOf(-1, 0, 1000)) {
+            assertThrows(IllegalArgumentException::class.java) { PzStore.putEntry(context, draft.id, entry(), count) }
+            assertArrayEquals(bytes, path.readBytes())
+        }
+        assertThrows(IllegalArgumentException::class.java) { PzStore.putEntry(context, draft.id, draft.items.first(), 2) }
+        assertThrows(PzValidationException::class.java) { PzStore.putEntry(context, draft.id, entry().copy(materialName = ""), 4) }
+        assertArrayEquals(bytes, path.readBytes())
+        val large = PzStore.create(context)
+        PzStore.putEntry(context, large.id, entry(), 999)
+        assertEquals(999, PzStore.get(context, large.id)!!.items.map { it.id }.toSet().size)
+        PzStore.approve(context, draft.id)
+        val approved = path.readBytes()
+        assertThrows(IllegalStateException::class.java) { PzStore.putEntry(context, draft.id, entry(), 4) }
+        assertArrayEquals(approved, path.readBytes())
+    }
+
+    @Test fun countedPackagesBackUpAndRecoverWithOnePhotoAndTheSameScanText() {
+        TestServer().use { server ->
+            Settings.setServerUrls(context, server.url)
+            assertTrue(ServerSync.perform(context))
+            val draft = PzStore.create(context)
+            PzStore.edit(context, draft.id) { it.copy(supplier = "Dostawca", receiver = "Jan", deliveryMatches = true) }
+            val photo = photograph().first
+            val read = LabelRead(PzSummary.now(), emptyList(), "NET 25 KG", photo = photo)
+            PzStore.putEntry(context, draft.id, entry().copy(quantity = "25".toBigDecimal(), label = read), 4)
+            val approved = PzStore.approve(context, draft.id)
+            assertTrue(ServerSync.perform(context))
+            assertEquals(1, server.photoUploads)
+            assertEquals(1, server.backups)
+            assertEquals(4, server.documents.getValue(draft.id).getJSONObject("document").getJSONArray("items").length())
+            context.close()
+            context = TestContext(base)
+            Settings.setServerUrls(context, server.url)
+            assertTrue(ServerSync.perform(context))
+            val recovered = PzStore.get(context, draft.id)!!
+            assertEquals(approved, recovered)
+            assertEquals(1, recovered.items.count { it.label?.photo != null })
+            assertTrue(recovered.items.all { it.label?.text == read.text })
+            assertEquals(1, File(context.filesDir, "label_photos").listFiles()!!.size)
         }
     }
 

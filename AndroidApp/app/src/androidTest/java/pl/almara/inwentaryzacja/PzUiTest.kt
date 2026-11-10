@@ -278,6 +278,9 @@ class PzUiTest {
 
     @Test fun scannedSuggestionsAllowManualCorrectionsAndSurviveRescansAndRotation() {
         assumeTrue(Build.HARDWARE.contains("ranchu") || Build.HARDWARE.contains("goldfish"))
+        val previousCatalog = CatalogStore.get(context)
+        CatalogStore.replace(context, MaterialCatalog(PzSummary.now(), listOf(
+            CatalogMaterial("pib-test", "PIB32", "", "", emptyList()))))
         val doc = PzStore.create(context)
         val read = LabelRuleStore.get(context).apply(LabelRead(PzSummary.now(),
             listOf(LabelCode("PIB32 / SPXFPG005E / 20260721 / 175,000", "QR_CODE")), ""))
@@ -286,7 +289,7 @@ class PzUiTest {
                 .putExtra(PzDetailActivity.EXTRA_ID, doc.id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)).use { scenario ->
                 scenario.onActivity { activity ->
                     activity.applyLabel(read)
-                    assertEquals("Poliizobuten PIB32", activity.findViewById<EditText>(R.id.materialInput).text.toString())
+                    assertEquals("PIB32", activity.findViewById<EditText>(R.id.materialInput).text.toString())
                     assertEquals("SPXFPG005E", activity.findViewById<EditText>(R.id.lotInput).text.toString())
                     assertEquals("175", activity.findViewById<EditText>(R.id.quantityInput).text.toString())
                     assertFalse(activity.findViewById<MaterialButton>(R.id.conditionOk).isChecked)
@@ -314,7 +317,11 @@ class PzUiTest {
             assertEquals("170", PzSummary.number(entry.quantity))
             assertEquals("szt.", entry.unit)
             assertEquals(read, entry.label)
-        } finally { PzStore.delete(context, doc.id) }
+        } finally {
+            PzStore.delete(context, doc.id)
+            if (previousCatalog == null) JsonFiles.delete(File(context.filesDir, "material-catalog.json"))
+            else CatalogStore.replace(context, previousCatalog)
+        }
     }
 
     @Test fun manualWorkflowRestoresFormsSelectsByPhysicalEntryAndLocksApproval() {

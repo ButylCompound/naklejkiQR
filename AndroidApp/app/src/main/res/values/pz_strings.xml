@@ -24,6 +24,9 @@
     <string name="pz_unknown_lot_entry">Nieznana — pozycja %1$d</string>
     <string name="pz_quantity">Ilość na palecie / w opakowaniu</string>
     <string name="pz_unit">Jednostka</string>
+    <string name="pz_package_count">Liczba palet / opakowań</string>
+    <string name="pz_package_count_hint">Ilość, partia i stan będą takie same dla każdego opakowania.</string>
+    <string name="pz_package_count_required">Podaj liczbę palet lub opakowań od 1 do 999.</string>
     <string name="pz_condition">Stan</string>
     <string name="pz_ok">OK</string>
     <string name="pz_damaged">Uszkodzenie</string>

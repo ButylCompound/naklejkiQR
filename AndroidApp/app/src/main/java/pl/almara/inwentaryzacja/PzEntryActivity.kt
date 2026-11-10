@@ -68,6 +68,8 @@ class PzEntryActivity : AppCompatActivity() {
         binding.lotInput.doAfterTextChanged { clearFieldWarning("lot") }
         binding.quantityInput.doAfterTextChanged { clearFieldWarning("quantity") }
         binding.unitInput.doAfterTextChanged { clearFieldWarning("unit") }
+        binding.packageCountInputLayout.visibility = if (original == null) View.VISIBLE else View.GONE
+        binding.packageCountInput.doAfterTextChanged { binding.packageCountInputLayout.error = null }
         binding.catalogHint.text = if (catalog == null) getString(R.string.pz_catalog_empty)
             else getString(R.string.pz_catalog_count, catalog.materials.size, PzSummary.date(catalog.updatedAt))
         binding.unitInput.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, listOf("kg", "szt.")))
@@ -103,7 +105,7 @@ class PzEntryActivity : AppCompatActivity() {
         label?.photo?.takeIf { it != read.photo && it != original?.label?.photo }?.let { LabelPhotos.delete(this, it) }
         label = read
         if (original == null) scannedAt = read.capturedAt
-        val choices = read.values.filter { it.field in setOf("materialName", "lot", "quantity") }.groupBy { it.field }
+        val choices = labelValues().filter { it.field in setOf("materialName", "lot", "quantity") }.groupBy { it.field }
         for ((field, values) in choices) if (values.size == 1) {
             val empty = when (field) {
                 "materialName" -> binding.materialInput.text.isBlank()
@@ -126,11 +128,9 @@ class PzEntryActivity : AppCompatActivity() {
     private fun applyValue(value: LabelValue) {
         when (value.field) {
             "materialName" -> {
-                val catalog = CatalogStore.get(this)?.materials.orEmpty()
-                val material = if (value.materialId != null) catalog.find { it.id == value.materialId }
-                    else catalog.singleOrNull { it.name.trim().equals(value.value.trim(), ignoreCase = true) }
-                selectedMaterialId = material?.id
-                selectedMaterialName = material?.name ?: value.value
+                val material = CatalogStore.get(this)?.matchScanned(value.value, value.materialId) ?: return
+                selectedMaterialId = material.id
+                selectedMaterialName = material.name
                 binding.materialInput.setText(selectedMaterialName, false)
                 setApproximateMaterial(value.approximate)
             }
@@ -202,9 +202,18 @@ class PzEntryActivity : AppCompatActivity() {
         listOf("materialName", "lot", "quantity", "unit").forEach(::updateFieldWarning)
     }
 
+    private fun labelValues(): List<LabelValue> {
+        val catalog = CatalogStore.get(this)
+        return label?.values.orEmpty().filter { it.field != "materialId" }.mapNotNull { value ->
+            if (value.field == "materialName") catalog?.matchScanned(value.value, value.materialId)?.let {
+                value.copy(value = it.name, materialId = it.id)
+            } else value
+        }.distinct()
+    }
+
     private fun chooseLabelValue() {
         val read = label ?: return
-        val values = read.values.filter { it.field != "materialId" }
+        val values = labelValues()
         val labels = values.map { value ->
             val name = when (value.field) {
                 "materialName" -> R.string.pz_material
@@ -230,6 +239,12 @@ class PzEntryActivity : AppCompatActivity() {
     }
 
     private fun saveEntry() {
+        val count = if (original == null) binding.packageCountInput.text.toString().trim().toIntOrNull()?.takeIf { it in 1..999 } else 1
+        if (count == null) {
+            binding.packageCountInputLayout.error = getString(R.string.pz_package_count_required)
+            binding.packageCountInput.requestFocus()
+            return
+        }
         val quantity = PzSummary.parseQuantity(binding.quantityInput.text.toString())
         val condition = when (binding.conditionGroup.checkedButtonId) {
             R.id.conditionOk -> PzCondition.OK
@@ -257,7 +272,7 @@ class PzEntryActivity : AppCompatActivity() {
             input.error = getString(PzUi.message(problem)); input.requestFocus()
             return
         }
-        PzUi.guard(this) { PzStore.putEntry(this, documentId, entry); finish() }
+        PzUi.guard(this) { PzStore.putEntry(this, documentId, entry, count); finish() }
     }
 
     override fun onDestroy() {

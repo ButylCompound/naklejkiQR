@@ -24,6 +24,9 @@ class OcrConfidenceUiTest {
         assumeTrue(Build.HARDWARE.contains("ranchu") || Build.HARDWARE.contains("goldfish"))
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
+        val previousCatalog = CatalogStore.get(context)
+        CatalogStore.replace(context, MaterialCatalog(PzSummary.now(), listOf(
+            CatalogMaterial("butyl-test", "BUTYL IIR-1953", "", "", emptyList()))))
         val document = PzStore.create(context)
         val rules = LabelRules.parse(JSONObject(context.assets.open("label-rules.json").bufferedReader().use { it.readText() })
             .put("ocrWarningThreshold", 0.8))
@@ -87,6 +90,10 @@ class OcrConfidenceUiTest {
             assertTrue(corrected.lowConfidenceFields.isEmpty())
             assertFalse(corrected.approximateMaterial)
             assertTrue(corrected.label!!.values.any { it.lowConfidence })
-        } finally { PzStore.delete(context, document.id) }
+        } finally {
+            PzStore.delete(context, document.id)
+            if (previousCatalog == null) JsonFiles.delete(File(context.filesDir, "material-catalog.json"))
+            else CatalogStore.replace(context, previousCatalog)
+        }
     }
 }
